@@ -1,111 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - Sarkar Telecom</title>
   <style>
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#0f1115;color:#e7eaf0}
-    main{padding:22px;max-width:900px;margin:0 auto}
-    .card{background:#171a21;padding:28px;border-radius:14px;box-shadow:0 8px 26px rgba(0,0,0,.4);text-align:center;margin-top:26px}
-    .btn-logout{background:#ef4444;border:none;padding:10px 18px;border-radius:8px;color:#fff;font-weight:700;cursor:pointer}
+    :root {
+      --bg: #0f1115;
+      --card: #171a21;
+      --text: #e7eaf0;
+      --muted: #9aa3b2;
+      --accent: #06b6d4;
+      --ok: #10b981;
+      --bad: #ef4444;
+    }
+    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
+
+    header { background: var(--card); border-bottom: 1px solid #202635; padding: 10px; }
+    .top-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    .site-info { display: flex; align-items: center; gap: 10px; }
+    .site-logo { height: 40px; width: auto; border-radius: 8px; }
+    .site-name { font-size: 20px; font-weight: 800; color: var(--accent); }
+
+    .user-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: #2b3347; object-fit: cover; }
+    .user-box { background: #1f2430; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .balance { color: var(--ok); font-weight: bold; }
+
+    .btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
+    .btn.logout { background: var(--bad); color: #fff; }
+    .btn.login { background: var(--accent); color: #001; }
+
+    .nav-row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .nav-row a { background: #1f2430; padding: 8px 14px; border-radius: 8px; text-decoration: none; color: var(--text); font-weight: 600; transition: background 0.2s; }
+    .nav-row a:hover { background: var(--accent); color: #001; }
+
+    @media (max-width: 600px) {
+      .top-row { flex-direction: column; align-items: flex-start; }
+      .user-info { width: 100%; justify-content: space-between; }
+      .nav-row { justify-content: center; }
+    }
+
+    main { padding: 20px; }
+    .card { background:#171a21; padding:20px; border-radius:12px; max-width:400px; margin:20px auto; box-shadow:0 6px 16px rgba(0,0,0,.25); text-align:center; }
   </style>
 </head>
 <body>
-  <!-- header will be injected here -->
-  <div id="header-container"></div>
 
-  <main>
-    <div class="card">
-      <h1>Welcome, <span id="name">Loading...</span></h1>
-      <p><strong>Email:</strong> <span id="email">—</span></p>
-      <p><strong>Balance:</strong> 💎 <span id="balance">0</span></p>
-      <div style="margin-top:16px;">
-        <button class="btn-logout" id="logout-btn">Logout</button>
-      </div>
+<!-- 🔹 Header Start -->
+<header>
+  <div class="top-row">
+    <div class="site-info">
+      <img src="https://sarkar-telecom.github.io/Topup/logo.png" alt="Logo" class="site-logo">
+      <span class="site-name">SARKAR TELECOM</span>
     </div>
-  </main>
+    <div class="user-info" id="userInfo"></div>
+  </div>
 
-  <script>
-    (async () => {
-      // 1) load header fragment
+  <div class="nav-row">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="order.html">Order</a>
+    <a href="order-history.html">Order History</a>
+    <a href="profile.html">Profile</a>
+  </div>
+</header>
+<!-- 🔹 Header End -->
+
+<!-- 🔹 Dashboard Content -->
+<main>
+  <h1>Welcome to Dashboard</h1>
+  <div class="card">
+    <h2>User Info</h2>
+    <p><b>Email:</b> <span id="emailBox">Loading...</span></p>
+    <p><b>Balance:</b> 💎 <span id="balanceBox">0</span></p>
+  </div>
+</main>
+
+<!-- 🔹 Firebase Auth Script -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+    projectId: "diamond-recharge-f7f59",
+    storageBucket: "diamond-recharge-f7f59.appspot.com",
+    messagingSenderId: "657717928489",
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+    measurementId: "G-TDK78BQ8SQ"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const userInfo = document.getElementById("userInfo");
+  const emailBox = document.getElementById("emailBox");
+  const balanceBox = document.getElementById("balanceBox");
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      let balance = 0;
+      let avatarUrl = user.photoURL || "https://via.placeholder.com/40";
+
       try {
-        const res = await fetch('header.html');
-        if (!res.ok) throw new Error('header fetch failed');
-        const html = await res.text();
-        document.getElementById('header-container').innerHTML = html;
-      } catch (e) {
-        console.error('Failed to load header.html', e);
-        document.getElementById('header-container').innerHTML = '<!-- header load failed -->';
-      }
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (snap.exists()) {
+          const data = snap.data();
+          balance = data.balance || 0;
+          if (data.avatar) avatarUrl = data.avatar;
 
-      // 2) import header script (initializes firebase + onAuthStateChanged)
-      let module = null;
-      try {
-        module = await import('./header-script.js');
-      } catch (e) {
-        console.error('Failed to import header-script.js', e);
-      }
-
-      // 3) populate dashboard fields:
-      // prefer live data from module.getCurrentUserData(), fallback to localStorage snapshot
-      async function populate() {
-        // try module first
-        if (module && module.getCurrentUserData) {
-          try {
-            const d = await module.getCurrentUserData();
-            if (d && d.authUser) {
-              const docData = d.userDoc || {};
-              document.getElementById('name').textContent = (docData.name || d.authUser.displayName || 'User');
-              document.getElementById('email').textContent = (docData.email || d.authUser.email || '—');
-              document.getElementById('balance').textContent = (docData.balance ?? 0);
-              return;
-            }
-          } catch (err) {
-            console.warn('getCurrentUserData failed', err);
-          }
+          emailBox.textContent = data.email || user.email;
+          balanceBox.textContent = balance;
         }
-
-        // fallback to localStorage snapshot
-        try {
-          const raw = localStorage.getItem('user');
-          if (raw) {
-            const s = JSON.parse(raw);
-            document.getElementById('name').textContent = s.name || 'User';
-            document.getElementById('email').textContent = s.email || '—';
-            document.getElementById('balance').textContent = (s.balance ?? 0);
-            return;
-          }
-        } catch(e){}
-        // if nothing, redirect to login
-        // (we wait a little because auth state initialization could be async)
-        setTimeout(()=> {
-          const name = document.getElementById('name').textContent;
-          if (name === 'Loading...' || name === '') {
-            window.location.href = 'login.html';
-          }
-        }, 1200);
-      }
-      await populate();
-
-      // 4) wire logout button using exported signOutUser if present
-      const logoutBtn = document.getElementById('logout-btn');
-      if (module && module.signOutUser) {
-        logoutBtn.onclick = async () => {
-          await module.signOutUser();
-          window.location.href = 'login.html';
-        };
-      } else {
-        // fallback: try to remove localStorage and redirect
-        logoutBtn.onclick = () => {
-          try { localStorage.removeItem('user'); } catch(e){}
-          window.location.href = 'login.html';
-        };
+      } catch (e) {
+        console.error("Firestore error", e);
       }
 
-      // 5) also refresh UI when localStorage changes (another tab)
-      window.addEventListener('storage', () => populate());
-    })();
-  </script>
+      userInfo.innerHTML = `
+        <img src="${avatarUrl}" class="user-avatar" alt="User" onerror="this.src='https://via.placeholder.com/40'">
+        <div class="user-box">${user.email}</div>
+        <div class="user-box balance">💎 ${balance}</div>
+        <button class="btn logout" id="logoutBtn">Logout</button>
+      `;
+
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
+        await signOut(auth);
+        window.location.href = "login.html";
+      });
+
+    } else {
+      userInfo.innerHTML = `<button class="btn login" onclick="window.location.href='login.html'">Login</button>`;
+      emailBox.textContent = "Not logged in";
+      balanceBox.textContent = "0";
+    }
+  });
+</script>
+
 </body>
 </html>
