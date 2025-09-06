@@ -3,20 +3,51 @@
 <head>
   <meta charset="UTF-8">
   <title>Signup</title>
-  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="content max-400">
-    <h2>🆕 Create Account</h2>
-    <form id="signupForm" class="form">
-      <input type="text" id="signupName" placeholder="Full Name" required>
-      <input type="email" id="signupEmail" placeholder="Email" required>
-      <input type="password" id="signupPassword" placeholder="Password" required>
-      <input type="text" id="signupPhone" placeholder="Phone (optional)">
-      <button class="btn w-100">Sign Up</button>
-    </form>
-    <p class="mt">Already have an account? <a href="login.html">Login</a></p>
-  </div>
-  <script type="module" src="page.js"></script>
+  <h2>Signup</h2>
+  <form id="signupForm">
+    <input type="text" id="signupName" placeholder="Full Name" required><br>
+    <input type="email" id="signupEmail" placeholder="Email" required><br>
+    <input type="password" id="signupPassword" placeholder="Password" required><br>
+    <button type="submit">Sign Up</button>
+  </form>
+
+  <p>Already have an account? <a href="login.html">Login</a></p>
+
+  <script type="module">
+    import { auth, db } from "./app.js";
+    import { createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    document.getElementById("signupForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("signupName").value;
+      const email = document.getElementById("signupEmail").value;
+      const password = document.getElementById("signupPassword").value;
+
+      try {
+        // create account
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(cred.user, { displayName: name });
+
+        // save user data in Firestore
+        await setDoc(doc(db, "users", cred.user.uid), {
+          uid: cred.user.uid,
+          name,
+          email,
+          createdAt: serverTimestamp(),
+          balance: 0,
+          status: "pending",
+          role: "user"
+        });
+
+        alert("Signup successful!");
+        window.location.href = "dashboard.html";
+      } catch (error) {
+        alert("Signup failed: " + error.message);
+      }
+    });
+  </script>
 </body>
 </html>
