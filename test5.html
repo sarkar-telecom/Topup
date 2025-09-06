@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Test Order History</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0f1115; color: #e7eaf0; padding: 15px; }
+    h2 { text-align: center; color: #06b6d4; margin-bottom: 20px; }
+    .order-card {
+      background: #171a21;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    }
+    .order-card h3 {
+      margin: 0 0 8px 0;
+      color: #06b6d4;
+      font-size: 16px;
+    }
+    .order-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 14px;
+      border-bottom: 1px solid #222;
+    }
+    .order-item:last-child { border-bottom: none; }
+    .label { color: #aaa; }
+    .value { font-weight: bold; }
+
+    /* Status Colors */
+    .status-completed { color: #22c55e; } /* Green */
+    .status-waiting { color: #eab308; }   /* Yellow */
+    .status-failed { color: #ef4444; }    /* Red */
+    .status-other { color: #9ca3af; }     /* Gray */
+  </style>
+</head>
+<body>
+  <h2>📜 All Orders (Test)</h2>
+  <div id="orderList">⏳ Loading...</div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
+    };
+
+    initializeApp(firebaseConfig);
+    const db = getFirestore();
+
+    async function loadOrders() {
+      const list = document.getElementById("orderList");
+      list.innerHTML = "⏳ Loading...";
+
+      try {
+        const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+          list.innerHTML = "⚠ No orders found.";
+          return;
+        }
+
+        let idx = snap.docs.length;
+        list.innerHTML = "";
+
+        snap.docs.forEach(doc => {
+          const data = doc.data();
+          let timeStr = "-";
+          if (data.createdAt?.toDate) {
+            timeStr = data.createdAt.toDate().toLocaleString();
+          }
+
+          let cls = "status-other";
+          switch (data.status) {
+            case "COMPLETED": cls = "status-completed"; break;
+            case "WAITING": cls = "status-waiting"; break;
+            case "FAILED": cls = "status-failed"; break;
+          }
+
+          const card = document.createElement("div");
+          card.className = "order-card";
+          card.innerHTML = `
+            <h3>Order #${idx--}</h3>
+            <div class="order-item"><span class="label">Profile ID:</span><span class="value">${data.profileId || "-"}</span></div>
+            <div class="order-item"><span class="label">Amount:</span><span class="value">${data.amount || "-"}</span></div>
+            <div class="order-item"><span class="label">Status:</span><span class="value ${cls}">${data.status || "-"}</span></div>
+            <div class="order-item"><span class="label">Time:</span><span class="value">${timeStr}</span></div>
+          `;
+          list.appendChild(card);
+        });
+      } catch (err) {
+        list.innerHTML = "❌ " + err.message;
+      }
+    }
+
+    loadOrders();
+  </script>
+</body>
+</html>
