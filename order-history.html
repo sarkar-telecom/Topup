@@ -3,159 +3,144 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order History - Sarkar Telecom</title>
-  <style>
-    :root {
-      --bg: #0f1115;
-      --card: #171a21;
-      --text: #e7eaf0;
-      --accent: #06b6d4;
-      --ok: #10b981;
-      --bad: #ef4444;
-      --wait: #eab308;
+  <title>My Order History</title>
+  <script type="module">
+    // Firebase SDK ইমপোর্ট
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // 🔥 আপনার Firebase config দিয়ে দিন
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // ইউজারের অর্ডার লোড
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const q = query(
+          collection(db, "orders"),
+          where("userId", "==", user.uid),   // case 1
+          orderBy("timestamp", "desc"),
+          limit(20)
+        );
+
+        const q2 = query(
+          collection(db, "orders"),
+          where("uid", "==", user.uid),     // case 2
+          orderBy("timestamp", "desc"),
+          limit(20)
+        );
+
+        loadOrders(q);
+        loadOrders(q2);
+      } else {
+        document.getElementById("ordersBody").innerHTML =
+          `<tr><td colspan="5" class="text-center py-4 text-red-400">⚠️ Please login to see your orders</td></tr>`;
+      }
+    });
+
+    function loadOrders(queryRef) {
+      onSnapshot(queryRef, (snapshot) => {
+        const tbody = document.getElementById("ordersBody");
+        tbody.innerHTML = "";
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+
+          // timestamp convert
+          let date = "";
+          if (data.timestamp?.toDate) {
+            date = data.timestamp.toDate().toLocaleString();
+          } else if (typeof data.timestamp === "number") {
+            date = new Date(data.timestamp).toLocaleString();
+          } else {
+            date = "-";
+          }
+
+          // status color
+          let statusClass = "bg-yellow-600";
+          if (data.status === "CONFIRMED" || data.status === "COMPLETED") statusClass = "bg-green-600";
+          else if (data.status === "CANCELLED") statusClass = "bg-red-600";
+
+          // render row
+          const tr = `
+            <tr class="border-b border-gray-700">
+              <td class="px-4 py-2">${doc.id}</td>
+              <td class="px-4 py-2">${data.clientId || "-"}</td>
+              <td class="px-4 py-2">💎 ${data.amount}</td>
+              <td class="px-4 py-2">${date}</td>
+              <td class="px-4 py-2"><span class="px-2 py-1 rounded text-white ${statusClass}">${data.status}</span></td>
+            </tr>
+          `;
+          tbody.innerHTML += tr;
+        });
+
+        if (!snapshot.size) {
+          document.getElementById("ordersBody").innerHTML =
+            `<tr><td colspan="5" class="text-center py-4 text-gray-400">No orders found</td></tr>`;
+        }
+      });
     }
-    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
-    header { background: var(--card); border-bottom: 1px solid #202635; padding: 10px; }
-    .top-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-    .site-info { display: flex; align-items: center; gap: 10px; }
-    .site-logo { height: 40px; border-radius: 8px; }
-    .site-name { font-size: 20px; font-weight: 800; color: var(--accent); }
-    .user-info { display: flex; align-items: center; gap: 10px; }
-    .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-    .user-box { background: #1f2430; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; }
-    .nav-row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-    .nav-row a { background: #1f2430; padding: 8px 14px; border-radius: 8px; text-decoration: none; color: var(--text); font-weight: 600; }
-    .nav-row a:hover { background: var(--accent); color: #001; }
-    main { padding: 20px; }
-    .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 6px 16px rgba(0,0,0,.25); max-width: 900px; margin: 0 auto; }
-    h2 { text-align: center; margin-bottom: 20px; }
-    .search-box { margin-bottom: 15px; text-align: center; }
-    .search-box input { padding: 10px; border-radius: 8px; border: none; width: 60%; max-width: 300px; background: #1f2430; color: var(--text); }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 10px; text-align: center; border-bottom: 1px solid #333; }
-    th { background: #1f2430; }
-    .status { padding: 6px 10px; border-radius: 6px; font-weight: 600; }
-    .waiting { background: var(--wait); color: #000; }
-    .confirmed { background: var(--ok); color: #000; }
-    .cancelled { background: var(--bad); color: #fff; }
+  </script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #111827;
+      color: #f3f4f6;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      background: #1f2937;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th {
+      text-align: left;
+      padding: 12px;
+      background: #374151;
+    }
+    td {
+      padding: 10px;
+    }
+    .bg-yellow-600 { background: #ca8a04; }
+    .bg-green-600 { background: #16a34a; }
+    .bg-red-600 { background: #dc2626; }
   </style>
 </head>
 <body>
-
-<header>
-  <div class="top-row">
-    <div class="site-info">
-      <img src="https://sarkar-telecom.github.io/Topup/logo.png" alt="Logo" class="site-logo">
-      <span class="site-name">SARKAR TELECOM</span>
-    </div>
-    <div class="user-info" id="userInfo"></div>
-  </div>
-  <div class="nav-row">
-    <a href="dashboard.html">Dashboard</a>
-    <a href="order.html">Order</a>
-    <a href="order-history.html">Order History</a>
-    <a href="profile.html">Profile</a>
-  </div>
-</header>
-
-<main>
-  <div class="card">
-    <h2>My Order History</h2>
-    <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Search by Status (WAITING / CONFIRMED / CANCELLED)">
-    </div>
+  <div class="container">
+    <h2 style="text-align:center; margin-bottom:20px;">My Order History</h2>
     <table>
       <thead>
         <tr>
           <th>Order ID</th>
           <th>Profile ID / Number</th>
-          <th>💎 Amount</th>
+          <th>Amount</th>
           <th>Date & Time</th>
           <th>Status</th>
         </tr>
       </thead>
-      <tbody id="orderList"></tbody>
+      <tbody id="ordersBody">
+        <tr><td colspan="5" class="text-center py-4 text-gray-400">Loading...</td></tr>
+      </tbody>
     </table>
   </div>
-</main>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { getFirestore, collection, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
-    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
-    projectId: "diamond-recharge-f7f59",
-    storageBucket: "diamond-recharge-f7f59.appspot.com",
-    messagingSenderId: "657717928489",
-    appId: "1:657717928489:web:70431ebc9afb7002d4b238",
-    measurementId: "G-TDK78BQ8SQ"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  const userInfo = document.getElementById("userInfo");
-  const orderList = document.getElementById("orderList");
-  const searchInput = document.getElementById("searchInput");
-
-  let currentUser;
-
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      currentUser = user;
-      userInfo.innerHTML = `
-        <img src="${user.photoURL || 'https://via.placeholder.com/40'}" class="user-avatar">
-        <div class="user-box">${user.email}</div>
-        <button id="logoutBtn">Logout</button>
-      `;
-      document.getElementById("logoutBtn").addEventListener("click", async () => {
-        await signOut(auth);
-        window.location.href = "login.html";
-      });
-      listenOrders();  // ✅ live sync
-    } else {
-      window.location.href = "login.html";
-    }
-  });
-
-  function listenOrders() {
-    const q = query(
-      collection(db, "orders"),
-      where("uid", "==", currentUser.uid),
-      orderBy("createdAt", "desc"),
-      limit(20)
-    );
-
-    onSnapshot(q, (snapshot) => {
-      orderList.innerHTML = "";
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        let id = docSnap.id;
-        let status = data.status || "WAITING";
-        let date = data.createdAt?.toDate().toLocaleString() || "—";
-        let statusClass = status === "CONFIRMED" ? "confirmed" : status === "CANCELLED" ? "cancelled" : "waiting";
-
-        // 🔹 Search ফিল্টার
-        if (searchInput.value && !status.includes(searchInput.value.toUpperCase())) return;
-
-        orderList.innerHTML += `
-          <tr>
-            <td>${id}</td>
-            <td>${data.recipient}</td>
-            <td>💎 ${data.amount}</td>
-            <td>${date}</td>
-            <td><span class="status ${statusClass}">${status}</span></td>
-          </tr>
-        `;
-      });
-    });
-  }
-
-  searchInput.addEventListener("input", listenOrders);
-</script>
 </body>
 </html>
