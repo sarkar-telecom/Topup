@@ -82,7 +82,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { getFirestore, collection, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFirestore, collection, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
@@ -116,46 +116,46 @@
         await signOut(auth);
         window.location.href = "login.html";
       });
-      loadOrders();
+      listenOrders();  // ✅ live sync
     } else {
       window.location.href = "login.html";
     }
   });
 
-  async function loadOrders() {
+  function listenOrders() {
     const q = query(
       collection(db, "orders"),
-      where("uid", "==", currentUser.uid),   // ✅ শুধুমাত্র নিজের অর্ডার
+      where("uid", "==", currentUser.uid),
       orderBy("createdAt", "desc"),
       limit(20)
     );
 
-    const snap = await getDocs(q);
-    orderList.innerHTML = "";
+    onSnapshot(q, (snapshot) => {
+      orderList.innerHTML = "";
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        let id = docSnap.id;
+        let status = data.status || "WAITING";
+        let date = data.createdAt?.toDate().toLocaleString() || "—";
+        let statusClass = status === "CONFIRMED" ? "confirmed" : status === "CANCELLED" ? "cancelled" : "waiting";
 
-    snap.forEach((docSnap) => {
-      const data = docSnap.data();
-      let id = docSnap.id;
-      let status = data.status || "WAITING";
-      let date = data.createdAt?.toDate().toLocaleString() || "—";
-      let statusClass = status === "CONFIRMED" ? "confirmed" : status === "CANCELLED" ? "cancelled" : "waiting";
+        // 🔹 Search ফিল্টার
+        if (searchInput.value && !status.includes(searchInput.value.toUpperCase())) return;
 
-      // 🔹 Search ফিল্টার
-      if (searchInput.value && !status.includes(searchInput.value.toUpperCase())) return;
-
-      orderList.innerHTML += `
-        <tr>
-          <td>${id}</td>
-          <td>${data.recipient}</td>
-          <td>💎 ${data.amount}</td>
-          <td>${date}</td>
-          <td><span class="status ${statusClass}">${status}</span></td>
-        </tr>
-      `;
+        orderList.innerHTML += `
+          <tr>
+            <td>${id}</td>
+            <td>${data.recipient}</td>
+            <td>💎 ${data.amount}</td>
+            <td>${date}</td>
+            <td><span class="status ${statusClass}">${status}</span></td>
+          </tr>
+        `;
+      });
     });
   }
 
-  searchInput.addEventListener("input", loadOrders);
+  searchInput.addEventListener("input", listenOrders);
 </script>
 </body>
 </html>
