@@ -2,82 +2,68 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Create Order</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding:20px; }
+    button { margin:4px; padding:8px 12px; }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Create Order</h2>
-    <input type="text" id="clientId" placeholder="Enter Profile ID / Number">
+  <h2>Create Order</h2>
+  <input type="text" id="clientId" placeholder="Enter Client ID">
+  <div id="amountBtns"></div>
+  <button id="confirmOrder">Confirm Order</button>
 
-    <div class="amount-grid">
-      <button onclick="selectAmount(10)">💎 10</button>
-      <button onclick="selectAmount(50)">💎 50</button>
-      <button onclick="selectAmount(100)">💎 100</button>
-      <button onclick="selectAmount(200)">💎 200</button>
-      <button onclick="selectAmount(500)">💎 500</button>
-      <button onclick="selectAmount(1000)">💎 1000</button>
-      <button onclick="selectAmount(2000)">💎 2000</button>
-      <button onclick="selectAmount(5000)">💎 5000</button>
-      <button onclick="selectAmount(10000)">💎 10000</button>
-      <button onclick="selectAmount(20000)">💎 20000</button>
-    </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    <button id="confirmOrder">Confirm Order</button>
-  </div>
+    // ✅ আপনার Firebase config বসান
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
 
-<script>
-  // 🔥 Firebase Config (আপনার আগের config এখানে বসান)
-  const firebaseConfig = {
-    apiKey: "YOUR_KEY",
-    authDomain: "YOUR_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_BUCKET",
-    messagingSenderId: "YOUR_MSG_ID",
-    appId: "YOUR_APP_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  let selectedAmount = 0;
-
-  function selectAmount(amount) {
-    selectedAmount = amount;
-    alert("Selected: " + amount);
-  }
-
-  document.getElementById("confirmOrder").addEventListener("click", async () => {
-    const clientId = document.getElementById("clientId").value;
-    const user = auth.currentUser;
-
-    if (!user) {
-      alert("Please login first!");
-      return;
-    }
-
-    if (!clientId || !selectedAmount) {
-      alert("Enter Profile ID and select amount");
-      return;
-    }
-
-    await db.collection("orders").add({
-      userId: user.uid,
-      userEmail: user.email,
-      clientId: clientId,
-      amount: selectedAmount,
-      status: "PENDING",
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    // amount buttons
+    const amounts = [10,50,100,200,500,1000,2000,5000,10000,20000];
+    const btnContainer = document.getElementById("amountBtns");
+    let selectedAmount = null;
+    amounts.forEach(val=>{
+      let btn=document.createElement("button");
+      btn.textContent="💎 "+val;
+      btn.onclick=()=>selectedAmount=val;
+      btnContainer.appendChild(btn);
     });
 
-    alert("✅ Order Created Successfully!");
-    document.getElementById("clientId").value = "";
-  });
+    document.getElementById("confirmOrder").addEventListener("click", async ()=>{
+      const clientId=document.getElementById("clientId").value.trim();
+      const user=auth.currentUser;
+      if(!user){ alert("⚠️ Please login first"); return; }
+      if(!clientId || !selectedAmount){ alert("⚠️ Fill Client ID & Select Amount"); return; }
 
-</script>
+      const orderId="ORD"+Date.now();
+      await addDoc(collection(db,"orders"),{
+        orderId,
+        clientId,
+        amount:selectedAmount,
+        userId:user.uid,
+        status:"Pending",
+        createdAt:serverTimestamp()
+      });
+      alert("✅ Order Created Successfully");
+    });
+  </script>
 </body>
 </html>
