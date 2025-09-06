@@ -1,41 +1,39 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Create Account</title>
+  <meta charset="UTF-8">
+  <title>Sign Up</title>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-<button id="openSidebar" class="open-btn">&#9776; Menu</button>
-<div id="sidebar" class="sidebar">
-  <button id="closeSidebar" class="close-btn">&times;</button>
-  <a href="index.html">Home</a>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="order.html">Place Order</a>
-  <a href="order-history.html">Order History</a>
-  <a href="profile.html">Profile</a>
-  <a href="admin.html">Admin</a>
-  <button id="logoutBtn" class="logout-btn">Logout</button>
-</div>
-<div class="content">
-
-  <div class="card max-400">
+  <div class="content max-400">
     <h2>Create Account</h2>
     <form id="signupForm" class="form">
-      <label>Name</label>
-      <input id="signupName" required placeholder="Your name">
-      <label>Email</label>
-      <input id="signupEmail" type="email" required placeholder="you@example.com">
-      <label>Password</label>
-      <input id="signupPassword" type="password" minlength="6" required placeholder="At least 6 chars">
-      <button class="btn w-100" type="submit">Sign Up</button>
+      <input type="text" id="name" placeholder="Full Name" required>
+      <input type="email" id="email" placeholder="Email" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <button class="btn w-100">Sign Up</button>
     </form>
-    <p class="mt">Already have an account? <a href="login.html">Login</a></p>
+    <p class="mt">Already have account? <a href="login.html">Login</a></p>
   </div>
 
-</div>
-<script type="module" src="assets/app.js"></script>
-<script type="module" src="assets/page.js"></script>
+  <script type="module">
+    import { auth, db, ensureUserDoc } from "./assets/app.js";
+    import { createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    const form=document.getElementById("signupForm");
+    form.onsubmit=async(e)=>{
+      e.preventDefault();
+      const name=form.name.value;
+      const email=form.email.value;
+      const pass=form.password.value;
+      try{
+        const res=await createUserWithEmailAndPassword(auth,email,pass);
+        await updateProfile(res.user,{displayName:name});
+        await ensureUserDoc(res.user);
+        location.href="dashboard.html";
+      }catch(err){ alert(err.message); }
+    };
+  </script>
 </body>
 </html>
