@@ -3,119 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order History</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <title>Test Order History</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#0f1115; color:#e7eaf0; padding:15px; }
+    h2 { text-align:center; color:#06b6d4; margin-bottom:20px; }
+
+    .order-card {
+      background:#171a21;
+      border:1px solid #333;
+      border-radius:8px;
+      padding:12px;
+      margin-bottom:12px;
+      box-shadow:0 2px 5px rgba(0,0,0,0.4);
+    }
+    .order-card h3 {
+      margin:0 0 8px 0;
+      color:#06b6d4;
+      font-size:16px;
+    }
+    .order-item {
+      display:flex;
+      justify-content:space-between;
+      padding:4px 0;
+      font-size:14px;
+      border-bottom:1px solid #222;
+    }
+    .order-item:last-child { border-bottom:none; }
+    .label { color:#aaa; }
+    .value { color:#fff; font-weight:bold; }
+  </style>
 </head>
-<body class="bg-gray-900 text-white">
+<body>
+  <h2>📜 All Orders (Test)</h2>
+  <div id="orderList"></div>
 
-  <!-- Header -->
-  <div class="p-4 bg-gray-800 shadow flex justify-between items-center">
-    <h1 class="text-lg font-bold">📜 My Order History</h1>
-    <button id="logoutBtn" class="bg-red-500 px-3 py-1 rounded">Logout</button>
-  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  <!-- Search -->
-  <div class="p-4">
-    <input type="text" id="searchBox" placeholder="Search by Order ID / Profile ID"
-      class="w-full p-2 rounded bg-gray-800 border border-gray-600 text-white">
-  </div>
-
-  <!-- Table -->
-  <div class="overflow-x-auto p-4">
-    <table class="w-full text-sm border border-gray-700">
-      <thead class="bg-gray-700">
-        <tr>
-          <th class="p-2">Order ID</th>
-          <th class="p-2">Profile ID</th>
-          <th class="p-2">Amount</th>
-          <th class="p-2">Date & Time</th>
-          <th class="p-2">Status</th>
-        </tr>
-      </thead>
-      <tbody id="orderTable" class="text-center"></tbody>
-    </table>
-  </div>
-
-  <script>
-    // 🔥 আপনার Firebase Config বসান
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-    const orderTable = document.getElementById("orderTable");
-    const searchBox = document.getElementById("searchBox");
+    async function loadOrders() {
+      const orderList = document.getElementById("orderList");
+      orderList.innerHTML = "<p>⏳ Loading...</p>";
 
-    let ordersData = [];
+      try {
+        const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
 
-    // 🔹 Auth Check
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = "login.html"; // লগইন না থাকলে redirect
-      } else {
-        loadOrders(user.uid);
-      }
-    });
+        if (snapshot.empty) {
+          orderList.innerHTML = "<p>⚠ No orders found.</p>";
+          return;
+        }
 
-    // 🔹 Load Orders (Real-time listener)
-    function loadOrders(uid) {
-      db.collection("orders")
-        .where("userId", "==", uid)
-        .orderBy("createdAt", "desc")
-        .onSnapshot(snapshot => {
-          ordersData = [];
-          snapshot.forEach(doc => {
-            ordersData.push({ id: doc.id, ...doc.data() });
-          });
-          renderTable(ordersData);
+        orderList.innerHTML = "";
+        let count = 1;
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          let timeText = "-";
+          if (data.createdAt?.toDate) {
+            timeText = data.createdAt.toDate().toLocaleString();
+          }
+
+          const card = document.createElement("div");
+          card.className = "order-card";
+          card.innerHTML = `
+            <h3>Order #${count++}</h3>
+            <div class="order-item"><span class="label">Email:</span> <span class="value">${data.email || "-"}</span></div>
+            <div class="order-item"><span class="label">Profile ID:</span> <span class="value">${data.profileId || "-"}</span></div>
+            <div class="order-item"><span class="label">Amount:</span> <span class="value">${data.amount || "-"}</span></div>
+            <div class="order-item"><span class="label">Status:</span> <span class="value">${data.status || "-"}</span></div>
+            <div class="order-item"><span class="label">Time:</span> <span class="value">${timeText}</span></div>
+          `;
+          orderList.appendChild(card);
         });
+      } catch (err) {
+        orderList.innerHTML = "<p>❌ " + err.message + "</p>";
+      }
     }
 
-    // 🔹 Render Table
-    function renderTable(data) {
-      orderTable.innerHTML = "";
-      data.forEach(order => {
-        const tr = document.createElement("tr");
-        tr.className = "border-b border-gray-700";
-        tr.innerHTML = `
-          <td class="p-2 break-all">${order.id}</td>
-          <td class="p-2">${order.clientId || "-"}</td>
-          <td class="p-2">💎 ${order.amount}</td>
-          <td class="p-2">${order.createdAt?.toDate().toLocaleString() || "-"}</td>
-          <td class="p-2 ${order.status === "SUCCESS" ? "text-green-400" : "text-yellow-400"}">
-            ${order.status}
-          </td>
-        `;
-        orderTable.appendChild(tr);
-      });
-    }
-
-    // 🔹 Search filter
-    searchBox.addEventListener("input", e => {
-      const value = e.target.value.toLowerCase();
-      const filtered = ordersData.filter(order =>
-        order.id.toLowerCase().includes(value) ||
-        (order.clientId && order.clientId.toLowerCase().includes(value))
-      );
-      renderTable(filtered);
-    });
-
-    // 🔹 Logout
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      auth.signOut();
-    });
+    loadOrders();
   </script>
-
 </body>
 </html>
