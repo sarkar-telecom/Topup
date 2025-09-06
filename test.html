@@ -32,7 +32,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-    // 🔑 তোমার নতুন Firebase Config
+    // 🔑 তোমার Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
       authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -69,7 +69,7 @@
             <td>${data.profileId || "-"}</td>
             <td>${data.amount || "-"}</td>
             <td>${data.status || "-"}</td>
-            <td>${data.createdAt?.toDate ? data.createdAt.toDate().toLocaleString() : "-"}</td>
+            <td>${data.createdAt ? new Date(data.createdAt).toLocaleString() : "-"}</td>
           `;
           orderTable.appendChild(tr);
         });
