@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Firebase Test</title>
+</head>
+<body>
+  <h2>Signup</h2>
+  <input id="signupEmail" type="email" placeholder="Email">
+  <input id="signupPass" type="password" placeholder="Password">
+  <button id="signupBtn">Signup</button>
+
+  <h2>Login</h2>
+  <input id="loginEmail" type="email" placeholder="Email">
+  <input id="loginPass" type="password" placeholder="Password">
+  <button id="loginBtn">Login</button>
+
+  <h2>Status</h2>
+  <pre id="status">Not logged in</pre>
+
+  <script type="module">
+    // Firebase import
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } 
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    // ✅ আপনার config এখানে
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
+    };
+
+    // Init Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Signup
+    document.getElementById("signupBtn").addEventListener("click", async () => {
+      const email = document.getElementById("signupEmail").value;
+      const pass = document.getElementById("signupPass").value;
+      try {
+        await createUserWithEmailAndPassword(auth, email, pass);
+        alert("Signup successful!");
+      } catch (err) {
+        alert("Signup error: " + err.message);
+      }
+    });
+
+    // Login
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const email = document.getElementById("loginEmail").value;
+      const pass = document.getElementById("loginPass").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+        alert("Login successful!");
+      } catch (err) {
+        alert("Login error: " + err.message);
+      }
+    });
+
+    // Track login status
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById("status").textContent = "Logged in as: " + user.email;
+      } else {
+        document.getElementById("status").textContent = "Not logged in";
+      }
+    });
+  </script>
+</body>
+</html>
