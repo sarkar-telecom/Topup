@@ -1,16 +1,210 @@
 <!DOCTYPE html>
-<html>
+<html lang="bn">
 <head>
   <meta charset="UTF-8">
-  <title>Topup</title>
-  <link rel="stylesheet" href="assets/style.css">
+  <title>Diamond Recharge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root { --bg:#0f1115; --card:#171a21; --text:#e7eaf0; --muted:#9aa3b2; --accent:#06b6d4; --ok:#10b981; --warn:#f59e0b; --bad:#ef4444; }
+    body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui}
+    .hidden{display:none}
+    .container{max-width:420px;margin:20px auto;padding:20px;background:var(--card);border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+    input{width:100%;padding:10px;margin:6px 0;border-radius:10px;border:1px solid #202635;background:#0c111a;color:var(--text)}
+    button{width:100%;padding:10px;margin-top:10px;border:none;border-radius:10px;background:var(--accent);color:#001;font-weight:600;cursor:pointer}
+    nav{display:flex;justify-content:center;gap:10px;margin:20px}
+    nav button{flex:1;padding:8px;background:#1f2430;color:var(--text)}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    td,th{padding:8px;border-bottom:1px solid #293244;text-align:left}
+    .tag{padding:4px 8px;border-radius:8px;background:#23304a;font-size:12px}
+  </style>
 </head>
 <body>
-  <div class="content">
-    <h1>💎 Diamond Top-up</h1>
-    <p>Fast & secure top-ups. Please login to continue.</p>
-    <a href="login.html" class="btn">Login</a>
-    <a href="signup.html" class="btn outline">Create Account</a>
-  </div>
+
+<nav id="nav" class="hidden">
+  <button onclick="show('dashboard')">Dashboard</button>
+  <button onclick="show('order')">Order</button>
+  <button onclick="show('history')">History</button>
+  <button onclick="show('profile')">Profile</button>
+  <button onclick="logout()">Logout</button>
+</nav>
+
+<!-- Login -->
+<div id="login" class="container">
+  <h2>Login</h2>
+  <form id="loginForm">
+    <input id="loginEmail" type="email" placeholder="Email" required>
+    <input id="loginPassword" type="password" placeholder="Password" required>
+    <button type="submit">Login</button>
+  </form>
+  <p>New user? <a href="#" onclick="show('signup')">Sign Up</a></p>
+</div>
+
+<!-- Signup -->
+<div id="signup" class="container hidden">
+  <h2>Sign Up</h2>
+  <form id="signupForm">
+    <input id="signupName" type="text" placeholder="Full Name" required>
+    <input id="signupEmail" type="email" placeholder="Email" required>
+    <input id="signupPassword" type="password" placeholder="Password" required>
+    <button type="submit">Create Account</button>
+  </form>
+  <p>Already have an account? <a href="#" onclick="show('login')">Login</a></p>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" class="container hidden">
+  <h2>Dashboard</h2>
+  <p id="welcome"></p>
+  <p>Balance: <span id="balance">৳ 0</span></p>
+  <p>Status: <span id="status"></span></p>
+</div>
+
+<!-- Order -->
+<div id="order" class="container hidden">
+  <h2>Place Order</h2>
+  <form id="orderForm">
+    <input id="gameId" type="text" placeholder="Game ID" required>
+    <input id="diamonds" type="number" placeholder="Diamonds" required>
+    <input id="note" type="text" placeholder="Note">
+    <button type="submit">Submit</button>
+  </form>
+</div>
+
+<!-- Order History -->
+<div id="history" class="container hidden">
+  <h2>Order History</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Diamonds</th><th>Status</th></tr></thead>
+    <tbody id="orders"></tbody>
+  </table>
+</div>
+
+<!-- Profile -->
+<div id="profile" class="container hidden">
+  <h2>Profile</h2>
+  <form id="profileForm">
+    <input id="profileName" type="text" placeholder="Name">
+    <input id="profileEmail" type="email" disabled>
+    <button type="submit">Save</button>
+  </form>
+</div>
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, updateDoc, addDoc, collection, serverTimestamp, onSnapshot, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+    projectId: "diamond-recharge-f7f59",
+    storageBucket: "diamond-recharge-f7f59.firebasestorage.app",
+    messagingSenderId: "657717928489",
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+    measurementId: "G-TDK78BQ8SQ"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Helpers
+  function show(id){
+    document.querySelectorAll(".container").forEach(c=>c.classList.add("hidden"));
+    document.getElementById(id).classList.remove("hidden");
+  }
+  async function ensureUserDoc(user){
+    const ref = doc(db,"users",user.uid);
+    const snap = await getDoc(ref);
+    if(!snap.exists()){
+      await setDoc(ref,{name:user.displayName||"",email:user.email,balance:0,status:"active",createdAt:serverTimestamp()});
+    }
+  }
+
+  // Login
+  document.getElementById("loginForm").addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    const email=document.getElementById("loginEmail").value;
+    const pass=document.getElementById("loginPassword").value;
+    try{
+      await signInWithEmailAndPassword(auth,email,pass);
+    }catch(err){alert(err.message);}
+  });
+
+  // Signup
+  document.getElementById("signupForm").addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    const name=document.getElementById("signupName").value;
+    const email=document.getElementById("signupEmail").value;
+    const pass=document.getElementById("signupPassword").value;
+    try{
+      const cred=await createUserWithEmailAndPassword(auth,email,pass);
+      await updateProfile(cred.user,{displayName:name});
+      await ensureUserDoc(cred.user);
+    }catch(err){alert(err.message);}
+  });
+
+  // Profile save
+  document.getElementById("profileForm").addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    const name=document.getElementById("profileName").value;
+    const user=auth.currentUser;
+    if(user){
+      await updateProfile(user,{displayName:name});
+      await updateDoc(doc(db,"users",user.uid),{name});
+      alert("Profile updated");
+    }
+  });
+
+  // Order
+  document.getElementById("orderForm").addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    const user=auth.currentUser;
+    const gameId=document.getElementById("gameId").value;
+    const diamonds=parseInt(document.getElementById("diamonds").value);
+    const note=document.getElementById("note").value;
+    if(user){
+      await addDoc(collection(db,"orders"),{uid:user.uid,email:user.email,gameId,diamonds,note,status:"WAITING",createdAt:serverTimestamp()});
+      alert("Order placed");
+    }
+  });
+
+  // Logout
+  window.logout=()=>signOut(auth);
+
+  // Listen auth
+  onAuthStateChanged(auth, async (user)=>{
+    if(user){
+      document.getElementById("nav").classList.remove("hidden");
+      show("dashboard");
+      document.getElementById("welcome").textContent="Welcome "+(user.displayName||"");
+      document.getElementById("profileName").value=user.displayName||"";
+      document.getElementById("profileEmail").value=user.email;
+      await ensureUserDoc(user);
+      const uref=doc(db,"users",user.uid);
+      const usnap=await getDoc(uref);
+      const u=usnap.data();
+      document.getElementById("balance").textContent="৳ "+(u.balance||0);
+      document.getElementById("status").textContent=u.status;
+
+      // Orders live
+      const q1=query(collection(db,"orders"),where("uid","==",user.uid),orderBy("createdAt","desc"));
+      onSnapshot(q1,(snap)=>{
+        const tbody=document.getElementById("orders");
+        tbody.innerHTML="";
+        snap.forEach(d=>{
+          const o=d.data();
+          const tr=document.createElement("tr");
+          tr.innerHTML=`<td>${d.id.slice(0,6)}..</td><td>${o.diamonds}</td><td><span class="tag">${o.status}</span></td>`;
+          tbody.appendChild(tr);
+        });
+      });
+    }else{
+      document.getElementById("nav").classList.add("hidden");
+      show("login");
+    }
+  });
+</script>
 </body>
 </html>
