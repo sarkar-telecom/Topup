@@ -2,167 +2,146 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Order History</title>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, collection, query, where, orderBy, limit, onSnapshot, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    // 🔥 আপনার Firebase config বসান
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    // অর্ডার লোড করা
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const q1 = query(
-          collection(db, "orders"),
-          where("userId", "==", user.uid),
-          orderBy("timestamp", "desc"),
-          limit(20)
-        );
-
-        const q2 = query(
-          collection(db, "orders"),
-          where("uid", "==", user.uid),
-          orderBy("timestamp", "desc"),
-          limit(20)
-        );
-
-        loadOrders(q1, user.uid);
-        loadOrders(q2, user.uid);
-      } else {
-        document.getElementById("ordersBody").innerHTML =
-          `<tr><td colspan="5" class="text-center py-4 text-red-400">⚠️ Please login to see your orders</td></tr>`;
-      }
-    });
-
-    function loadOrders(queryRef, uid) {
-      onSnapshot(queryRef, (snapshot) => {
-        const tbody = document.getElementById("ordersBody");
-        tbody.innerHTML = "";
-
-        snapshot.forEach(async (docSnap) => {
-          const data = docSnap.data();
-          const docRef = doc(db, "orders", docSnap.id);
-
-          // timestamp handle
-          let orderTime = 0;
-          if (data.timestamp?.toDate) {
-            orderTime = data.timestamp.toDate().getTime();
-          } else if (typeof data.timestamp === "number") {
-            orderTime = data.timestamp;
-          }
-
-          const now = Date.now();
-
-          // ✅ Auto-cancel check
-          if (data.status === "WAITING" && now - orderTime > 5 * 60 * 1000) {
-            await updateDoc(docRef, { status: "CANCELLED" });
-
-            // Refund ব্যালেন্স
-            if (data.amount && uid) {
-              const userRef = doc(db, "users", uid);
-              const userSnap = await getDoc(userRef);
-              if (userSnap.exists()) {
-                const userData = userSnap.data();
-                const newBalance = (userData.balance || 0) + data.amount;
-                await updateDoc(userRef, { balance: newBalance });
-              }
-            }
-            return;
-          }
-
-          // status color
-          let statusClass = "bg-yellow-600";
-          if (data.status === "CONFIRMED" || data.status === "COMPLETED") statusClass = "bg-green-600";
-          else if (data.status === "CANCELLED") statusClass = "bg-red-600";
-
-          // তারিখ format
-          let dateStr = "-";
-          if (orderTime) dateStr = new Date(orderTime).toLocaleString();
-
-          // টেবিল row
-          const tr = `
-            <tr class="border-b border-gray-700">
-              <td class="px-4 py-2">${docSnap.id}</td>
-              <td class="px-4 py-2">${data.clientId || "-"}</td>
-              <td class="px-4 py-2">💎 ${data.amount}</td>
-              <td class="px-4 py-2">${dateStr}</td>
-              <td class="px-4 py-2"><span class="px-2 py-1 rounded text-white ${statusClass}">${data.status}</span></td>
-            </tr>
-          `;
-          tbody.innerHTML += tr;
-        });
-
-        if (!snapshot.size) {
-          document.getElementById("ordersBody").innerHTML =
-            `<tr><td colspan="5" class="text-center py-4 text-gray-400">No orders found</td></tr>`;
-        }
-      });
-    }
-  </script>
-
+  <title>Order History</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+  <link rel="stylesheet" href="style.css">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #111827;
-      color: #f3f4f6;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 900px;
-      margin: 30px auto;
-      background: #1f2937;
-      padding: 20px;
-      border-radius: 10px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th {
-      text-align: left;
-      padding: 12px;
-      background: #374151;
-    }
-    td {
-      padding: 10px;
-    }
-    .bg-yellow-600 { background: #ca8a04; }
-    .bg-green-600 { background: #16a34a; }
-    .bg-red-600 { background: #dc2626; }
+    body { background: #121212; color: #fff; font-family: Arial, sans-serif; }
+    .container { width: 95%; max-width: 900px; margin: auto; padding: 20px; }
+    h2 { text-align: center; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 10px; text-align: center; border: 1px solid #333; }
+    th { background: #1f1f1f; }
+    .status-box { padding: 5px 10px; border-radius: 6px; color: #fff; font-weight: bold; }
+    .waiting { background: orange; }
+    .confirmed { background: green; }
+    .cancelled { background: red; }
+    .filter { margin-bottom: 15px; display: flex; justify-content: center; gap: 10px; }
+    select, input { padding: 6px; border-radius: 6px; border: none; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2 style="text-align:center; margin-bottom:20px;">My Order History</h2>
+    <h2>My Order History</h2>
+
+    <div class="filter">
+      <input type="text" id="searchInput" placeholder="Search by Order ID...">
+      <select id="statusFilter">
+        <option value="">All Status</option>
+        <option value="WAITING">WAITING</option>
+        <option value="CONFIRMED">CONFIRMED</option>
+        <option value="CANCELLED">CANCELLED</option>
+      </select>
+    </div>
+
     <table>
       <thead>
         <tr>
           <th>Order ID</th>
-          <th>Profile ID / Number</th>
+          <th>Profile ID</th>
           <th>Amount</th>
           <th>Date & Time</th>
           <th>Status</th>
         </tr>
       </thead>
-      <tbody id="ordersBody">
-        <tr><td colspan="5" class="text-center py-4 text-gray-400">Loading...</td></tr>
+      <tbody id="orderTableBody">
+        <tr><td colspan="5">Loading orders...</td></tr>
       </tbody>
     </table>
   </div>
+
+  <script type="module">
+    // ✅ Firebase Config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, collection, query, where, orderBy, limit, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const tableBody = document.getElementById("orderTableBody");
+    const searchInput = document.getElementById("searchInput");
+    const statusFilter = document.getElementById("statusFilter");
+
+    // Auto Cancel Function
+    async function autoCancelOrder(orderId, createdAt, status) {
+      const fiveMin = 5 * 60 * 1000;
+      if (status === "WAITING" && (Date.now() - createdAt.toMillis()) > fiveMin) {
+        await updateDoc(doc(db, "orders", orderId), { status: "CANCELLED" });
+      }
+    }
+
+    // Listen user auth
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        loadOrders(user.uid);
+      } else {
+        tableBody.innerHTML = `<tr><td colspan="5">⚠ Please login to see your orders</td></tr>`;
+      }
+    });
+
+    function loadOrders(uid) {
+      const q = query(
+        collection(db, "orders"),
+        where("userId", "==", uid),
+        orderBy("createdAt", "desc"),
+        limit(20)
+      );
+
+      onSnapshot(q, snapshot => {
+        if (snapshot.empty) {
+          tableBody.innerHTML = `<tr><td colspan="5">No orders found</td></tr>`;
+          return;
+        }
+
+        let rows = "";
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          autoCancelOrder(docSnap.id, data.createdAt, data.status);
+
+          let statusClass =
+            data.status === "WAITING" ? "waiting" :
+            data.status === "CONFIRMED" ? "confirmed" : "cancelled";
+
+          rows += `
+            <tr data-status="${data.status}" data-id="${docSnap.id}">
+              <td>${docSnap.id}</td>
+              <td>${data.profileId}</td>
+              <td>💎 ${data.amount}</td>
+              <td>${data.createdAt.toDate().toLocaleString()}</td>
+              <td><span class="status-box ${statusClass}">${data.status}</span></td>
+            </tr>
+          `;
+        });
+        tableBody.innerHTML = rows;
+      });
+    }
+
+    // Filter Orders
+    function filterOrders() {
+      const term = searchInput.value.toLowerCase();
+      const status = statusFilter.value;
+      Array.from(tableBody.getElementsByTagName("tr")).forEach(row => {
+        const id = row.dataset.id.toLowerCase();
+        const st = row.dataset.status;
+        row.style.display =
+          (id.includes(term) && (status === "" || st === status)) ? "" : "none";
+      });
+    }
+    searchInput.addEventListener("input", filterOrders);
+    statusFilter.addEventListener("change", filterOrders);
+  </script>
 </body>
 </html>
