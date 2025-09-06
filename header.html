@@ -3,170 +3,189 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Header</title>
+  <title>Sarkar Telecom Header</title>
   <style>
+    :root {
+      --bg: #0f1115;
+      --card: #171a21;
+      --text: #e7eaf0;
+      --muted: #9aa3b2;
+      --accent: #06b6d4;
+      --ok: #10b981;
+      --bad: #ef4444;
+    }
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #111;
-      color: white;
+      background: var(--bg);
+      color: var(--text);
     }
     header {
-      background: #1e1e1e;
-      padding: 10px 15px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+      background: var(--card);
+      border-bottom: 1px solid #202635;
+      padding: 10px;
     }
-    .header-row {
+    .top-row {
       display: flex;
-      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
       gap: 10px;
     }
-    .site-name {
-      font-size: 22px;
-      font-weight: bold;
-      color: #38bdf8;
-    }
-    nav {
+    .site-info {
       display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .site-logo {
+      height: 40px;
+      width: auto;
+      border-radius: 8px;
+    }
+    .site-name {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
       gap: 10px;
       flex-wrap: wrap;
     }
-    nav a, nav div, nav button {
-      background: #2d2d2d;
-      padding: 6px 14px;
-      border-radius: 6px;
-      text-decoration: none;
-      color: white;
-      font-size: 14px;
-      transition: background 0.3s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      border: none;
-      cursor: pointer;
-    }
-    nav a:hover, nav button:hover {
-      background: #38bdf8;
-      color: black;
-    }
     .user-avatar {
-      width: 28px;
-      height: 28px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      border: 2px solid #38bdf8;
+      background: #2b3347;
+      object-fit: cover;
     }
-    @media (max-width: 700px) {
-      .header-row {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      nav {
-        width: 100%;
-      }
+    .user-details {
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+    }
+    .balance {
+      font-weight: bold;
+      color: var(--ok);
+    }
+    .btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .btn.logout { background: var(--bad); color: #fff; }
+    .btn.login { background: var(--accent); color: #001; }
+
+    .nav-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .nav-row a {
+      background: #1f2430;
+      padding: 8px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    .nav-row a:hover {
+      background: var(--accent);
+      color: #001;
+    }
+    @media (max-width: 600px) {
+      .top-row { flex-direction: column; align-items: flex-start; }
+      .user-info { width: 100%; justify-content: space-between; }
+      .nav-row { justify-content: center; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="header-row">
-      <!-- Site Logo / Name -->
-      <div class="site-name">SARKAR TELECOM</div>
 
-      <!-- Navigation + User Info -->
-      <nav>
-        <a href="dashboard.html">Dashboard</a>
-        <a href="order.html">Order</a>
-        <a href="history.html">Order History</a>
-        <a href="profile.html">Profile</a>
-        
-        <!-- Live User Info -->
-        <div id="userName">👤 Guest</div>
-        <div id="userEmail">📧 Not logged in</div>
-        <div id="userBalance">💎 0</div>
-        <img id="userAvatar" class="user-avatar" src="https://via.placeholder.com/28" alt="User">
-
-        <!-- Auth Button -->
-        <button id="authBtn" onclick="goLogin()">Login</button>
-      </nav>
+<header>
+  <!-- First Row -->
+  <div class="top-row">
+    <div class="site-info">
+      <img src="https://sarkar-telecom.github.io/Topup/logo.png" alt="Logo" class="site-logo">
+      <span class="site-name">SARKAR TELECOM</span>
     </div>
-  </header>
+    <div class="user-info" id="userInfo">
+      <!-- User Data will load here -->
+    </div>
+  </div>
 
-  <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  <!-- Second Row -->
+  <div class="nav-row">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="order.html">Order</a>
+    <a href="history.html">Order History</a>
+    <a href="profile.html">Profile</a>
+  </div>
+</header>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
-      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
-      projectId: "diamond-recharge-f7f59",
-      storageBucket: "diamond-recharge-f7f59.appspot.com",
-      messagingSenderId: "657717928489",
-      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
-      measurementId: "G-TDK78BQ8SQ"
-    };
+<!-- Firebase Scripts -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js"></script>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+<script>
+  // আপনার Firebase Config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+    projectId: "diamond-recharge-f7f59",
+    storageBucket: "diamond-recharge-f7f59.appspot.com",
+    messagingSenderId: "657717928489",
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+    measurementId: "G-TDK78BQ8SQ"
+  };
 
-    const userNameEl = document.getElementById("userName");
-    const userEmailEl = document.getElementById("userEmail");
-    const userBalanceEl = document.getElementById("userBalance");
-    const userAvatarEl = document.getElementById("userAvatar");
-    const authBtn = document.getElementById("authBtn");
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        // User Logged In
-        userNameEl.innerText = `👤 ${user.displayName || "User"}`;
-        userEmailEl.innerText = `📧 ${user.email}`;
-        userAvatarEl.src = user.photoURL || "https://via.placeholder.com/28";
-        
-        // Get Live Balance
-        const docRef = doc(db, "users", user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          userBalanceEl.innerText = `💎 ${data.balance || 0}`;
-        } else {
-          userBalanceEl.innerText = "💎 0";
+  const userInfo = document.getElementById("userInfo");
+
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      let balance = 0;
+      try {
+        const doc = await db.collection("users").doc(user.uid).get();
+        if (doc.exists) {
+          balance = doc.data().balance || 0;
         }
-
-        // Show Logout
-        authBtn.innerText = "Logout";
-        authBtn.onclick = doLogout;
-      } else {
-        // Not Logged In
-        userNameEl.innerText = "👤 Guest";
-        userEmailEl.innerText = "📧 Not logged in";
-        userBalanceEl.innerText = "💎 0";
-        userAvatarEl.src = "https://via.placeholder.com/28";
-
-        // Show Login
-        authBtn.innerText = "Login";
-        authBtn.onclick = goLogin;
+      } catch (e) {
+        console.error("Error fetching balance", e);
       }
-    });
 
-    // Logout
-    function doLogout() {
-      signOut(auth).then(() => {
-        alert("Logged out!");
-        window.location.href = "login.html";
-      });
+      userInfo.innerHTML = `
+        <img src="${user.photoURL || 'https://via.placeholder.com/40'}" class="user-avatar" alt="User">
+        <div class="user-details">
+          <span>Welcome ${user.displayName || "User"} to Sarkar Telecom</span>
+          <span>${user.email}</span>
+          <span class="balance">💎 ${balance}</span>
+        </div>
+        <button class="btn logout" onclick="logout()">Logout</button>
+      `;
+    } else {
+      userInfo.innerHTML = `
+        <button class="btn login" onclick="window.location.href='login.html'">Login</button>
+      `;
     }
+  });
 
-    // Go to Login Page
-    function goLogin() {
+  function logout() {
+    auth.signOut().then(() => {
       window.location.href = "login.html";
-    }
+    });
+  }
+</script>
 
-    window.doLogout = doLogout;
-    window.goLogin = goLogin;
-  </script>
 </body>
 </html>
