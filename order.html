@@ -2,79 +2,135 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Create Order</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Make Order - Sarkar Telecom</title>
   <style>
-    body { background:#121212; color:#fff; font-family:sans-serif; margin:0; padding:20px; }
-    .card { background:#1e1e1e; padding:20px; border-radius:10px; max-width:500px; margin:auto; }
-    input, button { width:100%; padding:10px; margin:10px 0; border-radius:6px; border:none; }
-    input { background:#2a2a2a; color:#fff; }
-    button { background:#00c3ff; color:#000; font-weight:bold; cursor:pointer; }
-    .amounts { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:10px; }
-    .amounts button { background:#333; color:#0ff; }
+    body { margin:0; font-family: Arial, sans-serif; background:#0f1115; color:#e7eaf0; }
+    h2 { text-align:center; margin:20px 0; color:#06b6d4; }
+    .card { background:#171a21; padding:20px; border-radius:12px; max-width:400px; margin:20px auto; box-shadow:0 6px 16px rgba(0,0,0,.25); text-align:center; }
+    input, select { width:90%; padding:10px; margin:8px 0; border:none; border-radius:8px; }
+    .btn { padding:10px 20px; margin-top:12px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
+    .btn.confirm { background:#06b6d4; color:#001; }
+    .btn.confirm:disabled { background:#3b4252; color:#888; cursor:not-allowed; }
+    .diamond-btns { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:10px 0; }
+    .diamond-btn { background:#1f2430; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:600; }
+    .diamond-btn.active { background:#06b6d4; color:#000; }
+    #loading { text-align:center; padding:30px; font-size:16px; color:#9aa3b2; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h2>Create Order</h2>
-    <input type="text" id="clientId" placeholder="Enter Client / Profile ID" />
-    <div class="amounts">
-      <button onclick="selectAmount(10)">💎 10</button>
-      <button onclick="selectAmount(50)">💎 50</button>
-      <button onclick="selectAmount(100)">💎 100</button>
-      <button onclick="selectAmount(200)">💎 200</button>
-      <button onclick="selectAmount(500)">💎 500</button>
-      <button onclick="selectAmount(1000)">💎 1000</button>
-      <button onclick="selectAmount(2000)">💎 2000</button>
-      <button onclick="selectAmount(5000)">💎 5000</button>
-      <button onclick="selectAmount(10000)">💎 10000</button>
-      <button onclick="selectAmount(20000)">💎 20000</button>
+
+  <div id="loading">⏳ Checking login...</div>
+
+  <div class="card" id="orderCard" style="display:none;">
+    <h2>💎 Make an Order</h2>
+    <input type="text" id="clientId" placeholder="Enter Profile ID or Number">
+    
+    <div class="diamond-btns">
+      <div class="diamond-btn" data-amount="100">💎 100</div>
+      <div class="diamond-btn" data-amount="200">💎 200</div>
+      <div class="diamond-btn" data-amount="500">💎 500</div>
+      <div class="diamond-btn" data-amount="1000">💎 1000</div>
     </div>
-    <button onclick="createOrder()">Confirm Order</button>
+
+    <button class="btn confirm" id="confirmBtn" disabled>✅ Confirm Order</button>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { 
+    getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence 
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { 
+    getFirestore, doc, getDoc, updateDoc, collection, addDoc, serverTimestamp 
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // ✅ আপনার config এখানে বসান
-    const firebaseConfig = {
-      apiKey: "AIzaSy***************",
-      authDomain: "your-project.firebaseapp.com",
-      projectId: "your-project",
-      storageBucket: "your-project.appspot.com",
-      messagingSenderId: "**********",
-      appId: "1:**********:web:**********"
-    };
+  // ✅ Firebase Config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+    projectId: "diamond-recharge-f7f59",
+    storageBucket: "diamond-recharge-f7f59.appspot.com",
+    messagingSenderId: "657717928489",
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+    measurementId: "G-TDK78BQ8SQ"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    setPersistence(auth, browserLocalPersistence);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  setPersistence(auth, browserLocalPersistence);
 
-    let selectedAmount = null;
-    window.selectAmount = (amt) => { selectedAmount = amt; alert("Selected: 💎 " + amt); }
+  const loading = document.getElementById("loading");
+  const orderCard = document.getElementById("orderCard");
+  const clientId = document.getElementById("clientId");
+  const confirmBtn = document.getElementById("confirmBtn");
+  let selectedAmount = null;
+  let currentUser = null;
 
-    window.createOrder = async () => {
-      const clientId = document.getElementById("clientId").value.trim();
-      if (!clientId || !selectedAmount) return alert("⚠️ Enter Client ID and select amount");
-      const user = auth.currentUser;
-      if (!user) return alert("⚠️ Please login");
+  // Select diamond
+  document.querySelectorAll(".diamond-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".diamond-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      selectedAmount = parseInt(btn.dataset.amount);
+      checkEnableConfirm();
+    });
+  });
 
+  clientId.addEventListener("input", checkEnableConfirm);
+
+  function checkEnableConfirm() {
+    confirmBtn.disabled = !(clientId.value && selectedAmount);
+  }
+
+  // Confirm order
+  confirmBtn.addEventListener("click", async () => {
+    if (!currentUser) return;
+
+    const userRef = doc(db, "users", currentUser.uid);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) {
+      alert("⚠️ User data not found.");
+      return;
+    }
+
+    const data = snap.data();
+    if ((data.balance || 0) < selectedAmount) {
+      alert("❌ Not enough balance!");
+      return;
+    }
+
+    try {
       await addDoc(collection(db, "orders"), {
-        userId: user.uid,
-        clientId,
+        userId: currentUser.uid,
+        clientId: clientId.value,
         amount: selectedAmount,
         status: "WAITING",
         createdAt: serverTimestamp()
       });
-      alert("✅ Order Created!");
-    };
 
-    onAuthStateChanged(auth, (user) => {
-      if (!user) window.location.href="login.html";
-    });
-  </script>
+      await updateDoc(userRef, { balance: (data.balance || 0) - selectedAmount });
+
+      alert("✅ Order placed!");
+      window.location.href = "order-history.html";
+    } catch (e) {
+      console.error(e);
+      alert("⚠️ Error placing order");
+    }
+  });
+
+  // Auth
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+    currentUser = user;
+    loading.style.display = "none";
+    orderCard.style.display = "block";
+  });
+</script>
+
 </body>
 </html>
