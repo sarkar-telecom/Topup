@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order History</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#0f1115; color:#e7eaf0; padding:20px; }
+    h2 { text-align:center; color:#06b6d4; margin-bottom:10px; }
+
+    table {
+      width: 80%;
+      margin: auto;
+      border-collapse: collapse;
+      background: #171a21;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid #333;
+      padding: 6px 8px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #06b6d4;
+      color: #001;
+      font-size: 13px;
+    }
+
+    th:nth-child(1), td:nth-child(1) { width: 8%; }   /* SL */
+    th:nth-child(2), td:nth-child(2) { width: 25%; }  /* Profile ID */
+    th:nth-child(3), td:nth-child(3) { width: 15%; }  /* Amount */
+    th:nth-child(4), td:nth-child(4) { width: 20%; }  /* Status */
+    th:nth-child(5), td:nth-child(5) { width: 15%; }  /* Time */
+
+    .status-waiting { color: orange; font-weight:bold; }
+    .status-completed { color: lime; font-weight:bold; }
+    .status-failed { color: red; font-weight:bold; }
+
+    /* Pagination buttons */
+    .pagination {
+      margin-top: 15px;
+      text-align: center;
+    }
+    .pagination button {
+      background: #06b6d4;
+      color: #001;
+      border: none;
+      margin: 2px;
+      padding: 6px 12px;
+      cursor: pointer;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    .pagination button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h2>📜 All Orders</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>SL</th>
+        <th>Profile ID</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="orderTable"></tbody>
+  </table>
+
+  <div class="pagination">
+    <button id="prevBtn">⬅ Prev</button>
+    <span id="pageInfo"></span>
+    <button id="nextBtn">Next ➡</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let allOrders = [];
+    let currentPage = 1;
+    const perPage = 10;
+
+    async function loadOrders() {
+      const orderTable = document.getElementById("orderTable");
+      orderTable.innerHTML = "<tr><td colspan='5'>⏳ Loading...</td></tr>";
+
+      try {
+        const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+          orderTable.innerHTML = "<tr><td colspan='5'>⚠ No orders found.</td></tr>";
+          return;
+        }
+
+        allOrders = [];
+        let serial = snapshot.size;
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          let timeStr = "-";
+          if (data.createdAt?.toDate) {
+            const dateObj = data.createdAt.toDate();
+            timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          }
+
+          let statusClass = "";
+          if (data.status === "WAITING") statusClass = "status-waiting";
+          else if (data.status === "COMPLETED") statusClass = "status-completed";
+          else if (data.status === "FAILED") statusClass = "status-failed";
+
+          allOrders.push({
+            sl: serial,
+            profileId: data.profileId || "-",
+            amount: data.amount || "-",
+            status: data.status || "-",
+            statusClass,
+            timeStr
+          });
+          serial--;
+        });
+
+        renderPage();
+      } catch (err) {
+        orderTable.innerHTML = "<tr><td colspan='5'>❌ " + err.message + "</td></tr>";
+      }
+    }
+
+    function renderPage() {
+      const orderTable = document.getElementById("orderTable");
+      orderTable.innerHTML = "";
+
+      const start = (currentPage - 1) * perPage;
+      const end = start + perPage;
+      const pageOrders = allOrders.slice(start, end);
+
+      pageOrders.forEach(order => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${order.sl}</td>
+          <td>${order.profileId}</td>
+          <td>${order.amount}</td>
+          <td class="${order.statusClass}">${order.status}</td>
+          <td>${order.timeStr}</td>
+        `;
+        orderTable.appendChild(tr);
+      });
+
+      // pagination info
+      document.getElementById("pageInfo").textContent = `Page ${currentPage} of ${Math.ceil(allOrders.length / perPage)}`;
+
+      // disable buttons if needed
+      document.getElementById("prevBtn").disabled = currentPage === 1;
+      document.getElementById("nextBtn").disabled = currentPage === Math.ceil(allOrders.length / perPage);
+    }
+
+    document.getElementById("prevBtn").addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderPage();
+      }
+    });
+
+    document.getElementById("nextBtn").addEventListener("click", () => {
+      if (currentPage < Math.ceil(allOrders.length / perPage)) {
+        currentPage++;
+        renderPage();
+      }
+    });
+
+    loadOrders();
+  </script>
+</body>
+</html>
