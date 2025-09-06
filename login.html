@@ -28,10 +28,24 @@
       text-align: center;
     }
     h2 { color: var(--accent); margin-bottom: 20px; }
+    .input-group {
+      position: relative;
+      width: 100%;
+    }
     input {
       width: 100%; padding: 10px; margin: 10px 0;
       border: 1px solid #333; border-radius: 6px;
       background: #1f2430; color: var(--text);
+    }
+    .toggle-password {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--accent);
+      user-select: none;
     }
     .remember {
       display: flex; align-items: center; gap: 6px;
@@ -55,7 +69,11 @@
 <div class="login-card">
   <h2>Login</h2>
   <input type="email" id="email" placeholder="Email" required>
-  <input type="password" id="password" placeholder="Password" required>
+  
+  <div class="input-group">
+    <input type="password" id="password" placeholder="Password" required>
+    <span class="toggle-password" id="togglePassword">👁</span>
+  </div>
 
   <div class="remember">
     <input type="checkbox" id="rememberMe">
@@ -87,10 +105,22 @@
   const loginBtn = document.getElementById("loginBtn");
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
+  const togglePassword = document.getElementById("togglePassword");
   const rememberMe = document.getElementById("rememberMe");
   const errorBox = document.getElementById("errorBox");
 
-  // ✅ আগেরবার Remember Me দিয়ে সেভ করা থাকলে ইনপুটে বসিয়ে দেবে
+  // ✅ Show / Hide Password
+  togglePassword.addEventListener("click", () => {
+    if (passwordInput.type === "password") {
+      passwordInput.type = "text";
+      togglePassword.textContent = "🙈";
+    } else {
+      passwordInput.type = "password";
+      togglePassword.textContent = "👁";
+    }
+  });
+
+  // ✅ Remember Me → Auto Fill
   window.addEventListener("DOMContentLoaded", () => {
     const savedEmail = localStorage.getItem("savedEmail");
     const savedPassword = localStorage.getItem("savedPassword");
@@ -102,14 +132,14 @@
     }
   });
 
-  // ✅ যদি ইউজার আগে থেকেই লগইন করা থাকে → সরাসরি dashboard.html এ
+  // ✅ যদি আগেই লগইন করা থাকে → ড্যাশবোর্ড এ পাঠাও
   onAuthStateChanged(auth, (user) => {
     if (user) {
       window.location.href = "dashboard.html";
     }
   });
 
-  // ✅ Login Button Action
+  // ✅ Login Button
   loginBtn.addEventListener("click", async () => {
     const email = emailInput.value.trim();
     const password = passwordInput.value.trim();
@@ -118,7 +148,7 @@
     try {
       await signInWithEmailAndPassword(auth, email, password);
 
-      // 🔹 Remember Me হলে save করো
+      // 🔹 Remember Me → Save
       if (rememberMe.checked) {
         localStorage.setItem("savedEmail", email);
         localStorage.setItem("savedPassword", password);
@@ -127,7 +157,7 @@
         localStorage.removeItem("savedPassword");
       }
 
-      window.location.href = "dashboard.html"; // সফল হলে ড্যাশবোর্ড এ রিডিরেক্ট
+      window.location.href = "dashboard.html"; // ✅ সফল হলে ড্যাশবোর্ড এ পাঠাও
     } catch (error) {
       errorBox.textContent = error.message;
     }
