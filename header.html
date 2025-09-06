@@ -14,91 +14,27 @@
       --ok: #10b981;
       --bad: #ef4444;
     }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-    header {
-      background: var(--card);
-      border-bottom: 1px solid #202635;
-      padding: 10px;
-    }
-    .top-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .site-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .site-logo {
-      height: 40px;
-      width: auto;
-      border-radius: 8px;
-    }
-    .site-name {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--accent);
-    }
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .user-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: #2b3347;
-      object-fit: cover;
-    }
-    .user-details {
-      display: flex;
-      flex-direction: column;
-      font-size: 14px;
-    }
-    .balance {
-      font-weight: bold;
-      color: var(--ok);
-    }
-    .btn {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-    }
+    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
+    header { background: var(--card); border-bottom: 1px solid #202635; padding: 10px; }
+
+    .top-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    .site-info { display: flex; align-items: center; gap: 10px; }
+    .site-logo { height: 40px; width: auto; border-radius: 8px; }
+    .site-name { font-size: 20px; font-weight: 800; color: var(--accent); }
+
+    .user-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: #2b3347; object-fit: cover; }
+    .user-details { display: flex; flex-direction: column; font-size: 14px; }
+    .balance { font-weight: bold; color: var(--ok); }
+
+    .btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
     .btn.logout { background: var(--bad); color: #fff; }
     .btn.login { background: var(--accent); color: #001; }
 
-    .nav-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-      flex-wrap: wrap;
-    }
-    .nav-row a {
-      background: #1f2430;
-      padding: 8px 14px;
-      border-radius: 8px;
-      text-decoration: none;
-      color: var(--text);
-      font-weight: 600;
-      transition: background 0.2s;
-    }
-    .nav-row a:hover {
-      background: var(--accent);
-      color: #001;
-    }
+    .nav-row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .nav-row a { background: #1f2430; padding: 8px 14px; border-radius: 8px; text-decoration: none; color: var(--text); font-weight: 600; transition: background 0.2s; }
+    .nav-row a:hover { background: var(--accent); color: #001; }
+
     @media (max-width: 600px) {
       .top-row { flex-direction: column; align-items: flex-start; }
       .user-info { width: 100%; justify-content: space-between; }
@@ -135,12 +71,12 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js"></script>
 
 <script>
-  // আপনার Firebase Config
+  // ✅ Fixed Firebase Config
   const firebaseConfig = {
     apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
     authDomain: "diamond-recharge-f7f59.firebaseapp.com",
     projectId: "diamond-recharge-f7f59",
-    storageBucket: "diamond-recharge-f7f59.appspot.com",
+    storageBucket: "diamond-recharge-f7f59.appspot.com", // ✅ Corrected
     messagingSenderId: "657717928489",
     appId: "1:657717928489:web:70431ebc9afb7002d4b238",
     measurementId: "G-TDK78BQ8SQ"
