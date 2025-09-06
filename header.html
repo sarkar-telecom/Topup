@@ -1,128 +1,168 @@
 <!-- header.html -->
-<header class="header">
-  <div class="logo-area">
-    <img src="assets/logo.png" alt="logo" class="logo" />
-    <h2>SARKAR TELECOM</h2>
+<header class="site-header">
+  <!-- First Row -->
+  <div class="header-top">
+    <div class="left">
+      <img src="assets/logo.png" alt="logo" class="logo" />
+      <span id="welcomeText">Welcome, Guest to Sarkar Telecom</span>
+    </div>
+    <div class="right">
+      <span id="userBalance">💎 0</span>
+      <button class="logout-btn" id="logoutBtn">Logout</button>
+      <button class="menu-toggle" id="menuToggle">☰</button>
+    </div>
   </div>
 
-  <button class="menu-toggle" id="menuToggle">☰</button>
-
-  <nav class="nav" id="navMenu">
-    <span id="userInfo"></span>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="balance.html">Balance</a>
-    <a href="order.html">Orders</a>
-    <a href="profile.html">Profile</a>
-    <a href="admin.html">Admin</a>
-    <a href="logout.html" class="logout-btn">Logout</a>
+  <!-- Second Row (Navigation) -->
+  <nav class="header-nav" id="headerNav">
+    <a href="dashboard.html" class="nav-link">Dashboard</a>
+    <a href="order.html" class="nav-link">Order</a>
+    <a href="order-history.html" class="nav-link">Order History</a>
+    <a href="profile.html" class="nav-link">Profile</a>
   </nav>
 </header>
 
 <style>
-/* Base */
-.header {
-  background:#171a21;
-  color:#e7eaf0;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:10px 20px;
-  border-bottom:1px solid #202635;
-  position:sticky;
-  top:0;
-  z-index:1000;
+/* Header Theme (Dark + Mobile Friendly) */
+.site-header {
+  background: #171a21;
+  color: #e7eaf0;
+  border-bottom: 1px solid #202635;
+  font-family: system-ui, sans-serif;
 }
-.logo-area { display:flex; align-items:center; gap:10px; }
-.logo { height:32px; width:32px; border-radius:50%; }
-h2 { margin:0; color:#06b6d4; }
 
-/* Nav */
-.nav {
-  display:flex;
-  align-items:center;
-  gap:16px;
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
 }
-.nav a {
-  color:#e7eaf0;
-  text-decoration:none;
-  font-weight:600;
+
+.header-top .left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
-.nav a:hover { color:#06b6d4; }
+
+.logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+#welcomeText {
+  font-weight: 600;
+  font-size: 14px;
+  color: #e7eaf0;
+}
+
+.header-top .right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#userBalance {
+  font-weight: 600;
+  font-size: 14px;
+  color: #06b6d4;
+}
+
 .logout-btn {
-  background:#1f2430;
-  border:1px solid #2b3347;
-  padding:6px 12px;
-  border-radius:8px;
+  background: #1f2430;
+  border: 1px solid #2b3347;
+  color: #e7eaf0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
 }
-.logout-btn:hover { background:#ef4444; border-color:#ef4444; color:#fff; }
-
-/* User info */
-#userInfo {
-  font-size:14px;
-  color:#9aa3b2;
-  margin-right:12px;
-  white-space:nowrap;
+.logout-btn:hover {
+  background: #ef4444;
+  color: #fff;
 }
 
-/* Mobile */
 .menu-toggle {
-  display:none;
-  background:none;
-  border:none;
-  color:#fff;
-  font-size:22px;
-  cursor:pointer;
+  display: none;
+  font-size: 22px;
+  background: none;
+  border: none;
+  color: #e7eaf0;
+  cursor: pointer;
 }
-@media(max-width:768px){
-  .menu-toggle { display:block; }
-  .nav {
-    position:absolute;
-    top:60px; right:0;
-    background:#0f1115;
-    flex-direction:column;
-    align-items:flex-start;
-    padding:12px;
-    gap:10px;
-    width:200px;
-    border-left:1px solid #202635;
-    display:none;
+
+.header-nav {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  padding: 8px;
+  background: #0f1115;
+}
+
+.header-nav .nav-link {
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #1f2430;
+  border: 1px solid #2b3347;
+  color: #e7eaf0;
+  text-decoration: none;
+  font-size: 14px;
+  transition: 0.2s;
+}
+.header-nav .nav-link:hover {
+  background: #06b6d4;
+  color: #001;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: block;
   }
-  .nav.show { display:flex; }
+  .header-nav {
+    display: none;
+    flex-direction: column;
+    padding: 10px;
+  }
+  .header-nav.active {
+    display: flex;
+  }
 }
 </style>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
-  authDomain: "diamond-recharge-f7f59.firebaseapp.com",
-  projectId: "diamond-recharge-f7f59",
-  storageBucket: "diamond-recharge-f7f59.appspot.com",
-  messagingSenderId: "657717928489",
-  appId: "1:657717928489:web:70431ebc9afb7002d4b238"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+import { auth, db } from "./app.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Toggle menu (mobile)
-document.getElementById("menuToggle").addEventListener("click", ()=>{
-  document.getElementById("navMenu").classList.toggle("show");
+document.getElementById("menuToggle")?.addEventListener("click", () => {
+  document.getElementById("headerNav").classList.toggle("active");
 });
 
-// Show user info
-onAuthStateChanged(auth, async (user)=>{
-  if(user){
-    const uref = doc(db,"users",user.uid);
-    const snap = await getDoc(uref);
-    let balance = 0;
-    if(snap.exists()) balance = snap.data().balance || 0;
-    document.getElementById("userInfo").innerHTML =
-      `${user.displayName || "User"} | ${user.email} | 💎 ${balance}`;
+// Auth state listener
+onAuthStateChanged(auth, async (user) => {
+  const welcomeText = document.getElementById("welcomeText");
+  const userBalance = document.getElementById("userBalance");
+
+  if (user) {
+    // Get user doc from Firestore
+    const ref = doc(db, "users", user.uid);
+    const snap = await getDoc(ref);
+    const data = snap.data() || {};
+
+    welcomeText.textContent = `Welcome, ${user.displayName || data.name || "User"} to Sarkar Telecom`;
+    userBalance.textContent = `💎 ${data.balance || 0}`;
+  } else {
+    welcomeText.textContent = "Welcome, Guest to Sarkar Telecom";
+    userBalance.textContent = "💎 0";
   }
+});
+
+// Logout
+document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+  await signOut(auth);
+  localStorage.clear();
+  location.href = "login.html";
 });
 </script>
