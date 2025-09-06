@@ -2,86 +2,86 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>📜 My Order History</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order History</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#121212; color:white; text-align:center; }
+    .container { max-width:600px; margin:20px auto; padding:20px; }
+    table { width:100%; border-collapse:collapse; margin-top:20px; }
+    th, td { border:1px solid #444; padding:10px; text-align:center; }
+    th { background:#333; }
+    tr:nth-child(even) { background:#1e1e1e; }
+    button { margin-top:20px; padding:10px 20px; border:none; background:#4CAF50; color:white; font-weight:bold; border-radius:5px; cursor:pointer; }
+    button:hover { background:#45a049; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📜 Your Order History</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Client ID</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="orderTable"></tbody>
+    </table>
+    <button onclick="window.location.href='order.html'">➕ Place New Order</button>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { getFirestore, collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // ✅ আপনার Firebase config
+    // ✅ Firebase Config
     const firebaseConfig = {
-      apiKey: "AIzaSyBL-_2hFduDHHya03iCZHqv5EKQabS5XlQ",
-      authDomain: "topup-2e5c3.firebaseapp.com",
-      projectId: "topup-2e5c3",
-      storageBucket: "topup-2e5c3.appspot.com",
-      messagingSenderId: "157913706904",
-      appId: "1:157913706904:web:6dcb1d2c9e6d7a86ebf0f7"
+      apiKey: "AIzaSyCCRD0u3KtZfkhKmwaRn40Ipqn13Bcw3Xw",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const tableBody = document.getElementById("ordersTableBody");
+    const orderTable = document.getElementById("orderTable");
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
-        window.location.href = "login.html";
-      } else {
-        const q = query(
-          collection(db, "orders"),
-          where("userId", "==", user.uid),
-          orderBy("createdAt", "desc")
-        );
-
-        onSnapshot(q, (snapshot) => {
-          tableBody.innerHTML = "";
-          if (snapshot.empty) {
-            tableBody.innerHTML = `<tr><td colspan="5">কোনো অর্ডার পাওয়া যায়নি।</td></tr>`;
-            return;
-          }
-          snapshot.forEach((doc) => {
-            const data = doc.data();
-            const row = `
-              <tr>
-                <td>${doc.id}</td>
-                <td>${data.clientId}</td>
-                <td>💎 ${data.amount}</td>
-                <td>${new Date(data.createdAt).toLocaleString()}</td>
-                <td style="color:${
-                  data.status === "CONFIRMED" ? "lime" : 
-                  data.status === "CANCELLED" ? "red" : "yellow"
-                };">${data.status}</td>
-              </tr>
-            `;
-            tableBody.innerHTML += row;
-          });
-        });
+        window.location.href = "login.html"; // যদি login না করা থাকে
+        return;
       }
+
+      const q = query(
+        collection(db, "orders"),
+        where("userId", "==", user.uid),
+        orderBy("createdAt", "desc")
+      );
+
+      onSnapshot(q, (snapshot) => {
+        orderTable.innerHTML = "";
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const row = `
+            <tr>
+              <td>${data.clientId}</td>
+              <td>${data.amount}</td>
+              <td>${data.status}</td>
+              <td>${data.createdAt?.toDate().toLocaleString() || "N/A"}</td>
+            </tr>
+          `;
+          orderTable.innerHTML += row;
+        });
+      });
     });
   </script>
-</head>
-<body style="background:#111; color:#fff; font-family:sans-serif;">
-  <h2>📜 My Order History</h2>
-  <table border="1" cellpadding="8" cellspacing="0" style="width:100%; text-align:center; background:#222;">
-    <thead>
-      <tr>
-        <th>Order ID</th>
-        <th>Client ID</th>
-        <th>Amount</th>
-        <th>Date & Time</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="ordersTableBody">
-      <tr><td colspan="5">Loading...</td></tr>
-    </tbody>
-  </table>
-
-  <br>
-  <button onclick="window.location.href='order.html'" 
-          style="padding:10px 20px; background:#0af; border:none; color:#fff; border-radius:6px;">
-    ➕ Make New Order
-  </button>
 </body>
 </html>
