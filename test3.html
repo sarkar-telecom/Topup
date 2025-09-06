@@ -5,37 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Test Order History</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#0f1115; color:#e7eaf0; padding:15px; }
-    h2 { text-align:center; color:#06b6d4; margin-bottom:20px; }
-
-    .order-card {
-      background:#171a21;
-      border:1px solid #333;
-      border-radius:8px;
-      padding:12px;
-      margin-bottom:12px;
-      box-shadow:0 2px 5px rgba(0,0,0,0.4);
+    body { 
+      font-family: Arial, sans-serif; 
+      background:#0f1115; 
+      color:#e7eaf0; 
+      padding:10px; 
     }
-    .order-card h3 {
-      margin:0 0 8px 0;
-      color:#06b6d4;
-      font-size:16px;
+    h2 { 
+      text-align:center; 
+      color:#06b6d4; 
+      font-size:20px;
     }
-    .order-item {
-      display:flex;
-      justify-content:space-between;
-      padding:4px 0;
-      font-size:14px;
-      border-bottom:1px solid #222;
+    table { 
+      width:100%; 
+      border-collapse:collapse; 
+      margin-top:15px; 
+      background:#171a21; 
+      font-size:14px; 
     }
-    .order-item:last-child { border-bottom:none; }
-    .label { color:#aaa; }
-    .value { color:#fff; font-weight:bold; }
+    th, td { 
+      border:1px solid #333; 
+      padding:6px; 
+      text-align:center; 
+      word-break: break-word;
+    }
+    th { 
+      background:#06b6d4; 
+      color:#001; 
+      font-size:13px;
+    }
+    /* মোবাইলের জন্য রেসপনসিভ */
+    @media(max-width:600px){
+      table, thead, tbody, th, td, tr { display:block; }
+      thead { display:none; }
+      tr { margin-bottom:10px; background:#1d222c; border-radius:8px; padding:6px; }
+      td { 
+        border:none; 
+        text-align:left; 
+        padding:4px 8px; 
+        font-size:13px;
+      }
+      td::before {
+        content: attr(data-label);
+        font-weight:bold;
+        margin-right:6px;
+        color:#06b6d4;
+      }
+    }
   </style>
 </head>
 <body>
-  <h2>📜 All Orders (Test)</h2>
-  <div id="orderList"></div>
+  <h2>📜 All Orders</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>SL</th>
+        <th>Profile ID</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="orderTable"></tbody>
+  </table>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
@@ -55,41 +87,38 @@
     const db = getFirestore(app);
 
     async function loadOrders() {
-      const orderList = document.getElementById("orderList");
-      orderList.innerHTML = "<p>⏳ Loading...</p>";
+      const orderTable = document.getElementById("orderTable");
+      orderTable.innerHTML = "<tr><td colspan='5'>⏳ Loading...</td></tr>";
 
       try {
         const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
 
         if (snapshot.empty) {
-          orderList.innerHTML = "<p>⚠ No orders found.</p>";
+          orderTable.innerHTML = "<tr><td colspan='5'>⚠ No orders found.</td></tr>";
           return;
         }
 
-        orderList.innerHTML = "";
-        let count = 1;
+        orderTable.innerHTML = "";
+        let sl = snapshot.size; // মোট কতটা ডকুমেন্ট আছে
         snapshot.forEach(doc => {
           const data = doc.data();
-          let timeText = "-";
-          if (data.createdAt?.toDate) {
-            timeText = data.createdAt.toDate().toLocaleString();
-          }
+          const time = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "-";
 
-          const card = document.createElement("div");
-          card.className = "order-card";
-          card.innerHTML = `
-            <h3>Order #${count++}</h3>
-            <div class="order-item"><span class="label">Email:</span> <span class="value">${data.email || "-"}</span></div>
-            <div class="order-item"><span class="label">Profile ID:</span> <span class="value">${data.profileId || "-"}</span></div>
-            <div class="order-item"><span class="label">Amount:</span> <span class="value">${data.amount || "-"}</span></div>
-            <div class="order-item"><span class="label">Status:</span> <span class="value">${data.status || "-"}</span></div>
-            <div class="order-item"><span class="label">Time:</span> <span class="value">${timeText}</span></div>
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td data-label="SL">${sl--}</td>
+            <td data-label="Profile ID">${data.profileId || "-"}</td>
+            <td data-label="Amount">${data.amount || "-"}</td>
+            <td data-label="Status" style="color:${data.status === "success" ? "#10b981" : data.status === "failed" ? "#ef4444" : "#eab308"}">
+              ${data.status || "-"}
+            </td>
+            <td data-label="Time">${time}</td>
           `;
-          orderList.appendChild(card);
+          orderTable.appendChild(tr);
         });
       } catch (err) {
-        orderList.innerHTML = "<p>❌ " + err.message + "</p>";
+        orderTable.innerHTML = "<tr><td colspan='5'>❌ " + err.message + "</td></tr>";
       }
     }
 
