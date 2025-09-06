@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Balance</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#0f1115; color:#e7eaf0; text-align:center; }
+    .card { background:#171a21; padding:20px; border-radius:12px; max-width:400px; margin:50px auto; box-shadow:0 6px 16px rgba(0,0,0,.25); }
+    .btn { padding:10px 14px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
+    .btn.logout { background:#ef4444; color:#fff; }
+  </style>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { 
+      getAuth, onAuthStateChanged, signOut 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { 
+      getFirestore, doc, onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const balanceEl = document.getElementById("balance");
+
+    // User check + live balance update
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const ref = doc(db, "users", user.uid);
+        onSnapshot(ref, (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            balanceEl.textContent = data.balance ?? 0;
+          } else {
+            balanceEl.textContent = "No balance data!";
+          }
+        });
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    // Logout
+    async function logoutUser() {
+      await signOut(auth);
+      localStorage.removeItem("user");
+      window.location.href = "login.html";
+    }
+    window.logoutUser = logoutUser;
+  </script>
+</head>
+<body>
+  <div class="card">
+    <h2>💎 Your Balance</h2>
+    <p><b>Current Balance:</b> <span id="balance">Loading...</span></p>
+    <button class="btn logout" onclick="logoutUser()">Logout</button>
+  </div>
+</body>
+</html>
