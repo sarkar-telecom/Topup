@@ -4,267 +4,112 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Order History</title>
-  <link rel="stylesheet" href="style.css">
-
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <style>
-    body {
-      background: #111827;
-      color: white;
-      font-family: Arial, sans-serif;
-    }
-    .container {
-      max-width: 1000px;
-      margin: 20px auto;
-      padding: 15px;
-    }
-    h2 {
-      text-align: center;
-      margin-bottom: 15px;
-    }
-    .filter-bar {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
-    }
-    .filter-bar input,
-    .filter-bar select {
-      padding: 8px;
-      border-radius: 6px;
-      border: none;
-      flex: 1;
-      min-width: 150px;
-    }
-    .table-wrapper {
-      overflow-x: auto;
-      border-radius: 8px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 700px;
-    }
-    th, td {
-      padding: 10px;
-      text-align: center;
-      border-bottom: 1px solid #333;
-    }
-    th {
-      background: #1f2937;
-    }
-    tr:nth-child(even) {
-      background: #1a2234;
-    }
-    .status-box {
-      padding: 4px 8px;
-      border-radius: 5px;
-      font-weight: bold;
-      display: inline-block;
-      min-width: 90px;
-    }
-    .waiting {
-      background: #facc15;
-      color: black;
-    }
-    .confirmed {
-      background: #22c55e;
-    }
-    .cancelled {
-      background: #ef4444;
-    }
-    .pagination {
-      margin-top: 15px;
-      text-align: center;
-    }
-    .pagination button {
-      padding: 6px 12px;
-      margin: 2px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      background: #374151;
-      color: white;
-    }
-    .pagination button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    body { font-family: Arial, sans-serif; background:#111; color:#fff; margin:0; padding:0; }
+    .container { max-width: 100%; margin: auto; padding: 10px; }
+    h2 { text-align:center; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px; text-align: center; border-bottom: 1px solid #333; }
+    th { background: #222; }
+    tr:hover { background: #1a1a1a; }
+    .search-box, .filter-box { width: 100%; padding: 10px; margin: 5px 0; border-radius:5px; border:none; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>My Order History</h2>
-
-    <div class="filter-bar">
-      <input type="text" id="searchOrder" placeholder="Search by Order ID / Profile ID">
-      <select id="statusFilter">
-        <option value="all">All Status</option>
-        <option value="WAITING">WAITING</option>
-        <option value="CONFIRMED">CONFIRMED</option>
-        <option value="CANCELLED">CANCELLED</option>
-      </select>
-    </div>
-
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>Order ID</th>
-            <th>Profile ID / Number</th>
-            <th>💎 Amount</th>
-            <th>Date & Time</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="orderTable">
-          <tr>
-            <td colspan="5">⚠ Please login to see your orders</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="pagination">
-      <button id="prevPage">Prev</button>
-      <button id="nextPage">Next</button>
-    </div>
+    <h2>📜 My Order History</h2>
+    <input type="text" id="searchBox" class="search-box" placeholder="Search by Order ID / Client ID">
+    <select id="statusFilter" class="filter-box">
+      <option value="all">All Status</option>
+      <option value="COMPLETED">Completed</option>
+      <option value="PENDING">Pending</option>
+      <option value="CANCELLED">Cancelled</option>
+    </select>
+    <table>
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Client ID</th>
+          <th>Amount</th>
+          <th>Date & Time</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="orderTable"></tbody>
+    </table>
   </div>
 
-  <!-- Firebase Scripts -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, query, where, orderBy, limit, getDocs, startAfter } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    // 🔹 আপনার Firebase Config বসান
+  <script>
+    // 🔥 আপনার Firebase Config বসান
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "YOUR_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "XXXX",
+      appId: "XXXX"
     };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    let lastVisible = null;
-    let currentUserId = null;
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
 
     const orderTable = document.getElementById("orderTable");
-    const searchInput = document.getElementById("searchOrder");
+    const searchBox = document.getElementById("searchBox");
     const statusFilter = document.getElementById("statusFilter");
-    const prevBtn = document.getElementById("prevPage");
-    const nextBtn = document.getElementById("nextPage");
 
-    let orderCache = [];
-    let currentPage = 0;
-
-    function renderOrders(orders) {
-      orderTable.innerHTML = "";
-      if (orders.length === 0) {
-        orderTable.innerHTML = `<tr><td colspan="5">❌ No orders found</td></tr>`;
-        return;
-      }
-
-      orders.forEach(order => {
-        const tr = document.createElement("tr");
-        const statusClass = order.status === "WAITING" ? "waiting" :
-                            order.status === "CONFIRMED" ? "confirmed" : "cancelled";
-        const profileCell = order.profileId || order.number || "-";
-
-        tr.innerHTML = `
-          <td>${order.id}</td>
-          <td>${profileCell}</td>
-          <td>💎 ${order.amount}</td>
-          <td>${order.date}</td>
-          <td><span class="status-box ${statusClass}">${order.status}</span></td>
-        `;
-        orderTable.appendChild(tr);
-      });
-    }
-
-    async function loadOrders(page = 0) {
-      if (!currentUserId) return;
-
-      let q = query(
-        collection(db, "orders"),
-        where("userId", "==", currentUserId),
-        orderBy("createdAt", "desc"),
-        limit(20)
-      );
-
-      if (page > 0 && lastVisible) {
-        q = query(
-          collection(db, "orders"),
-          where("userId", "==", currentUserId),
-          orderBy("createdAt", "desc"),
-          startAfter(lastVisible),
-          limit(20)
-        );
-      }
-
-      const querySnapshot = await getDocs(q);
-      orderCache = [];
-      querySnapshot.forEach(doc => {
-        const data = doc.data();
-        orderCache.push({
-          id: doc.id,
-          profileId: data.profileId || "",
-          number: data.number || "",
-          amount: data.amount || 0,
-          status: data.status || "WAITING",
-          date: data.createdAt?.toDate().toLocaleString() || "-"
-        });
-      });
-
-      lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
-      renderOrders(orderCache);
-    }
-
-    // 🔹 Authentication Check
-    onAuthStateChanged(auth, (user) => {
+    // ⏳ Load Orders
+    auth.onAuthStateChanged(user => {
       if (user) {
-        currentUserId = user.uid;
-        loadOrders();
-      } else {
-        orderTable.innerHTML = `<tr><td colspan="5">⚠ Please login to see your orders</td></tr>`;
+        db.collection("orders").where("userEmail", "==", user.email)
+          .orderBy("timestamp", "desc")
+          .onSnapshot(snapshot => {
+            let orders = [];
+            snapshot.forEach(doc => {
+              let data = doc.data();
+              orders.push({
+                id: doc.id,
+                clientId: data.clientId || data.profileId || data.number || "-",
+                amount: data.amount || 0,
+                status: data.status || "Unknown",
+                timestamp: data.timestamp ? 
+                  (data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp)) : null
+              });
+            });
+            renderOrders(orders);
+          });
       }
     });
 
-    // 🔹 Filter by status or search
-    statusFilter.addEventListener("change", () => {
-      let filtered = orderCache;
-      const status = statusFilter.value;
-      if (status !== "all") {
-        filtered = filtered.filter(o => o.status === status);
-      }
-      renderOrders(filtered);
-    });
+    // 🔍 Render Orders
+    function renderOrders(orders) {
+      let searchVal = searchBox.value.toLowerCase();
+      let statusVal = statusFilter.value;
 
-    searchInput.addEventListener("input", () => {
-      const keyword = searchInput.value.toLowerCase();
-      const filtered = orderCache.filter(o =>
-        o.id.toLowerCase().includes(keyword) ||
-        (o.profileId && o.profileId.toLowerCase().includes(keyword)) ||
-        (o.number && o.number.toLowerCase().includes(keyword))
-      );
-      renderOrders(filtered);
-    });
+      orderTable.innerHTML = "";
+      orders
+        .filter(order => 
+          (order.id.toLowerCase().includes(searchVal) || order.clientId.toLowerCase().includes(searchVal)) &&
+          (statusVal === "all" || order.status === statusVal)
+        )
+        .forEach(order => {
+          let row = `
+            <tr>
+              <td>${order.id}</td>
+              <td>${order.clientId}</td>
+              <td>💎 ${order.amount}</td>
+              <td>${order.timestamp ? order.timestamp.toLocaleString() : "-"}</td>
+              <td>${order.status}</td>
+            </tr>
+          `;
+          orderTable.innerHTML += row;
+        });
+    }
 
-    // 🔹 Pagination
-    prevBtn.addEventListener("click", () => {
-      if (currentPage > 0) {
-        currentPage--;
-        loadOrders(currentPage);
-      }
-    });
-    nextBtn.addEventListener("click", () => {
-      currentPage++;
-      loadOrders(currentPage);
-    });
+    searchBox.addEventListener("input", () => renderOrders(orders));
+    statusFilter.addEventListener("change", () => renderOrders(orders));
   </script>
 </body>
 </html>
