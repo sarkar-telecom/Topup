@@ -1,4 +1,3 @@
-
 :root { --bg:#0f1115; --card:#171a21; --text:#e7eaf0; --muted:#9aa3b2; --accent:#06b6d4; --ok:#10b981; --warn:#f59e0b; --bad:#ef4444; }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
