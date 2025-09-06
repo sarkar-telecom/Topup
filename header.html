@@ -71,12 +71,12 @@
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
   import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  // ✅ Correct Firebase Config
+  // ✅ Firebase Config
   const firebaseConfig = {
     apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
     authDomain: "diamond-recharge-f7f59.firebaseapp.com",
     projectId: "diamond-recharge-f7f59",
-    storageBucket: "diamond-recharge-f7f59.appspot.com", // fixed
+    storageBucket: "diamond-recharge-f7f59.appspot.com",
     messagingSenderId: "657717928489",
     appId: "1:657717928489:web:70431ebc9afb7002d4b238",
     measurementId: "G-TDK78BQ8SQ"
@@ -93,26 +93,31 @@
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       let balance = 0;
+      let avatarUrl = user.photoURL || "https://via.placeholder.com/40";
+
       try {
         const snap = await getDoc(doc(db, "users", user.uid));
         if (snap.exists()) {
-          balance = snap.data().balance || 0;
+          const data = snap.data();
+          balance = data.balance || 0;
+          if (data.avatar) {
+            avatarUrl = data.avatar; // Firestore এ avatar ফিল্ড থাকলে সেটাই ব্যবহার করবে
+          }
         }
       } catch (e) {
         console.error("Firestore error", e);
       }
 
       userInfo.innerHTML = `
-        <img src="${user.photoURL || 'https://via.placeholder.com/40'}" class="user-avatar" alt="User">
+        <img src="${avatarUrl}" class="user-avatar" alt="User">
         <div class="user-details">
-          <span>Welcome ${user.displayName || "User"} to Sarkar Telecom</span>
+          <span>${user.displayName || "User"}</span>
           <span>${user.email}</span>
           <span class="balance">💎 ${balance}</span>
         </div>
         <button class="btn logout" id="logoutBtn">Logout</button>
       `;
 
-      // Logout button event
       document.getElementById("logoutBtn").addEventListener("click", async () => {
         await signOut(auth);
         window.location.href = "login.html";
