@@ -5,12 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Order History</title>
   <script type="module">
-    // Firebase SDK ইমপোর্ট
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, collection, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, query, where, orderBy, limit, onSnapshot, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // 🔥 আপনার Firebase config দিয়ে দিন
+    // 🔥 আপনার Firebase config বসান
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_AUTH_DOMAIN",
@@ -24,46 +23,65 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // ইউজারের অর্ডার লোড
+    // অর্ডার লোড করা
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        const q = query(
+        const q1 = query(
           collection(db, "orders"),
-          where("userId", "==", user.uid),   // case 1
+          where("userId", "==", user.uid),
           orderBy("timestamp", "desc"),
           limit(20)
         );
 
         const q2 = query(
           collection(db, "orders"),
-          where("uid", "==", user.uid),     // case 2
+          where("uid", "==", user.uid),
           orderBy("timestamp", "desc"),
           limit(20)
         );
 
-        loadOrders(q);
-        loadOrders(q2);
+        loadOrders(q1, user.uid);
+        loadOrders(q2, user.uid);
       } else {
         document.getElementById("ordersBody").innerHTML =
           `<tr><td colspan="5" class="text-center py-4 text-red-400">⚠️ Please login to see your orders</td></tr>`;
       }
     });
 
-    function loadOrders(queryRef) {
+    function loadOrders(queryRef, uid) {
       onSnapshot(queryRef, (snapshot) => {
         const tbody = document.getElementById("ordersBody");
         tbody.innerHTML = "";
-        snapshot.forEach((doc) => {
-          const data = doc.data();
 
-          // timestamp convert
-          let date = "";
+        snapshot.forEach(async (docSnap) => {
+          const data = docSnap.data();
+          const docRef = doc(db, "orders", docSnap.id);
+
+          // timestamp handle
+          let orderTime = 0;
           if (data.timestamp?.toDate) {
-            date = data.timestamp.toDate().toLocaleString();
+            orderTime = data.timestamp.toDate().getTime();
           } else if (typeof data.timestamp === "number") {
-            date = new Date(data.timestamp).toLocaleString();
-          } else {
-            date = "-";
+            orderTime = data.timestamp;
+          }
+
+          const now = Date.now();
+
+          // ✅ Auto-cancel check
+          if (data.status === "WAITING" && now - orderTime > 5 * 60 * 1000) {
+            await updateDoc(docRef, { status: "CANCELLED" });
+
+            // Refund ব্যালেন্স
+            if (data.amount && uid) {
+              const userRef = doc(db, "users", uid);
+              const userSnap = await getDoc(userRef);
+              if (userSnap.exists()) {
+                const userData = userSnap.data();
+                const newBalance = (userData.balance || 0) + data.amount;
+                await updateDoc(userRef, { balance: newBalance });
+              }
+            }
+            return;
           }
 
           // status color
@@ -71,13 +89,17 @@
           if (data.status === "CONFIRMED" || data.status === "COMPLETED") statusClass = "bg-green-600";
           else if (data.status === "CANCELLED") statusClass = "bg-red-600";
 
-          // render row
+          // তারিখ format
+          let dateStr = "-";
+          if (orderTime) dateStr = new Date(orderTime).toLocaleString();
+
+          // টেবিল row
           const tr = `
             <tr class="border-b border-gray-700">
-              <td class="px-4 py-2">${doc.id}</td>
+              <td class="px-4 py-2">${docSnap.id}</td>
               <td class="px-4 py-2">${data.clientId || "-"}</td>
               <td class="px-4 py-2">💎 ${data.amount}</td>
-              <td class="px-4 py-2">${date}</td>
+              <td class="px-4 py-2">${dateStr}</td>
               <td class="px-4 py-2"><span class="px-2 py-1 rounded text-white ${statusClass}">${data.status}</span></td>
             </tr>
           `;
