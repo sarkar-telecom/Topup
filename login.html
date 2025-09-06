@@ -1,39 +1,35 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
   <title>Login</title>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-<button id="openSidebar" class="open-btn">&#9776; Menu</button>
-<div id="sidebar" class="sidebar">
-  <button id="closeSidebar" class="close-btn">&times;</button>
-  <a href="index.html">Home</a>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="order.html">Place Order</a>
-  <a href="order-history.html">Order History</a>
-  <a href="profile.html">Profile</a>
-  <a href="admin.html">Admin</a>
-  <button id="logoutBtn" class="logout-btn">Logout</button>
-</div>
-<div class="content">
-
-  <div class="card max-400">
+  <div class="content max-400">
     <h2>Login</h2>
     <form id="loginForm" class="form">
-      <label>Email</label>
-      <input id="loginEmail" type="email" required placeholder="you@example.com">
-      <label>Password</label>
-      <input id="loginPassword" type="password" required placeholder="••••••••">
-      <button class="btn w-100" type="submit">Login</button>
+      <input type="email" id="email" placeholder="Email" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <button class="btn w-100">Login</button>
     </form>
-    <p class="mt">No account? <a href="signup.html">Sign up</a></p>
+    <p class="mt">No account? <a href="signup.html">Create one</a></p>
   </div>
 
-</div>
-<script type="module" src="assets/app.js"></script>
-<script type="module" src="assets/page.js"></script>
+  <script type="module">
+    import { auth } from "./assets/app.js";
+    import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    const form=document.getElementById("loginForm");
+    form.onsubmit=async(e)=>{
+      e.preventDefault();
+      const email=form.email.value;
+      const pass=form.password.value;
+      try{
+        await signInWithEmailAndPassword(auth,email,pass);
+        location.href="dashboard.html";
+      }catch(err){ alert(err.message); }
+    };
+  </script>
 </body>
 </html>
