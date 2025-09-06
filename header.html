@@ -1,43 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sarkar Telecom - Header</title>
-  <style>
-    body { margin: 0; font-family: Arial, sans-serif; background: #0d1117; color: white; }
-    .header { background: #161b22; padding: 10px; display: flex; flex-direction: column; align-items: center; border-bottom: 1px solid #30363d; }
-    .logo-section { display: flex; align-items: center; gap: 10px; }
-    .logo-section img { height: 40px; }
-    .logo-section h2 { margin: 0; color: #00bfff; font-size: 20px; }
-    .user-info { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-    .user-info img.avatar { width: 35px; height: 35px; border-radius: 50%; border: 2px solid #00bfff; }
-    .user-box { background: #21262d; padding: 5px 10px; border-radius: 8px; }
-    .btn { background: #238636; border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-    .btn.logout { background: #d73a49; }
-    .nav { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; }
-    .nav button { background: #21262d; border: none; color: white; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-    .nav button:hover { background: #30363d; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div class="logo-section">
-      <img src="logo.png" alt="Site Logo" class="site-logo">
-      <h2>SARKAR TELECOM</h2>
+<!-- header.html -->
+<!-- KEEP THIS AS A FRAGMENT (no <html> / <head> / <body>) -->
+<style>
+  :root {
+    --bg:#0f1115; --card:#171a21; --text:#e7eaf0; --muted:#9aa3b2; --accent:#06b6d4; --ok:#10b981; --bad:#ef4444;
+  }
+  .site-header { background:var(--card); border-bottom:1px solid #202635; padding:14px; box-sizing:border-box; }
+  .site-row { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .logo-left { display:flex; align-items:center; gap:12px; }
+  .site-logo { height:44px; width:auto; border-radius:8px; }
+  .site-name { color:var(--accent); font-weight:800; font-size:20px; }
+  .user-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .avatar { width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid #0dbed9; background:#223; }
+  .user-box { background:#1f2430; padding:8px 12px; border-radius:10px; font-weight:600; }
+  .btn { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:700; }
+  .btn-logout { background:var(--bad); color:#fff; }
+  .nav-row { margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
+  .nav-link { background:#1f2430; padding:10px 16px; border-radius:12px; color:var(--text); text-decoration:none; font-weight:700; }
+  @media (max-width:600px){
+    .site-row{flex-direction:column;align-items:flex-start}
+  }
+</style>
+
+<div class="site-header" id="siteHeader">
+  <div class="site-row">
+    <div class="logo-left">
+      <img src="https://sarkar-telecom.github.io/Topup/logo.png" alt="logo" class="site-logo">
+      <div class="site-name">SARKAR TELECOM</div>
     </div>
-    <div class="user-info">
-      <img id="user-photo" class="avatar" src="default-avatar.png" alt="User Avatar">
-      <span id="user-email" class="user-box"></span>
-      <span id="user-balance" class="user-box">💎 0</span>
+
+    <div class="user-row">
+      <img id="user-photo" class="avatar" src="https://sarkar-telecom.github.io/Topup/default-avatar.png" alt="avatar">
+      <div id="user-email" class="user-box"></div>
+      <div id="user-balance" class="user-box">💎 0</div>
       <button id="auth-btn" class="btn">Login</button>
     </div>
-    <nav class="nav">
-      <button onclick="location.href='dashboard.html'">Dashboard</button>
-      <button onclick="location.href='order.html'">Order</button>
-      <button onclick="location.href='order-history.html'">Order History</button>
-      <button onclick="location.href='profile.html'">Profile</button>
-    </nav>
   </div>
-</body>
-</html>
+
+  <div class="nav-row" aria-hidden="false">
+    <a class="nav-link" href="dashboard.html">Dashboard</a>
+    <a class="nav-link" href="order.html">Order</a>
+    <a class="nav-link" href="order-history.html">Order History</a>
+    <a class="nav-link" href="profile.html">Profile</a>
+  </div>
+</div>
