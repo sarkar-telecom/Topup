@@ -1,102 +1,18 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Diamond Recharge — Login / Register</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    /* === Theme (আপনার রেফারেন্সের মতো) === */
-    :root { --bg:#0f1115; --card:#171a21; --text:#e7eaf0; --muted:#9aa3b2; --accent:#06b6d4; --ok:#10b981; --warn:#f59e0b; --bad:#ef4444; }
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui}
-    a{color:var(--accent);cursor:pointer}
-    .center{min-height:100vh;display:grid;place-items:center;padding:16px}
-    .card{background:var(--card);border:1px solid #202635;padding:24px;border-radius:16px;box-shadow:0 6px 16px rgba(0,0,0,.35);width:100%;max-width:420px}
-    h2{margin:0 0 12px}
-    p.muted{color:var(--muted);margin:8px 0 16px}
-    input{width:100%;padding:12px;border-radius:12px;border:1px solid #202635;background:#0c111a;color:var(--text);margin:8px 0}
-    button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--accent);color:#001;font-weight:700;cursor:pointer;margin-top:8px}
-    .row{display:flex;gap:8px;align-items:center;justify-content:center}
-    .switch{margin-top:12px;text-align:center}
-    .hidden{display:none}
-
-    /* Alerts / inline validation */
-    .alert{border-radius:12px;padding:10px 12px;margin:10px 0;font-weight:600}
-    .alert.warn{background:#2a2010;border:1px solid var(--warn);color:#ffdca3}
-    .alert.bad{background:#2a1416;border:1px solid var(--bad);color:#ffc7cc}
-    .alert.ok{background:#0f261f;border:1px solid var(--ok);color:#b8f3d7}
-
-    .help{font-size:12px;color:#d3b7b7;margin-top:-6px;margin-bottom:6px}
-    .flex-between{display:flex;align-items:center;justify-content:space-between}
-  </style>
-</head>
-<body>
-  <div class="center">
-    <!-- Login Card -->
-    <div id="loginBox" class="card">
-      <h2>লগইন</h2>
-      <p class="muted">ইমেইল ও পাসওয়ার্ড দিন</p>
-
-      <div id="loginAlert" class="alert hidden"></div>
-
-      <form id="loginForm" novalidate>
-        <input id="loginEmail" type="email" placeholder="ইমেইল" autocomplete="email" required />
-        <div id="loginEmailHelp" class="help"></div>
-
-        <input id="loginPassword" type="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)" autocomplete="current-password" required minlength="6" />
-        <div id="loginPassHelp" class="help"></div>
-
-        <button type="submit">লগইন</button>
-      </form>
-
-      <div class="switch">
-        নতুন ইউজার? <a id="toSignup">রেজিস্টার করুন</a>
-      </div>
-    </div>
-
-    <!-- Signup Card -->
-    <div id="signupBox" class="card hidden">
-      <h2>রেজিস্টার</h2>
-      <p class="muted">নতুন একাউন্ট তৈরি করুন</p>
-
-      <div id="signupAlert" class="alert hidden"></div>
-
-      <form id="signupForm" novalidate>
-        <input id="signupName" type="text" placeholder="পুরো নাম" autocomplete="name" required />
-        <div id="signupNameHelp" class="help"></div>
-
-        <input id="signupEmail" type="email" placeholder="ইমেইল" autocomplete="email" required />
-        <div id="signupEmailHelp" class="help"></div>
-
-        <input id="signupPassword" type="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)" autocomplete="new-password" required minlength="6" />
-        <div id="signupPassHelp" class="help"></div>
-
-        <button type="submit">একাউন্ট তৈরি করুন</button>
-      </form>
-
-      <div class="switch">
-        একাউন্ট আছে? <a id="toLogin">লগইন করুন</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Firebase & App Logic -->
+  <meta charset="UTF-8">
+  <title>Login</title>
   <script type="module">
-    /* =========================
-       Firebase Imports & Init
-    ==========================*/
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { 
-      getAuth, setPersistence, browserLocalPersistence,
-      signInWithEmailAndPassword, createUserWithEmailAndPassword,
-      updateProfile, onAuthStateChanged
+      getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut 
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import {
-      getFirestore, doc, getDoc, setDoc, updateDoc,
-      serverTimestamp, addDoc, collection
+    import { 
+      getFirestore, doc, getDoc 
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // ✅ আপনার Firebase কনফিগ (storageBucket ঠিক করা হয়েছে)
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
       authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -111,191 +27,48 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // 🔒 Refresh/reload এর পরেও লগিন থাকাতে local persistence
-    await setPersistence(auth, browserLocalPersistence);
-
-    /* =========================
-       UI Helpers
-    ==========================*/
-    const $ = (id) => document.getElementById(id);
-    const show = (el) => el.classList.remove("hidden");
-    const hide = (el) => el.classList.add("hidden");
-
-    const showAlert = (box, type, msg) => {
-      box.className = "alert " + (type||"");
-      box.textContent = msg;
-      show(box);
-    };
-    const clearAlert = (box) => {
-      box.className = "alert hidden";
-      box.textContent = "";
-      hide(box);
-    };
-    const setHelp = (el, msg) => { el.textContent = msg || ""; };
-
-    const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-    // Card toggles
-    const loginBox = $("loginBox");
-    const signupBox = $("signupBox");
-    $("toSignup").onclick = () => { hide(loginBox); show(signupBox); };
-    $("toLogin").onclick  = () => { hide(signupBox); show(loginBox); };
-
-    /* =========================
-       Firestore Helpers
-    ==========================*/
-    async function ensureUserDoc(user) {
-      const ref = doc(db, "users", user.uid);
-      const snap = await getDoc(ref);
-      if (!snap.exists()) {
-        await setDoc(ref, {
-          uid: user.uid,
-          name: user.displayName || "",
-          email: user.email,
-          balance: 0,
-          status: "active",
-          createdAt: serverTimestamp()
-        });
-      } else {
-        // নাম ফাঁকা থাকলে আপডেট
-        const data = snap.data() || {};
-        if (!data.name && user.displayName) {
-          await updateDoc(ref, { name: user.displayName });
-        }
-      }
-    }
-
-    async function logAuthEvent(type, payload = {}) {
-      try {
-        await addDoc(collection(db, "authLogs"), {
-          type,                 // "login" | "signup"
-          at: serverTimestamp(),
-          ...payload
-        });
-      } catch {}
-    }
-
-    // Local storage utility (অতিরিক্ত হিসেবে ইউজারের লাইটওয়েট ডেটা)
-    function saveSessionUser(user) {
-      const obj = user ? {
-        uid: user.uid, email: user.email, name: user.displayName || ""
-      } : null;
-      localStorage.setItem("sessionUser", JSON.stringify(obj));
-    }
-
-    /* =========================
-       LOGIN
-    ==========================*/
-    $("loginForm").addEventListener("submit", async (e) => {
+    // Login Function
+    async function loginUser(e) {
       e.preventDefault();
-      clearAlert($("loginAlert"));
-      setHelp($("loginEmailHelp"), "");
-      setHelp($("loginPassHelp"), "");
-
-      const email = $("loginEmail").value.trim();
-      const pass  = $("loginPassword").value;
-
-      // Client-side validation
-      let bad = false;
-      if (!isValidEmail(email)) {
-        setHelp($("loginEmailHelp"), "সঠিক ইমেইল লিখুন");
-        bad = true;
-      }
-      if (!pass || pass.length < 6) {
-        setHelp($("loginPassHelp"), "পাসওয়ার্ড কমপক্ষে ৬ অক্ষর হতে হবে");
-        bad = true;
-      }
-      if (bad) {
-        showAlert($("loginAlert"), "warn", "ভুল ইনপুট দিয়েছেন, অনুগ্রহ করে ঠিক করুন।");
-        return;
-      }
+      const email = document.getElementById("email").value.trim();
+      const pass  = document.getElementById("password").value.trim();
 
       try {
         const cred = await signInWithEmailAndPassword(auth, email, pass);
-        await ensureUserDoc(cred.user);
-        saveSessionUser(cred.user);
-        await logAuthEvent("login", { uid: cred.user.uid, email });
-        showAlert($("loginAlert"), "ok", "সফলভাবে লগইন হয়েছে!");
-        // আপনার ড্যাশবোর্ডে যাওয়ার রিডাইরেক্ট চাইলে:
-        // location.href = "index.html";
+
+        const ref = doc(db, "users", cred.user.uid);
+        const snap = await getDoc(ref);
+
+        if (snap.exists()) {
+          const userData = snap.data();
+          localStorage.setItem("user", JSON.stringify(userData));
+          alert("✅ Login successful!");
+          window.location.href = "dashboard.html";
+        } else {
+          alert("⚠️ User data missing in Firestore!");
+        }
       } catch (err) {
-        // Firebase error mapping (বাংলায়)
-        let msg = "লগইন হয়নি। আবার চেষ্টা করুন।";
-        if (err.code === "auth/invalid-email")         msg = "ইমেইল ফরম্যাট সঠিক নয়।";
-        if (err.code === "auth/user-not-found")        msg = "এই ইমেইলে কোনো একাউন্ট নেই।";
-        if (err.code === "auth/wrong-password")        msg = "পাসওয়ার্ড ভুল।";
-        if (err.code === "auth/too-many-requests")     msg = "অনেকবার চেষ্টা করা হয়েছে, কিছুক্ষণ পর চেষ্টা করুন।";
-        if (err.code === "auth/network-request-failed")msg = "নেটওয়ার্ক সমস্যা। ইন্টারনেট চেক করুন।";
-        showAlert($("loginAlert"), "bad", msg);
+        alert("❌ Error: " + err.message);
       }
-    });
+    }
 
-    /* =========================
-       SIGNUP (Register)
-    ==========================*/
-    $("signupForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      clearAlert($("signupAlert"));
-      setHelp($("signupNameHelp"), "");
-      setHelp($("signupEmailHelp"), "");
-      setHelp($("signupPassHelp"), "");
-
-      const name  = $("signupName").value.trim();
-      const email = $("signupEmail").value.trim();
-      const pass  = $("signupPassword").value;
-
-      // Client-side validation
-      let bad = false;
-      if (!name || name.length < 2) {
-        setHelp($("signupNameHelp"), "নাম কমপক্ষে ২ অক্ষর দিন");
-        bad = true;
-      }
-      if (!isValidEmail(email)) {
-        setHelp($("signupEmailHelp"), "সঠিক ইমেইল লিখুন");
-        bad = true;
-      }
-      if (!pass || pass.length < 6) {
-        setHelp($("signupPassHelp"), "পাসওয়ার্ড কমপক্ষে ৬ অক্ষর হতে হবে");
-        bad = true;
-      }
-      if (bad) {
-        showAlert($("signupAlert"), "warn", "ভুল ইনপুট দিয়েছেন, অনুগ্রহ করে ঠিক করুন।");
-        return;
-      }
-
-      try {
-        const cred = await createUserWithEmailAndPassword(auth, email, pass);
-        if (name) { await updateProfile(cred.user, { displayName: name }); }
-        await ensureUserDoc(cred.user);
-        saveSessionUser(cred.user);
-        await logAuthEvent("signup", { uid: cred.user.uid, email });
-        showAlert($("signupAlert"), "ok", "একাউন্ট তৈরি হয়েছে! এখন আপনি লগইন অবস্থায় আছেন।");
-        // location.href = "index.html";
-      } catch (err) {
-        let msg = "রেজিস্ট্রেশন হয়নি। আবার চেষ্টা করুন।";
-        if (err.code === "auth/email-already-in-use")  msg = "এই ইমেইল দিয়ে আগে থেকেই একাউন্ট আছে।";
-        if (err.code === "auth/invalid-email")         msg = "ইমেইল ফরম্যাট সঠিক নয়।";
-        if (err.code === "auth/weak-password")         msg = "পাসওয়ার্ড আরও শক্তিশালী দিন (কমপক্ষে ৬ অক্ষর)।";
-        if (err.code === "auth/network-request-failed")msg = "নেটওয়ার্ক সমস্যা। ইন্টারনেট চেক করুন।";
-        showAlert($("signupAlert"), "bad", msg);
-      }
-    });
-
-    /* =========================
-       Live Auth State (রিয়েল-টাইম)
-    ==========================*/
-    onAuthStateChanged(auth, async (user) => {
+    // Auto login if already authenticated
+    onAuthStateChanged(auth, (user) => {
       if (user) {
-        // লগড ইন: localStorage আপডেট
-        saveSessionUser(user);
-
-        // চাইলে এখানে রিডাইরেক্ট করতে পারেন
-        // location.href = "index.html";
-      } else {
-        // লগড আউট: সেশন ক্লিয়ার
-        saveSessionUser(null);
+        console.log("Logged in:", user.email);
       }
     });
+
+    window.loginUser = loginUser;
   </script>
+</head>
+<body>
+  <h2>Login</h2>
+  <form onsubmit="loginUser(event)">
+    <input id="email" type="email" placeholder="Email" required><br>
+    <input id="password" type="password" placeholder="Password" required><br>
+    <button type="submit">Login</button>
+  </form>
+  <p>Don't have account? <a href="signup.html">Signup</a></p>
 </body>
 </html>
