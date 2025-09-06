@@ -1,35 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Dashboard</title>
-  <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-  <div class="content">
-    <h2>Dashboard</h2>
-    <p id="welcome"></p>
-    <p>Balance: <span id="balance">0</span> 💎</p>
-    <a href="order.html" class="btn">Place Order</a>
-    <a href="orders.html" class="btn outline">Order History</a>
-    <button id="logoutBtn" class="btn danger mt">Logout</button>
-  </div>
+  <h2>Welcome to Dashboard</h2>
+  <p>You are logged in.</p>
+  <button id="logoutBtn">Logout</button>
 
   <script type="module">
-    import { auth, db, requireAuth, fmt } from "./assets/app.js";
-    import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { auth } from "./app.js";
+    import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    const user=await requireAuth();
-    if(user){
-      document.getElementById("welcome").textContent="Welcome, "+(user.displayName||user.email);
-      onSnapshot(doc(db,"users",user.uid),(snap)=>{
-        if(snap.exists()){
-          document.getElementById("balance").textContent=fmt(snap.data().balance);
-        }
-      });
-    }
-    document.getElementById("logoutBtn").onclick=()=>signOut(auth);
+    const logoutBtn = document.getElementById("logoutBtn");
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      alert("Logged out!");
+      window.location.href = "login.html";
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+      }
+    });
   </script>
 </body>
 </html>
