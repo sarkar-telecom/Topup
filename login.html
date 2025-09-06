@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<button id="openSidebar" class="open-btn">&#9776; Menu</button>
+<div id="sidebar" class="sidebar">
+  <button id="closeSidebar" class="close-btn">&times;</button>
+  <a href="index.html">Home</a>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="order.html">Place Order</a>
+  <a href="order-history.html">Order History</a>
+  <a href="profile.html">Profile</a>
+  <a href="admin.html">Admin</a>
+  <button id="logoutBtn" class="logout-btn">Logout</button>
+</div>
+<div class="content">
+
+  <div class="card max-400">
+    <h2>Login</h2>
+    <form id="loginForm" class="form">
+      <label>Email</label>
+      <input id="loginEmail" type="email" required placeholder="you@example.com">
+      <label>Password</label>
+      <input id="loginPassword" type="password" required placeholder="••••••••">
+      <button class="btn w-100" type="submit">Login</button>
+    </form>
+    <p class="mt">No account? <a href="signup.html">Sign up</a></p>
+  </div>
+
+</div>
+<script type="module" src="assets/app.js"></script>
+<script type="module" src="assets/page.js"></script>
+</body>
+</html>
