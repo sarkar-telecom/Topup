@@ -20,7 +20,7 @@ if (path === "login.html") {
   });
 }
 
-// ================= SIGNUP =================
+// --- Signup ---
 if (path === "signup.html") {
   const form = document.getElementById("signupForm");
   form?.addEventListener("submit", async (e) => {
@@ -29,17 +29,31 @@ if (path === "signup.html") {
     const name = document.getElementById("signupName").value.trim();
     const email = document.getElementById("signupEmail").value.trim();
     const pass = document.getElementById("signupPassword").value;
+    const phone = document.getElementById("signupPhone").value.trim();
 
     try {
+      // Firebase Auth এ ইউজার তৈরি
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
+
+      // Display Name আপডেট
       await updateProfile(cred.user, { displayName: name });
-      await ensureUserDoc(cred.user);
+
+      // Firestore এ ডকুমেন্ট তৈরি (অতিরিক্ত ফিল্ড সহ)
+      await setDoc(doc(db, "users", cred.user.uid), {
+        uid: cred.user.uid,
+        name: name,
+        email: email,
+        phone: phone,
+        balance: 0,
+        role: "user",
+        status: "pending",
+        createdAt: serverTimestamp()
+      });
 
       alert("✅ Account created successfully!");
       location.href = "dashboard.html";
     } catch (err) {
-      console.error("Signup error:", err);
-      alert("Signup error: " + err.message);
+      alert("❌ Signup error: " + err.message);
     }
   });
 }
