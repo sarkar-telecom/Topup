@@ -4,7 +4,6 @@ import {
   createUserWithEmailAndPassword, 
   updateProfile 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
 import { 
   doc, 
   setDoc, 
@@ -13,25 +12,40 @@ import {
 
 const path = location.pathname.split('/').pop() || "index.html";
 
-// --- Signup ---
+// --- Login Page ---
+if (path === "login.html") {
+  const form = document.getElementById("loginForm");
+  form?.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    const email = document.getElementById("loginEmail").value.trim();
+    const pass = document.getElementById("loginPassword").value;
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+      location.href = "dashboard.html";
+    } catch (err) {
+      alert("❌ Login failed: " + err.message);
+    }
+  });
+}
+
+// --- Signup Page ---
 if (path === "signup.html") {
   const form = document.getElementById("signupForm");
-  form?.addEventListener("submit", async (e) => {
+  form?.addEventListener("submit", async (e)=>{
     e.preventDefault();
-
     const name = document.getElementById("signupName").value.trim();
     const email = document.getElementById("signupEmail").value.trim();
     const pass = document.getElementById("signupPassword").value;
     const phone = document.getElementById("signupPhone").value.trim();
 
     try {
-      // Auth user তৈরি
+      // Firebase Auth এ নতুন ইউজার তৈরি
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
 
-      // Display name update
+      // Display Name update
       await updateProfile(cred.user, { displayName: name });
 
-      // Firestore এ ইউজার ডকুমেন্ট সেভ
+      // Firestore এ ডকুমেন্ট তৈরি
       await setDoc(doc(db, "users", cred.user.uid), {
         uid: cred.user.uid,
         name,
@@ -46,8 +60,7 @@ if (path === "signup.html") {
       alert("✅ Account created successfully!");
       location.href = "dashboard.html";
     } catch (err) {
-      console.error(err);
-      alert("❌ Signup error: " + err.message);
+      alert("❌ Signup failed: " + err.message);
     }
   });
 }
