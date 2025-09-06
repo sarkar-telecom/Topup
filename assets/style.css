@@ -1,0 +1,35 @@
+
+:root { --bg:#0f1115; --card:#171a21; --text:#e7eaf0; --muted:#9aa3b2; --accent:#06b6d4; --ok:#10b981; --warn:#f59e0b; --bad:#ef4444; }
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
+a{color:var(--accent)}
+.btn{background:var(--accent);color:#001;border:none;padding:10px 14px;border-radius:12px;cursor:pointer;display:inline-block;text-decoration:none;font-weight:600}
+.btn.outline{background:transparent;border:1px solid var(--accent);color:var(--text)}
+.btn.small{padding:6px 10px;border-radius:10px;font-size:12px}
+.btn.danger{background:var(--bad);color:#fff}
+.btn.ok{background:var(--ok);color:#001}
+.w-100{width:100%}
+.mt{margin-top:14px}
+.row{display:flex;align-items:center}
+.gap{gap:10px}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid #202635;padding:16px;border-radius:16px;box-shadow:0 6px 16px rgba(0,0,0,.25);margin:16px 0}
+.max-400{max-width:420px}
+.max-500{max-width:520px}
+.stat{font-size:32px;font-weight:800}
+.muted{color:var(--muted)}
+
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{padding:10px;border-bottom:1px solid #293244;font-weight:500}
+.table td .tag{padding:4px 8px;border-radius:10px;background:#23304a;color:#b8cdf6;font-size:12px}
+
+.sidebar{height:100%;width:0;position:fixed;z-index:10;top:0;left:0;background:#0b0e13;border-right:1px solid #202635;overflow-x:hidden;transition:.25s;padding-top:60px}
+.sidebar a{padding:10px 24px;font-weight:600}
+.sidebar .close-btn{position:absolute;top:14px;right:14px;font-size:28px;background:none;border:none;color:#fff;cursor:pointer}
+.open-btn{position:fixed;top:14px;left:14px;background:#1f2430;border:1px solid #2b3347;color:#e7eaf0;padding:8px 12px;border-radius:10px;z-index:11}
+.logout-btn{background:#1f2430;border:1px solid #2b3347;color:#e7eaf0;padding:8px 12px;border-radius:10px;margin:10px 24px;cursor:pointer}
+
+.content{padding:20px;max-width:1000px;margin:0 auto}
+
+.form{display:grid;gap:10px}
+input,select{background:#0c111a;border:1px solid #202635;color:#e7eaf0;border-radius:10px;padding:10px}
