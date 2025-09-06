@@ -21,17 +21,28 @@ if (path === "login.html") {
 // Signup
 if (path === "signup.html") {
   const form = document.getElementById("signupForm");
-  form?.addEventListener("submit", async (e)=>{
+  form?.addEventListener("submit", async (e) => {
     e.preventDefault();
+
     const name = document.getElementById("signupName").value.trim();
     const email = document.getElementById("signupEmail").value.trim();
     const pass = document.getElementById("signupPassword").value;
-    try{
+
+    try {
+      // ইউজার তৈরি করুন
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
+
+      // Display name আপডেট
       await updateProfile(cred.user, { displayName: name });
+
+      // Firestore এ ডকুমেন্ট তৈরি
       await ensureUserDoc(cred.user);
+
+      alert("Account created successfully!");
       location.href = "dashboard.html";
-    }catch(err){ alert(err.message); }
+    } catch (err) {
+      alert("Signup error: " + err.message);
+    }
   });
 }
 
