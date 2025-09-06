@@ -23,44 +23,36 @@
       padding: 20px;
       border-radius: 12px;
       width: 100%;
-      max-width: 350px;
+      max-width: 360px;
       box-shadow: 0 6px 16px rgba(0,0,0,.25);
       text-align: center;
     }
     h2 { color: var(--accent); margin-bottom: 20px; }
-    .input-group {
-      position: relative;
-      width: 100%;
-    }
+    .input-group { position: relative; width: 100%; }
     input {
       width: 100%; padding: 10px; margin: 10px 0;
       border: 1px solid #333; border-radius: 6px;
       background: #1f2430; color: var(--text);
     }
     .toggle-password {
-      position: absolute;
-      right: 10px;
-      top: 50%;
+      position: absolute; right: 10px; top: 50%;
       transform: translateY(-50%);
-      cursor: pointer;
-      font-size: 14px;
-      color: var(--accent);
+      cursor: pointer; font-size: 14px; color: var(--accent);
       user-select: none;
     }
-    .remember {
-      display: flex; align-items: center; gap: 6px;
-      margin-top: 5px; margin-bottom: 10px;
-      font-size: 14px;
-    }
-    button {
+    .btn {
       width: 100%; padding: 10px;
       background: var(--accent); color: #001;
       border: none; border-radius: 6px;
       font-size: 16px; font-weight: 600;
-      cursor: pointer;
-      margin-top: 10px;
+      cursor: pointer; margin: 6px 0;
+      transition: background 0.2s;
     }
-    button:hover { opacity: 0.9; }
+    .btn:hover { background: #05a0bb; }
+    .btn-alt {
+      background: #1f2430; color: var(--text);
+    }
+    .btn-alt:hover { background: #2a3142; }
     .error { color: var(--bad); margin-top: 10px; font-size: 14px; }
   </style>
 </head>
@@ -68,19 +60,22 @@
 
 <div class="login-card">
   <h2>Login</h2>
+
   <input type="email" id="email" placeholder="Email" required>
-  
+
   <div class="input-group">
     <input type="password" id="password" placeholder="Password" required>
     <span class="toggle-password" id="togglePassword">👁</span>
   </div>
 
-  <div class="remember">
-    <input type="checkbox" id="rememberMe">
-    <label for="rememberMe">Remember Me</label>
-  </div>
+  <!-- Login Button -->
+  <button class="btn" id="loginBtn">Login</button>
 
-  <button id="loginBtn">Login</button>
+  <!-- Navigation style buttons -->
+  <button class="btn-alt" id="rememberBtn">🔒 Remember Me</button>
+  <button class="btn-alt" onclick="window.location.href='register.html'">📝 Register</button>
+  <button class="btn-alt" onclick="window.location.href='forgot.html'">❓ Forgot Password</button>
+
   <p class="error" id="errorBox"></p>
 </div>
 
@@ -88,7 +83,6 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-  // 🔹 Firebase Config
   const firebaseConfig = {
     apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
     authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -106,10 +100,12 @@
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
   const togglePassword = document.getElementById("togglePassword");
-  const rememberMe = document.getElementById("rememberMe");
+  const rememberBtn = document.getElementById("rememberBtn");
   const errorBox = document.getElementById("errorBox");
 
-  // ✅ Show / Hide Password
+  let remember = false; // toggle state
+
+  // ✅ Password Show/Hide
   togglePassword.addEventListener("click", () => {
     if (passwordInput.type === "password") {
       passwordInput.type = "text";
@@ -120,26 +116,42 @@
     }
   });
 
-  // ✅ Remember Me → Auto Fill
-  window.addEventListener("DOMContentLoaded", () => {
-    const savedEmail = localStorage.getItem("savedEmail");
-    const savedPassword = localStorage.getItem("savedPassword");
-
-    if (savedEmail && savedPassword) {
-      emailInput.value = savedEmail;
-      passwordInput.value = savedPassword;
-      rememberMe.checked = true;
+  // ✅ Remember Me Toggle Button
+  rememberBtn.addEventListener("click", () => {
+    remember = !remember;
+    if (remember) {
+      rememberBtn.style.background = "#06b6d4";
+      rememberBtn.style.color = "#001";
+      rememberBtn.textContent = "✅ Remember Me";
+    } else {
+      rememberBtn.style.background = "#1f2430";
+      rememberBtn.style.color = "#e7eaf0";
+      rememberBtn.textContent = "🔒 Remember Me";
     }
   });
 
-  // ✅ যদি আগেই লগইন করা থাকে → ড্যাশবোর্ড এ পাঠাও
+  // ✅ Auto fill if remembered
+  window.addEventListener("DOMContentLoaded", () => {
+    const savedEmail = localStorage.getItem("savedEmail");
+    const savedPassword = localStorage.getItem("savedPassword");
+    if (savedEmail && savedPassword) {
+      emailInput.value = savedEmail;
+      passwordInput.value = savedPassword;
+      remember = true;
+      rememberBtn.style.background = "#06b6d4";
+      rememberBtn.style.color = "#001";
+      rememberBtn.textContent = "✅ Remember Me";
+    }
+  });
+
+  // ✅ Already logged in → Dashboard
   onAuthStateChanged(auth, (user) => {
     if (user) {
       window.location.href = "dashboard.html";
     }
   });
 
-  // ✅ Login Button
+  // ✅ Login Process
   loginBtn.addEventListener("click", async () => {
     const email = emailInput.value.trim();
     const password = passwordInput.value.trim();
@@ -148,8 +160,8 @@
     try {
       await signInWithEmailAndPassword(auth, email, password);
 
-      // 🔹 Remember Me → Save
-      if (rememberMe.checked) {
+      // Remember info
+      if (remember) {
         localStorage.setItem("savedEmail", email);
         localStorage.setItem("savedPassword", password);
       } else {
@@ -157,7 +169,7 @@
         localStorage.removeItem("savedPassword");
       }
 
-      window.location.href = "dashboard.html"; // ✅ সফল হলে ড্যাশবোর্ড এ পাঠাও
+      window.location.href = "dashboard.html";
     } catch (error) {
       errorBox.textContent = error.message;
     }
