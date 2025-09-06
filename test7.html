@@ -37,8 +37,9 @@
 
     .status-waiting { color: orange; font-weight:bold; }
     .status-completed { color: lime; font-weight:bold; }
-    .status-cancelled { color: red; font-weight:bold; }
+    .status-failed { color: red; font-weight:bold; }
 
+    /* Pagination buttons */
     .pagination {
       margin-top: 15px;
       text-align: center;
@@ -128,7 +129,7 @@
           let statusClass = "";
           if (data.status === "WAITING") statusClass = "status-waiting";
           else if (data.status === "COMPLETED") statusClass = "status-completed";
-          else if (data.status === "CANCELLED") statusClass = "status-cancelled";
+          else if (data.status === "FAILED") statusClass = "status-failed";
 
           allOrders.push({
             sl: serial,
@@ -161,15 +162,16 @@
           <td>${order.sl}</td>
           <td>${order.profileId}</td>
           <td>${order.amount}</td>
-          <td class="${order.statusClass}">
-            ${order.status === "WAITING" ? "⏳" : order.status === "COMPLETED" ? "✅" : order.status === "CANCELLED" ? "🚫" : order.status}
-          </td>
+          <td class="${order.statusClass}">${order.status}</td>
           <td>${order.timeStr}</td>
         `;
         orderTable.appendChild(tr);
       });
 
+      // pagination info
       document.getElementById("pageInfo").textContent = `Page ${currentPage} of ${Math.ceil(allOrders.length / perPage)}`;
+
+      // disable buttons if needed
       document.getElementById("prevBtn").disabled = currentPage === 1;
       document.getElementById("nextBtn").disabled = currentPage === Math.ceil(allOrders.length / perPage);
     }
