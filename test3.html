@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order History - Sarkar Telecom</title>
+  <style>
+    body { background:#121212; color:#e7eaf0; font-family:Arial, sans-serif; margin:0; padding:20px; }
+    h2 { text-align:center; }
+    table { width:100%; border-collapse:collapse; margin-top:20px; }
+    th, td { border:1px solid #333; padding:8px; text-align:center; }
+    th { background:#1e1e1e; }
+    .status { padding:4px 8px; border-radius:6px; font-weight:bold; display:inline-block; }
+    .WAITING { background:gold; color:#000; }
+    .CONFIRMED { background:#10b981; color:#fff; }
+    .CANCELLED { background:#ef4444; color:#fff; }
+  </style>
+</head>
+<body>
+  <h2>📜 My Order History</h2>
+  <div id="loading">⏳ Loading orders…</div>
+  <table id="orderTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Profile ID / Number</th>
+        <th>💎 Amount</th>
+        <th>Status</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody id="orderBody"></tbody>
+  </table>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    setPersistence(auth, browserLocalPersistence);
+
+    const loading = document.getElementById("loading");
+    const orderTable = document.getElementById("orderTable");
+    const orderBody = document.getElementById("orderBody");
+
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+      const q = query(
+        collection(db, "orders"),
+        where("userId", "==", user.uid),
+        orderBy("createdAt", "desc"),
+        limit(20)
+      );
+      onSnapshot(q, snap => {
+        orderBody.innerHTML = "";
+        if (snap.empty) {
+          loading.textContent = "No orders yet.";
+          return;
+        }
+        snap.forEach(doc => {
+          const data = doc.data();
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${doc.id}</td>
+            <td>${data.clientId}</td>
+            <td>💎 ${data.amount}</td>
+            <td><span class="status ${data.status}">${data.status}</span></td>
+            <td>${data.createdAt?.toDate().toLocaleString() || ""}</td>
+          `;
+          orderBody.appendChild(tr);
+        });
+        loading.style.display = "none";
+        orderTable.style.display = "table";
+      });
+    });
+  </script>
+</body>
+</html>
