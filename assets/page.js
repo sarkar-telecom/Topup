@@ -1,4 +1,3 @@
-
 import { auth, db, requireAuth, ensureUserDoc, fmt, timeAgo, autoCancelStaleOrders } from "./app.js";
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, addDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, where, updateDoc, increment, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
