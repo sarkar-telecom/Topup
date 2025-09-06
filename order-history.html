@@ -1,147 +1,251 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Order History</title>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Order History - Sarkar Telecom</title>
+
   <style>
-    body { background: #121212; color: #fff; font-family: Arial, sans-serif; }
-    .container { width: 95%; max-width: 900px; margin: auto; padding: 20px; }
-    h2 { text-align: center; margin-bottom: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { padding: 10px; text-align: center; border: 1px solid #333; }
-    th { background: #1f1f1f; }
-    .status-box { padding: 5px 10px; border-radius: 6px; color: #fff; font-weight: bold; }
-    .waiting { background: orange; }
-    .confirmed { background: green; }
-    .cancelled { background: red; }
-    .filter { margin-bottom: 15px; display: flex; justify-content: center; gap: 10px; }
-    select, input { padding: 6px; border-radius: 6px; border: none; }
+    :root{
+      --bg:#0f1115;--card:#171a21;--text:#e7eaf0;--muted:#9aa3b2;
+      --accent:#06b6d4;--ok:#10b981;--warn:#f59e0b;--bad:#ef4444;
+    }
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    header{background:var(--card);border-bottom:1px solid #202635;padding:10px}
+    .top-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .site-info{display:flex;align-items:center;gap:10px}
+    .site-logo{height:40px;border-radius:8px}
+    .site-name{font-size:20px;font-weight:800;color:var(--accent)}
+    .user-info{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .user-box{background:#1f2430;padding:6px 12px;border-radius:8px;font-weight:600}
+    .user-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;background:#2b3347}
+    .btn{padding:6px 12px;border:none;border-radius:8px;font-weight:700;cursor:pointer}
+    .btn.logout{background:var(--bad);color:#fff}
+    .nav-row{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+    .nav-row a{background:#1f2430;padding:8px 14px;border-radius:8px;text-decoration:none;color:var(--text);font-weight:700}
+    .nav-row a:hover{background:var(--accent);color:#001}
+
+    main{padding:20px}
+    .card{background:var(--card);border-radius:16px;padding:16px;box-shadow:0 6px 16px rgba(0,0,0,.25);max-width:980px;margin:0 auto}
+    h1{margin:8px 0 16px 0;text-align:center}
+    .filters{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:10px}
+    .input{background:#1f2430;border:none;border-radius:8px;padding:10px 12px;color:var(--text);min-width:220px}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    thead th{background:#1f2430;color:var(--text);padding:12px;border-radius:8px 8px 0 0}
+    tbody td{padding:10px;border-top:1px solid #222}
+    .status{padding:6px 10px;border-radius:8px;font-weight:800;display:inline-block}
+    .WAITING{background:var(--warn);color:#111}
+    .CONFIRMED,.COMPLETED{background:var(--ok);color:#051}
+    .CANCELLED{background:var(--bad)}
+    .muted{color:var(--muted)}
+    .center{text-align:center}
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>My Order History</h2>
-
-    <div class="filter">
-      <input type="text" id="searchInput" placeholder="Search by Order ID...">
-      <select id="statusFilter">
-        <option value="">All Status</option>
-        <option value="WAITING">WAITING</option>
-        <option value="CONFIRMED">CONFIRMED</option>
-        <option value="CANCELLED">CANCELLED</option>
-      </select>
+  <!-- Header -->
+  <header>
+    <div class="top-row">
+      <div class="site-info">
+        <img src="https://sarkar-telecom.github.io/Topup/logo.png" class="site-logo" alt="Logo">
+        <span class="site-name">SARKAR TELECOM</span>
+      </div>
+      <div class="user-info" id="userInfo"></div>
     </div>
+    <div class="nav-row">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="order.html">Order</a>
+      <a href="order-history.html">Order History</a>
+      <a href="profile.html">Profile</a>
+    </div>
+  </header>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Order ID</th>
-          <th>Profile ID</th>
-          <th>Amount</th>
-          <th>Date & Time</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="orderTableBody">
-        <tr><td colspan="5">Loading orders...</td></tr>
-      </tbody>
-    </table>
-  </div>
+  <!-- Page -->
+  <main>
+    <div class="card">
+      <h1>My Order History</h1>
 
+      <div class="filters">
+        <input id="searchBox" class="input" type="text" placeholder="Search by Order ID / Profile ID">
+        <select id="statusFilter" class="input">
+          <option value="">All Status</option>
+          <option>WAITING</option>
+          <option>CONFIRMED</option>
+          <option>COMPLETED</option>
+          <option>CANCELLED</option>
+        </select>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Profile ID / Number</th>
+            <th>💎 Amount</th>
+            <th>Date &amp; Time</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          <tr><td colspan="5" class="center muted">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Firebase v10 (modular) -->
   <script type="module">
-    // ✅ Firebase Config
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { 
+      getFirestore, collection, query, where, onSnapshot, doc, getDoc, updateDoc, Timestamp 
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    // ✅ Your Firebase config (as you use everywhere)
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "SENDER_ID",
-      appId: "APP_ID"
+      apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
     };
 
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, query, where, orderBy, limit, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-    const app = initializeApp(firebaseConfig);
+    const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
+    const db   = getFirestore(app);
 
-    const tableBody = document.getElementById("orderTableBody");
-    const searchInput = document.getElementById("searchInput");
+    // Header refs
+    const userInfo   = document.getElementById("userInfo");
+    const rowsEl     = document.getElementById("rows");
+    const searchBox  = document.getElementById("searchBox");
     const statusFilter = document.getElementById("statusFilter");
 
-    // Auto Cancel Function
-    async function autoCancelOrder(orderId, createdAt, status) {
-      const fiveMin = 5 * 60 * 1000;
-      if (status === "WAITING" && (Date.now() - createdAt.toMillis()) > fiveMin) {
-        await updateDoc(doc(db, "orders", orderId), { status: "CANCELLED" });
-      }
-    }
+    // Helpers
+    const fmt = (ts) => {
+      try {
+        if (!ts) return "-";
+        if (ts instanceof Timestamp) return ts.toDate().toLocaleString();
+        if (typeof ts === "number") return new Date(ts).toLocaleString();
+        if (ts.seconds) return new Date(ts.seconds*1000).toLocaleString();
+      } catch(e){}
+      return "-";
+    };
+    const millis = (ts) => {
+      if (!ts) return 0;
+      if (ts instanceof Timestamp) return ts.toMillis();
+      if (typeof ts === "number") return ts;
+      if (ts.seconds) return ts.seconds*1000;
+      return 0;
+    };
 
-    // Listen user auth
-    onAuthStateChanged(auth, user => {
-      if (user) {
-        loadOrders(user.uid);
-      } else {
-        tableBody.innerHTML = `<tr><td colspan="5">⚠ Please login to see your orders</td></tr>`;
+    // Live state
+    let allOrders = [];   // merged list from both (userId/uid)
+    let unsub1 = null, unsub2 = null;
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        userInfo.innerHTML = `<button class="btn" style="background:var(--accent);color:#001" onclick="location.href='login.html'">Login</button>`;
+        rowsEl.innerHTML = `<tr><td colspan="5" class="center">⚠ Please login to see your orders</td></tr>`;
+        return;
       }
+
+      // Header fill (email, avatar, balance)
+      let avatar = user.photoURL || "https://via.placeholder.com/40";
+      let balance = 0;
+      try {
+        const uref = doc(db, "users", user.uid);
+        const usnap = await getDoc(uref);
+        if (usnap.exists()) {
+          const u = usnap.data();
+          balance = u.balance || 0;
+          if (u.avatar) avatar = u.avatar;
+        }
+      } catch(e){ console.warn(e); }
+
+      userInfo.innerHTML = `
+        <img class="user-avatar" src="${avatar}" alt="User" onerror="this.src='https://via.placeholder.com/40'"/>
+        <div class="user-box">${user.email}</div>
+        <div class="user-box" style="color:var(--ok)">💎 ${balance}</div>
+        <button class="btn logout" id="logoutBtn">Logout</button>
+      `;
+      document.getElementById("logoutBtn").onclick = async () => { await signOut(auth); location.href="login.html"; };
+
+      // Attach listeners (support both field names)
+      const colRef = collection(db, "orders");
+
+      // Clear old
+      if (unsub1) unsub1(); if (unsub2) unsub2();
+      allOrders = [];
+
+      const applySnapshot = (snapshot) => {
+        const map = new Map(allOrders.map(o => [o.id, o])); // dedupe
+        snapshot.forEach(d => {
+          const data = d.data();
+          map.set(d.id, { id: d.id, ...data });
+        });
+        allOrders = Array.from(map.values())
+          .sort((a,b) => millis(b.createdAt || b.timestamp) - millis(a.createdAt || a.timestamp))
+          .slice(0, 20);
+        render();
+        // Auto-cancel (5 mins) for WAITING only
+        allOrders.forEach(async (o) => {
+          try {
+            const created = millis(o.createdAt || o.timestamp);
+            if (o.status === "WAITING" && Date.now() - created > 5*60*1000) {
+              await updateDoc(doc(db,"orders",o.id), { status: "CANCELLED" });
+            }
+          } catch(e){}
+        });
+      };
+
+      unsub1 = onSnapshot(query(colRef, where("userId","==",user.uid)), applySnapshot);
+      unsub2 = onSnapshot(query(colRef, where("uid","==",user.uid)),    applySnapshot);
     });
 
-    function loadOrders(uid) {
-      const q = query(
-        collection(db, "orders"),
-        where("userId", "==", uid),
-        orderBy("createdAt", "desc"),
-        limit(20)
-      );
+    function render() {
+      if (!allOrders.length) {
+        rowsEl.innerHTML = `<tr><td colspan="5" class="center muted">No orders found</td></tr>`;
+        return;
+      }
+      const term = (searchBox.value||"").trim().toLowerCase();
+      const flt  = statusFilter.value;
 
-      onSnapshot(q, snapshot => {
-        if (snapshot.empty) {
-          tableBody.innerHTML = `<tr><td colspan="5">No orders found</td></tr>`;
-          return;
-        }
-
-        let rows = "";
-        snapshot.forEach(docSnap => {
-          const data = docSnap.data();
-          autoCancelOrder(docSnap.id, data.createdAt, data.status);
-
-          let statusClass =
-            data.status === "WAITING" ? "waiting" :
-            data.status === "CONFIRMED" ? "confirmed" : "cancelled";
-
-          rows += `
-            <tr data-status="${data.status}" data-id="${docSnap.id}">
-              <td>${docSnap.id}</td>
-              <td>${data.profileId}</td>
-              <td>💎 ${data.amount}</td>
-              <td>${data.createdAt.toDate().toLocaleString()}</td>
-              <td><span class="status-box ${statusClass}">${data.status}</span></td>
-            </tr>
-          `;
-        });
-        tableBody.innerHTML = rows;
+      const filtered = allOrders.filter(o => {
+        const id = (o.id||"").toLowerCase();
+        const pid = (o.profileId || o.clientId || "").toString().toLowerCase();
+        const okText = !term || id.includes(term) || pid.includes(term);
+        const okStatus = !flt || (o.status === flt);
+        return okText && okStatus;
       });
+
+      if (!filtered.length) {
+        rowsEl.innerHTML = `<tr><td colspan="5" class="center muted">No matching orders</td></tr>`;
+        return;
+      }
+
+      rowsEl.innerHTML = filtered.map(o => {
+        const status = o.status || "-";
+        const cls = (status === "WAITING") ? "WAITING" :
+                    (status === "CANCELLED") ? "CANCELLED" :
+                    (status === "CONFIRMED" || status === "COMPLETED") ? "COMPLETED" : "";
+        const amount = o.amount ?? o.diamonds ?? 0;
+        const profile = o.profileId || o.clientId || "-";
+        const ts = fmt(o.createdAt || o.timestamp);
+        return `
+          <tr data-id="${o.id}" data-status="${status}">
+            <td class="center">${o.id}</td>
+            <td class="center">${profile}</td>
+            <td class="center">💎 ${amount}</td>
+            <td class="center">${ts}</td>
+            <td class="center"><span class="status ${cls}">${status}</span></td>
+          </tr>
+        `;
+      }).join("");
     }
 
-    // Filter Orders
-    function filterOrders() {
-      const term = searchInput.value.toLowerCase();
-      const status = statusFilter.value;
-      Array.from(tableBody.getElementsByTagName("tr")).forEach(row => {
-        const id = row.dataset.id.toLowerCase();
-        const st = row.dataset.status;
-        row.style.display =
-          (id.includes(term) && (status === "" || st === status)) ? "" : "none";
-      });
-    }
-    searchInput.addEventListener("input", filterOrders);
-    statusFilter.addEventListener("change", filterOrders);
+    searchBox.addEventListener("input", render);
+    statusFilter.addEventListener("change", render);
   </script>
 </body>
 </html>
