@@ -10,12 +10,24 @@
   <style>
     body { font-family: Arial, sans-serif; background:#111; color:#fff; margin:0; padding:0; }
     .container { max-width: 100%; margin: auto; padding: 10px; }
-    h2 { text-align:center; }
-    table { width: 100%; border-collapse: collapse; }
+    h2 { text-align:center; margin-bottom:15px; }
+    table { width: 100%; border-collapse: collapse; font-size:14px; }
     th, td { padding: 8px; text-align: center; border-bottom: 1px solid #333; }
     th { background: #222; }
     tr:hover { background: #1a1a1a; }
     .search-box, .filter-box { width: 100%; padding: 10px; margin: 5px 0; border-radius:5px; border:none; }
+    @media(max-width:600px){
+      table, thead, tbody, th, td, tr { display:block; }
+      thead { display:none; }
+      tr { margin-bottom:10px; background:#1a1a1a; border-radius:8px; padding:8px; }
+      td { text-align:left; padding:6px 10px; border:none; }
+      td::before { font-weight:bold; display:block; color:#aaa; }
+      td:nth-of-type(1)::before { content:"Order ID"; }
+      td:nth-of-type(2)::before { content:"Client ID"; }
+      td:nth-of-type(3)::before { content:"Amount"; }
+      td:nth-of-type(4)::before { content:"Date & Time"; }
+      td:nth-of-type(5)::before { content:"Status"; }
+    }
   </style>
 </head>
 <body>
@@ -43,7 +55,7 @@
   </div>
 
   <script>
-    // 🔥 আপনার Firebase Config বসান
+    // 🔥 Firebase Config বসান
     const firebaseConfig = {
       apiKey: "YOUR_KEY",
       authDomain: "YOUR_PROJECT.firebaseapp.com",
@@ -60,38 +72,60 @@
     const searchBox = document.getElementById("searchBox");
     const statusFilter = document.getElementById("statusFilter");
 
+    let orders = [];
+
     // ⏳ Load Orders
     auth.onAuthStateChanged(user => {
       if (user) {
         db.collection("orders").where("userEmail", "==", user.email)
           .orderBy("timestamp", "desc")
           .onSnapshot(snapshot => {
-            let orders = [];
+            orders = [];
             snapshot.forEach(doc => {
               let data = doc.data();
+
+              // টাইম কনভার্ট
+              let orderTime = null;
+              if (data.timestamp) {
+                if (data.timestamp.toDate) {
+                  orderTime = data.timestamp.toDate();
+                } else {
+                  orderTime = new Date(data.timestamp);
+                }
+              }
+
+              // ৫ মিনিটের মধ্যে confirm না হলে CANCELLED
+              if (orderTime && data.status !== "COMPLETED") {
+                const now = new Date();
+                const diff = (now - orderTime) / 1000 / 60; // মিনিটে
+                if (diff >= 5) {
+                  db.collection("orders").doc(doc.id).update({ status: "CANCELLED" });
+                  data.status = "CANCELLED";
+                }
+              }
+
               orders.push({
                 id: doc.id,
                 clientId: data.clientId || data.profileId || data.number || "-",
                 amount: data.amount || 0,
                 status: data.status || "Unknown",
-                timestamp: data.timestamp ? 
-                  (data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp)) : null
+                timestamp: orderTime
               });
             });
-            renderOrders(orders);
+            renderOrders();
           });
       }
     });
 
     // 🔍 Render Orders
-    function renderOrders(orders) {
+    function renderOrders() {
       let searchVal = searchBox.value.toLowerCase();
       let statusVal = statusFilter.value;
 
       orderTable.innerHTML = "";
       orders
         .filter(order => 
-          (order.id.toLowerCase().includes(searchVal) || order.clientId.toLowerCase().includes(searchVal)) &&
+          (order.id.toLowerCase().includes(searchVal) || order.clientId.toString().toLowerCase().includes(searchVal)) &&
           (statusVal === "all" || order.status === statusVal)
         )
         .forEach(order => {
@@ -108,8 +142,8 @@
         });
     }
 
-    searchBox.addEventListener("input", () => renderOrders(orders));
-    statusFilter.addEventListener("change", () => renderOrders(orders));
+    searchBox.addEventListener("input", renderOrders);
+    statusFilter.addEventListener("change", renderOrders);
   </script>
 </body>
 </html>
