@@ -15,7 +15,6 @@
       --wait: #eab308;
     }
     body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
-
     header { background: var(--card); border-bottom: 1px solid #202635; padding: 10px; }
     .top-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
     .site-info { display: flex; align-items: center; gap: 10px; }
@@ -25,57 +24,25 @@
     .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
     .user-box { background: #1f2430; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; }
     .balance { color: var(--ok); }
-
     .nav-row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
     .nav-row a { background: #1f2430; padding: 8px 14px; border-radius: 8px; text-decoration: none; color: var(--text); font-weight: 600; }
     .nav-row a:hover { background: var(--accent); color: #001; }
-
     main { padding: 20px; }
-    .card {
-      background: var(--card);
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 6px 16px rgba(0,0,0,.25);
-      max-width: 900px;
-      margin: 0 auto;
-    }
+    .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 6px 16px rgba(0,0,0,.25); max-width: 900px; margin: 0 auto; }
     h2 { text-align: center; margin-bottom: 20px; }
     .search-box { margin-bottom: 15px; text-align: center; }
-    .search-box input {
-      padding: 10px; border-radius: 8px; border: none;
-      width: 60%; max-width: 300px;
-      background: #1f2430; color: var(--text);
-    }
-
-    table {
-      width: 100%; border-collapse: collapse;
-    }
-    th, td {
-      padding: 10px; text-align: center;
-      border-bottom: 1px solid #333;
-    }
+    .search-box input { padding: 10px; border-radius: 8px; border: none; width: 60%; max-width: 300px; background: #1f2430; color: var(--text); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; text-align: center; border-bottom: 1px solid #333; }
     th { background: #1f2430; }
-    .status {
-      padding: 6px 10px; border-radius: 6px; font-weight: 600;
-    }
+    .status { padding: 6px 10px; border-radius: 6px; font-weight: 600; }
     .waiting { background: var(--wait); color: #000; }
     .confirmed { background: var(--ok); color: #000; }
     .cancelled { background: var(--bad); color: #fff; }
-
-    .pagination {
-      margin-top: 15px;
-      display: flex; justify-content: center; gap: 10px;
-    }
-    .page-btn {
-      background: #1f2430; padding: 8px 14px; border: none; border-radius: 8px;
-      color: var(--text); cursor: pointer; font-weight: 600;
-    }
-    .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
 <body>
 
-<!-- 🔹 Header -->
 <header>
   <div class="top-row">
     <div class="site-info">
@@ -92,12 +59,11 @@
   </div>
 </header>
 
-<!-- 🔹 Order History -->
 <main>
   <div class="card">
     <h2>My Order History</h2>
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Search by Status (WAITING/CONFIRMED/CANCELLED)">
+      <input type="text" id="searchInput" placeholder="Search by Status">
     </div>
     <table>
       <thead>
@@ -111,18 +77,13 @@
       </thead>
       <tbody id="orderList"></tbody>
     </table>
-    <div class="pagination">
-      <button class="page-btn" id="prevBtn">Prev</button>
-      <button class="page-btn" id="nextBtn">Next</button>
-    </div>
   </div>
 </main>
 
-<!-- 🔹 Firebase -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { getFirestore, collection, query, where, orderBy, limit, startAfter, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFirestore, collection, query, where, orderBy, limit, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
@@ -141,18 +102,14 @@
   const userInfo = document.getElementById("userInfo");
   const orderList = document.getElementById("orderList");
   const searchInput = document.getElementById("searchInput");
-  const prevBtn = document.getElementById("prevBtn");
-  const nextBtn = document.getElementById("nextBtn");
 
-  let currentUser, lastVisible = null, firstVisible = null, pageStack = [];
+  let currentUser;
 
-  // 🔹 Auth State
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       currentUser = user;
-      let avatarUrl = user.photoURL || "https://via.placeholder.com/40";
       userInfo.innerHTML = `
-        <img src="${avatarUrl}" class="user-avatar">
+        <img src="${user.photoURL || 'https://via.placeholder.com/40'}" class="user-avatar">
         <div class="user-box">${user.email}</div>
         <button class="btn logout" id="logoutBtn">Logout</button>
       `;
@@ -166,82 +123,58 @@
     }
   });
 
-  // 🔹 Load Orders (Pagination + Filter)
-  async function loadOrders(direction = "first") {
-    let statusFilter = searchInput.value.trim().toUpperCase();
-
-    let q = query(
+  async function loadOrders() {
+    const q = query(
       collection(db, "orders"),
       where("uid", "==", currentUser.uid),
       orderBy("createdAt", "desc"),
       limit(20)
     );
 
-    if (direction === "next" && lastVisible) {
-      q = query(q, startAfter(lastVisible));
-    } else if (direction === "prev" && pageStack.length > 1) {
-      pageStack.pop();
-      q = query(
-        collection(db, "orders"),
-        where("uid", "==", currentUser.uid),
-        orderBy("createdAt", "desc"),
-        limit(20)
-      );
-      let snap = await getDocs(q);
-      for (let i = 0; i < pageStack.length - 1; i++) {
-        snap = await getDocs(query(q, startAfter(pageStack[i])));
-      }
-      firstVisible = snap.docs[0];
-      lastVisible = snap.docs[snap.docs.length - 1];
-      renderOrders(snap.docs, statusFilter);
-      return;
-    }
-
     const snap = await getDocs(q);
-    if (!snap.empty) {
-      firstVisible = snap.docs[0];
-      lastVisible = snap.docs[snap.docs.length - 1];
-      pageStack.push(lastVisible);
-      renderOrders(snap.docs, statusFilter);
-    } else {
-      orderList.innerHTML = `<tr><td colspan="5">No orders found</td></tr>`;
-    }
-  }
-
-  // 🔹 Render Orders
-  async function renderOrders(docs, statusFilter) {
     orderList.innerHTML = "";
-    docs.forEach(docSnap => {
+
+    for (let docSnap of snap.docs) {
       const data = docSnap.data();
       let id = docSnap.id;
-      let recipient = data.recipient;
-      let amount = data.amount;
       let status = data.status || "WAITING";
       let date = data.createdAt?.toDate().toLocaleString() || "—";
-
-      if (statusFilter && status !== statusFilter) return;
-
       let statusClass = status === "CONFIRMED" ? "confirmed" : status === "CANCELLED" ? "cancelled" : "waiting";
+
+      // 🔹 Auto cancel after 5 minutes if still WAITING
+      if (status === "WAITING" && data.createdAt) {
+        let createdAt = data.createdAt.toDate();
+        let diffMin = (Date.now() - createdAt.getTime()) / 60000;
+        if (diffMin > 5) {
+          await updateDoc(doc(db, "orders", id), { status: "CANCELLED" });
+          status = "CANCELLED";
+          statusClass = "cancelled";
+
+          // Refund balance
+          const userRef = doc(db, "users", currentUser.uid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            let balance = userSnap.data().balance || 0;
+            await updateDoc(userRef, { balance: balance + data.amount });
+          }
+        }
+      }
+
+      if (searchInput.value && !status.includes(searchInput.value.toUpperCase())) continue;
 
       orderList.innerHTML += `
         <tr>
           <td>${id}</td>
-          <td>${recipient}</td>
-          <td>💎 ${amount}</td>
+          <td>${data.recipient}</td>
+          <td>💎 ${data.amount}</td>
           <td>${date}</td>
           <td><span class="status ${statusClass}">${status}</span></td>
         </tr>
       `;
-    });
+    }
   }
 
-  // 🔹 Search by Status
-  searchInput.addEventListener("input", () => loadOrders("first"));
-
-  // 🔹 Pagination
-  nextBtn.addEventListener("click", () => loadOrders("next"));
-  prevBtn.addEventListener("click", () => loadOrders("prev"));
+  searchInput.addEventListener("input", loadOrders);
 </script>
-
 </body>
 </html>
