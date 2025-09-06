@@ -1,118 +1,93 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order History</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-</head>
-<body class="bg-gray-900 text-white">
+  <title>📜 My Order History</title>
+  <script type="module">
+    // Import Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  <!-- Header -->
-  <div class="p-4 bg-gray-800 shadow flex justify-between items-center">
-    <h1 class="text-lg font-bold">📜 My Order History</h1>
-    <div class="flex gap-2">
-      <button onclick="window.location.href='order.html'" class="bg-blue-500 px-3 py-1 rounded">➕ New Order</button>
-      <button id="logoutBtn" class="bg-red-500 px-3 py-1 rounded">Logout</button>
-    </div>
-  </div>
-
-  <!-- Search -->
-  <div class="p-4">
-    <input type="text" id="searchBox" placeholder="Search by Order ID / Profile ID"
-      class="w-full p-2 rounded bg-gray-800 border border-gray-600 text-white">
-  </div>
-
-  <!-- Table -->
-  <div class="overflow-x-auto p-4">
-    <table class="w-full text-sm border border-gray-700">
-      <thead class="bg-gray-700">
-        <tr>
-          <th class="p-2">Order ID</th>
-          <th class="p-2">Profile ID</th>
-          <th class="p-2">Amount</th>
-          <th class="p-2">Date & Time</th>
-          <th class="p-2">Status</th>
-        </tr>
-      </thead>
-      <tbody id="orderTable" class="text-center"></tbody>
-    </table>
-  </div>
-
-  <script>
-    // 🔥 Firebase Config
+    // ✅ আপনার Firebase config বসান
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
       projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
       appId: "YOUR_APP_ID"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    const orderTable = document.getElementById("orderTable");
-    const searchBox = document.getElementById("searchBox");
-    let ordersData = [];
+    const tableBody = document.getElementById("ordersTableBody");
 
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = "login.html";
+    // ইউজার লগইন আছে কিনা চেক করুন
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const uid = user.uid;
+        console.log("✅ Logged in:", uid);
+
+        // শুধুমাত্র ইউজারের অর্ডারগুলো আনুন
+        const q = query(
+          collection(db, "orders"),
+          where("userId", "==", uid),
+          orderBy("createdAt", "desc")
+        );
+
+        // Realtime listener
+        onSnapshot(q, (snapshot) => {
+          tableBody.innerHTML = "";
+          if (snapshot.empty) {
+            tableBody.innerHTML = `<tr><td colspan="5">No orders found.</td></tr>`;
+            return;
+          }
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            const row = `
+              <tr>
+                <td>${doc.id}</td>
+                <td>${data.clientId}</td>
+                <td>💎 ${data.amount}</td>
+                <td>${new Date(data.createdAt).toLocaleString()}</td>
+                <td>${data.status}</td>
+              </tr>
+            `;
+            tableBody.innerHTML += row;
+          });
+        });
+
       } else {
-        loadOrders(user.uid);
+        // লগইন না থাকলে লগইন পেজে পাঠিয়ে দিন
+        window.location.href = "login.html";
       }
     });
-
-    function loadOrders(uid) {
-      db.collection("orders")
-        .where("userId", "==", uid)
-        .orderBy("createdAt", "desc")
-        .onSnapshot(snapshot => {
-          ordersData = [];
-          snapshot.forEach(doc => {
-            ordersData.push({ id: doc.id, ...doc.data() });
-          });
-          renderTable(ordersData);
-        });
-    }
-
-    function renderTable(data) {
-      orderTable.innerHTML = "";
-      data.forEach(order => {
-        const tr = document.createElement("tr");
-        tr.className = "border-b border-gray-700";
-        tr.innerHTML = `
-          <td class="p-2 break-all">${order.id}</td>
-          <td class="p-2">${order.clientId || "-"}</td>
-          <td class="p-2">💎 ${order.amount}</td>
-          <td class="p-2">${order.createdAt?.toDate().toLocaleString() || "-"}</td>
-          <td class="p-2 ${order.status === "SUCCESS" ? "text-green-400" : "text-yellow-400"}">
-            ${order.status}
-          </td>
-        `;
-        orderTable.appendChild(tr);
-      });
-    }
-
-    searchBox.addEventListener("input", e => {
-      const value = e.target.value.toLowerCase();
-      const filtered = ordersData.filter(order =>
-        order.id.toLowerCase().includes(value) ||
-        (order.clientId && order.clientId.toLowerCase().includes(value))
-      );
-      renderTable(filtered);
-    });
-
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      auth.signOut();
-    });
   </script>
+</head>
+<body style="background:#111; color:#fff; font-family:sans-serif;">
+  <h2>📜 My Order History</h2>
+  <table border="1" cellpadding="8" cellspacing="0" style="width:100%; text-align:center; background:#222;">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Client ID</th>
+        <th>Amount</th>
+        <th>Date & Time</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="ordersTableBody">
+      <tr><td colspan="5">Loading...</td></tr>
+    </tbody>
+  </table>
 
+  <br>
+  <button onclick="window.location.href='order.html'" 
+          style="padding:10px 20px; background:#0af; border:none; color:#fff; border-radius:6px;">
+    ➕ Make New Order
+  </button>
 </body>
 </html>
