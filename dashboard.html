@@ -1,46 +1,35 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
   <title>Dashboard</title>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-<button id="openSidebar" class="open-btn">&#9776; Menu</button>
-<div id="sidebar" class="sidebar">
-  <button id="closeSidebar" class="close-btn">&times;</button>
-  <a href="index.html">Home</a>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="order.html">Place Order</a>
-  <a href="order-history.html">Order History</a>
-  <a href="profile.html">Profile</a>
-  <a href="admin.html">Admin</a>
-  <button id="logoutBtn" class="logout-btn">Logout</button>
-</div>
-<div class="content">
-
-  <div class="grid-2">
-    <div class="card">
-      <h3>Balance</h3>
-      <div class="stat" id="balanceAmount">৳ 0</div>
-      <small id="userStatus">status: -</small>
-    </div>
-    <div class="card">
-      <h3>Orders this week</h3>
-      <div class="stat" id="weeklyOrders">0</div>
-    </div>
-  </div>
-  <div class="card">
-    <h3>Quick actions</h3>
-    <div class="row gap">
-      <a class="btn" href="order.html">New Order</a>
-      <a class="btn outline" href="order-history.html">Order History</a>
-    </div>
+  <div class="content">
+    <h2>Dashboard</h2>
+    <p id="welcome"></p>
+    <p>Balance: <span id="balance">0</span> 💎</p>
+    <a href="order.html" class="btn">Place Order</a>
+    <a href="orders.html" class="btn outline">Order History</a>
+    <button id="logoutBtn" class="btn danger mt">Logout</button>
   </div>
 
-</div>
-<script type="module" src="assets/app.js"></script>
-<script type="module" src="assets/page.js"></script>
+  <script type="module">
+    import { auth, db, requireAuth, fmt } from "./assets/app.js";
+    import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    const user=await requireAuth();
+    if(user){
+      document.getElementById("welcome").textContent="Welcome, "+(user.displayName||user.email);
+      onSnapshot(doc(db,"users",user.uid),(snap)=>{
+        if(snap.exists()){
+          document.getElementById("balance").textContent=fmt(snap.data().balance);
+        }
+      });
+    }
+    document.getElementById("logoutBtn").onclick=()=>signOut(auth);
+  </script>
 </body>
 </html>
