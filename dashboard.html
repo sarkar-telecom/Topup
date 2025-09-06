@@ -3,93 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Sarkar Telecom - Dashboard</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#0f1115; color:#e7eaf0; margin:0; }
-    main { padding:20px; text-align:center; }
-    .card { background:#171a21; padding:20px; border-radius:12px; max-width:400px; margin:30px auto; box-shadow:0 6px 16px rgba(0,0,0,.25); }
-    .btn { padding:10px 14px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
-    .btn.logout { background:#ef4444; color:#fff; }
+    body { margin: 0; font-family: Arial, sans-serif; background: #0d1117; color: white; }
+    .card { background: #161b22; margin: 20px auto; padding: 20px; border-radius: 10px; max-width: 400px; text-align: center; }
+    .btn.logout { background: #d73a49; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; }
   </style>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
-      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
-      projectId: "diamond-recharge-f7f59",
-      storageBucket: "diamond-recharge-f7f59.appspot.com",
-      messagingSenderId: "657717928489",
-      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
-      measurementId: "G-TDK78BQ8SQ"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    const nameEl = () => document.getElementById("name");
-    const emailEl = () => document.getElementById("email");
-    const balanceEl = () => document.getElementById("balance");
-
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          const ref = doc(db, "users", user.uid);
-          const snap = await getDoc(ref);
-          if (snap.exists()) {
-            const data = snap.data();
-            nameEl().textContent = data.name;
-            emailEl().textContent = data.email;
-            balanceEl().textContent = data.balance ?? 0;
-            localStorage.setItem("user", JSON.stringify(data));
-          } else {
-            alert("⚠️ User data not found in Firestore");
-          }
-        } catch (err) {
-          console.error(err);
-        }
-      } else {
-        window.location.href = "login.html";
-      }
-    });
-
-    window.logoutUser = async function () {
-      await signOut(auth);
-      localStorage.removeItem("user");
-      window.location.href = "login.html";
-    };
-  </script>
 </head>
 <body>
-  <!-- Header load হবে এখানে -->
   <div id="header-container"></div>
 
-  <!-- Dashboard Content -->
   <main>
     <div class="card">
       <h2>Welcome, <span id="name">Loading...</span></h2>
       <p><b>Email:</b> <span id="email"></span></p>
       <p><b>Balance:</b> 💎 <span id="balance">0</span></p>
-      <button class="btn logout" onclick="logoutUser()">Logout</button>
+      <button class="btn logout" id="logout-btn">Logout</button>
     </div>
   </main>
 
-  <!-- Load header.html -->
   <script>
     fetch("header.html")
       .then(res => res.text())
       .then(data => {
         document.getElementById("header-container").innerHTML = data;
-        const script = document.createElement("script");
-        script.src = "header-script.js"; // আপনার হেডার লজিক আলাদা করলে
-        document.body.appendChild(script);
-      })
-      .catch(err => console.error("Header load error:", err));
+        import("./header-script.js");
+      });
   </script>
 </body>
 </html>
