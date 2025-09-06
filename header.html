@@ -28,17 +28,24 @@
     // Auth state listener
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        document.getElementById("welcomeUser").textContent = `Welcome ${user.displayName || "User"} to SARKAR TELECOM`;
+        document.getElementById("welcomeUser").textContent =
+          `Welcome ${user.displayName || "User"} to Sarkar Telecom`;
         document.getElementById("userEmail").textContent = user.email;
 
-        // Firestore থেকে balance লাইভ
+        // Firestore থেকে balance লাইভ update
         const uref = doc(db, "users", user.uid);
         onSnapshot(uref, (snap) => {
           if (snap.exists()) {
             const data = snap.data();
-            document.getElementById("userBalance").textContent = `💎 ${data.balance || 0}`;
+            document.getElementById("userBalance").textContent =
+              `💎 ${data.balance || 0}`;
           }
         });
+
+        // ইউজার photo থাকলে show করব
+        if (user.photoURL) {
+          document.getElementById("userLogo").src = user.photoURL;
+        }
       } else {
         document.getElementById("welcomeUser").textContent = "Not logged in";
         document.getElementById("userBalance").textContent = "";
@@ -56,59 +63,78 @@
   <style>
     :root {
       --bg:#0f1115; --card:#171a21; --text:#e7eaf0;
-      --accent:#06b6d4; --ok:#10b981; --bad:#ef4444;
+      --accent:#06b6d4; --bad:#ef4444;
     }
     body { margin:0; font-family:Segoe UI, sans-serif; background:var(--bg); color:var(--text); }
     header {
       background:var(--card);
       border-bottom:1px solid #202635;
       padding:10px 16px;
-      display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    /* Top Row */
+    .top-row {
+      display:flex; justify-content:space-between; align-items:center;
+      flex-wrap:wrap; gap:10px;
     }
     .site-name {
-      font-size:20px;
-      font-weight:800;
+      font-size:20px; font-weight:800;
       background:linear-gradient(90deg,#06b6d4,#3b82f6,#9333ea);
       -webkit-background-clip:text;
       -webkit-text-fill-color:transparent;
     }
-    nav { display:flex; flex-wrap:wrap; gap:10px; margin-top:6px; }
+    .user-box {
+      display:flex; align-items:center; gap:10px;
+    }
+    #userLogo {
+      width:36px; height:36px; border-radius:50%; border:2px solid var(--accent);
+      object-fit:cover;
+    }
+    .user-info { font-size:14px; }
+    .logout-btn {
+      background:var(--bad); border:none; padding:6px 12px; border-radius:8px;
+      cursor:pointer; color:#fff; font-weight:600;
+    }
+    /* Bottom Row nav */
+    nav {
+      display:flex; flex-wrap:wrap; gap:10px; justify-content:center;
+    }
     nav a {
       background:#1f2430; padding:6px 12px; border-radius:8px;
       text-decoration:none; color:var(--text); font-weight:500; font-size:14px;
     }
     nav a:hover { background:var(--accent); color:#000; }
-    .user-info { font-size:14px; margin-top:6px; }
-    .logout-btn {
-      background:var(--bad); border:none; padding:6px 12px; border-radius:8px;
-      cursor:pointer; color:#fff; font-weight:600;
-    }
     /* Responsive */
     @media(max-width:600px){
-      header { flex-direction:column; align-items:flex-start; }
+      .top-row { flex-direction:column; align-items:flex-start; }
+      .user-box { align-items:flex-start; }
       nav { flex-direction:column; width:100%; }
       nav a { width:100%; text-align:center; }
-      .user-info { text-align:center; width:100%; }
     }
   </style>
 </head>
 <body>
   <header>
-    <div>
+    <!-- First Line -->
+    <div class="top-row">
       <div class="site-name">SARKAR TELECOM</div>
-      <div id="welcomeUser" class="user-info">Loading...</div>
-      <div id="userEmail" class="user-info"></div>
-      <div id="userBalance" class="user-info"></div>
-    </div>
-    <div>
-      <nav>
-        <a href="dashboard.html">Dashboard</a>
-        <a href="order.html">Order</a>
-        <a href="order-history.html">Order History</a>
-        <a href="profile.html">Profile</a>
+      <div class="user-box">
+        <img id="userLogo" src="https://via.placeholder.com/36" alt="User">
+        <div>
+          <div id="welcomeUser" class="user-info">Loading...</div>
+          <div id="userEmail" class="user-info"></div>
+          <div id="userBalance" class="user-info"></div>
+        </div>
         <button class="logout-btn" onclick="doLogout()">Logout</button>
-      </nav>
+      </div>
     </div>
+    <!-- Second Line -->
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="order.html">Order</a>
+      <a href="order-history.html">Order History</a>
+      <a href="profile.html">Profile</a>
+    </nav>
   </header>
 </body>
 </html>
