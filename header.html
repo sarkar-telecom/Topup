@@ -1,168 +1,114 @@
-<!-- header.html -->
-<header class="site-header">
-  <!-- First Row -->
-  <div class="header-top">
-    <div class="left">
-      <img src="assets/logo.png" alt="logo" class="logo" />
-      <span id="welcomeText">Welcome, Guest to Sarkar Telecom</span>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SARKAR TELECOM Header</title>
+  <script type="module">
+    // Firebase imports
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // আপনার Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.firebasestorage.app",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Auth state listener
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById("welcomeUser").textContent = `Welcome ${user.displayName || "User"} to SARKAR TELECOM`;
+        document.getElementById("userEmail").textContent = user.email;
+
+        // Firestore থেকে balance লাইভ
+        const uref = doc(db, "users", user.uid);
+        onSnapshot(uref, (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            document.getElementById("userBalance").textContent = `💎 ${data.balance || 0}`;
+          }
+        });
+      } else {
+        document.getElementById("welcomeUser").textContent = "Not logged in";
+        document.getElementById("userBalance").textContent = "";
+      }
+    });
+
+    // Logout
+    window.doLogout = async () => {
+      await signOut(auth);
+      localStorage.clear();
+      alert("Logged out successfully!");
+      window.location.href = "login.html";
+    };
+  </script>
+  <style>
+    :root {
+      --bg:#0f1115; --card:#171a21; --text:#e7eaf0;
+      --accent:#06b6d4; --ok:#10b981; --bad:#ef4444;
+    }
+    body { margin:0; font-family:Segoe UI, sans-serif; background:var(--bg); color:var(--text); }
+    header {
+      background:var(--card);
+      border-bottom:1px solid #202635;
+      padding:10px 16px;
+      display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center;
+    }
+    .site-name {
+      font-size:20px;
+      font-weight:800;
+      background:linear-gradient(90deg,#06b6d4,#3b82f6,#9333ea);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
+    nav { display:flex; flex-wrap:wrap; gap:10px; margin-top:6px; }
+    nav a {
+      background:#1f2430; padding:6px 12px; border-radius:8px;
+      text-decoration:none; color:var(--text); font-weight:500; font-size:14px;
+    }
+    nav a:hover { background:var(--accent); color:#000; }
+    .user-info { font-size:14px; margin-top:6px; }
+    .logout-btn {
+      background:var(--bad); border:none; padding:6px 12px; border-radius:8px;
+      cursor:pointer; color:#fff; font-weight:600;
+    }
+    /* Responsive */
+    @media(max-width:600px){
+      header { flex-direction:column; align-items:flex-start; }
+      nav { flex-direction:column; width:100%; }
+      nav a { width:100%; text-align:center; }
+      .user-info { text-align:center; width:100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="site-name">SARKAR TELECOM</div>
+      <div id="welcomeUser" class="user-info">Loading...</div>
+      <div id="userEmail" class="user-info"></div>
+      <div id="userBalance" class="user-info"></div>
     </div>
-    <div class="right">
-      <span id="userBalance">💎 0</span>
-      <button class="logout-btn" id="logoutBtn">Logout</button>
-      <button class="menu-toggle" id="menuToggle">☰</button>
+    <div>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="order.html">Order</a>
+        <a href="order-history.html">Order History</a>
+        <a href="profile.html">Profile</a>
+        <button class="logout-btn" onclick="doLogout()">Logout</button>
+      </nav>
     </div>
-  </div>
-
-  <!-- Second Row (Navigation) -->
-  <nav class="header-nav" id="headerNav">
-    <a href="dashboard.html" class="nav-link">Dashboard</a>
-    <a href="order.html" class="nav-link">Order</a>
-    <a href="order-history.html" class="nav-link">Order History</a>
-    <a href="profile.html" class="nav-link">Profile</a>
-  </nav>
-</header>
-
-<style>
-/* Header Theme (Dark + Mobile Friendly) */
-.site-header {
-  background: #171a21;
-  color: #e7eaf0;
-  border-bottom: 1px solid #202635;
-  font-family: system-ui, sans-serif;
-}
-
-.header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 16px;
-}
-
-.header-top .left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.logo {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-}
-
-#welcomeText {
-  font-weight: 600;
-  font-size: 14px;
-  color: #e7eaf0;
-}
-
-.header-top .right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-#userBalance {
-  font-weight: 600;
-  font-size: 14px;
-  color: #06b6d4;
-}
-
-.logout-btn {
-  background: #1f2430;
-  border: 1px solid #2b3347;
-  color: #e7eaf0;
-  padding: 6px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-.logout-btn:hover {
-  background: #ef4444;
-  color: #fff;
-}
-
-.menu-toggle {
-  display: none;
-  font-size: 22px;
-  background: none;
-  border: none;
-  color: #e7eaf0;
-  cursor: pointer;
-}
-
-.header-nav {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  padding: 8px;
-  background: #0f1115;
-}
-
-.header-nav .nav-link {
-  padding: 8px 14px;
-  border-radius: 8px;
-  background: #1f2430;
-  border: 1px solid #2b3347;
-  color: #e7eaf0;
-  text-decoration: none;
-  font-size: 14px;
-  transition: 0.2s;
-}
-.header-nav .nav-link:hover {
-  background: #06b6d4;
-  color: #001;
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .menu-toggle {
-    display: block;
-  }
-  .header-nav {
-    display: none;
-    flex-direction: column;
-    padding: 10px;
-  }
-  .header-nav.active {
-    display: flex;
-  }
-}
-</style>
-
-<script type="module">
-import { auth, db } from "./app.js";
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-// Toggle menu (mobile)
-document.getElementById("menuToggle")?.addEventListener("click", () => {
-  document.getElementById("headerNav").classList.toggle("active");
-});
-
-// Auth state listener
-onAuthStateChanged(auth, async (user) => {
-  const welcomeText = document.getElementById("welcomeText");
-  const userBalance = document.getElementById("userBalance");
-
-  if (user) {
-    // Get user doc from Firestore
-    const ref = doc(db, "users", user.uid);
-    const snap = await getDoc(ref);
-    const data = snap.data() || {};
-
-    welcomeText.textContent = `Welcome, ${user.displayName || data.name || "User"} to Sarkar Telecom`;
-    userBalance.textContent = `💎 ${data.balance || 0}`;
-  } else {
-    welcomeText.textContent = "Welcome, Guest to Sarkar Telecom";
-    userBalance.textContent = "💎 0";
-  }
-});
-
-// Logout
-document.getElementById("logoutBtn")?.addEventListener("click", async () => {
-  await signOut(auth);
-  localStorage.clear();
-  location.href = "login.html";
-});
-</script>
+  </header>
+</body>
+</html>
