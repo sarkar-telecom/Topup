@@ -16,50 +16,24 @@
       padding: 10px 15px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.5);
     }
-    .top-row {
+    .header-row {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
       flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
       gap: 10px;
     }
     .site-name {
-      font-size: 20px;
+      font-size: 22px;
       font-weight: bold;
       color: #38bdf8;
     }
-    .user-info-box {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .user-info-box img {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: 2px solid #38bdf8;
-    }
-    .user-details {
-      font-size: 13px;
-      line-height: 1.2;
-    }
-    .logout-btn {
-      background: #ef4444;
-      color: white;
-      border: none;
-      padding: 5px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-    }
     nav {
-      margin-top: 8px;
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
     }
-    nav a {
+    nav a, nav div, nav button {
       background: #2d2d2d;
       padding: 6px 14px;
       border-radius: 6px;
@@ -67,48 +41,56 @@
       color: white;
       font-size: 14px;
       transition: background 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: none;
+      cursor: pointer;
     }
-    nav a:hover {
+    nav a:hover, nav button:hover {
       background: #38bdf8;
       color: black;
     }
-    @media (max-width: 600px) {
-      .top-row {
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid #38bdf8;
+    }
+    @media (max-width: 700px) {
+      .header-row {
         flex-direction: column;
         align-items: flex-start;
       }
-      .user-info-box {
+      nav {
         width: 100%;
-        justify-content: space-between;
       }
     }
   </style>
 </head>
 <body>
   <header>
-    <div class="top-row">
-      <!-- Site Name -->
+    <div class="header-row">
+      <!-- Site Logo / Name -->
       <div class="site-name">SARKAR TELECOM</div>
 
-      <!-- User Info -->
-      <div class="user-info-box">
-        <img id="userLogo" src="https://via.placeholder.com/36" alt="User">
-        <div class="user-details">
-          <div id="welcomeUser">Welcome User</div>
-          <div id="userEmail">Not logged in</div>
-          <div id="userBalance">💎 0</div>
-        </div>
-        <button class="logout-btn" onclick="doLogout()">Logout</button>
-      </div>
-    </div>
+      <!-- Navigation + User Info -->
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="order.html">Order</a>
+        <a href="history.html">Order History</a>
+        <a href="profile.html">Profile</a>
+        
+        <!-- Live User Info -->
+        <div id="userName">👤 Guest</div>
+        <div id="userEmail">📧 Not logged in</div>
+        <div id="userBalance">💎 0</div>
+        <img id="userAvatar" class="user-avatar" src="https://via.placeholder.com/28" alt="User">
 
-    <!-- Navigation Links -->
-    <nav>
-      <a href="dashboard.html">Dashboard</a>
-      <a href="order.html">Order</a>
-      <a href="history.html">Order History</a>
-      <a href="profile.html">Profile</a>
-    </nav>
+        <!-- Auth Button -->
+        <button id="authBtn" onclick="goLogin()">Login</button>
+      </nav>
+    </div>
   </header>
 
   <!-- Firebase -->
@@ -131,29 +113,42 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Show User Info Live
+    const userNameEl = document.getElementById("userName");
+    const userEmailEl = document.getElementById("userEmail");
+    const userBalanceEl = document.getElementById("userBalance");
+    const userAvatarEl = document.getElementById("userAvatar");
+    const authBtn = document.getElementById("authBtn");
+
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        document.getElementById("welcomeUser").innerText = `Welcome ${user.displayName || "User"} to Sarkar Telecom`;
-        document.getElementById("userEmail").innerText = user.email;
-
-        // User Logo
-        if (user.photoURL) {
-          document.getElementById("userLogo").src = user.photoURL;
-        }
-
-        // Get Balance from Firestore
+        // User Logged In
+        userNameEl.innerText = `👤 ${user.displayName || "User"}`;
+        userEmailEl.innerText = `📧 ${user.email}`;
+        userAvatarEl.src = user.photoURL || "https://via.placeholder.com/28";
+        
+        // Get Live Balance
         const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
-          document.getElementById("userBalance").innerText = `💎 ${data.balance || 0}`;
+          userBalanceEl.innerText = `💎 ${data.balance || 0}`;
+        } else {
+          userBalanceEl.innerText = "💎 0";
         }
+
+        // Show Logout
+        authBtn.innerText = "Logout";
+        authBtn.onclick = doLogout;
       } else {
-        document.getElementById("welcomeUser").innerText = "Not logged in";
-        document.getElementById("userEmail").innerText = "";
-        document.getElementById("userBalance").innerText = "💎 0";
-        document.getElementById("userLogo").src = "https://via.placeholder.com/36";
+        // Not Logged In
+        userNameEl.innerText = "👤 Guest";
+        userEmailEl.innerText = "📧 Not logged in";
+        userBalanceEl.innerText = "💎 0";
+        userAvatarEl.src = "https://via.placeholder.com/28";
+
+        // Show Login
+        authBtn.innerText = "Login";
+        authBtn.onclick = goLogin;
       }
     });
 
@@ -164,7 +159,14 @@
         window.location.href = "login.html";
       });
     }
+
+    // Go to Login Page
+    function goLogin() {
+      window.location.href = "login.html";
+    }
+
     window.doLogout = doLogout;
+    window.goLogin = goLogin;
   </script>
 </body>
 </html>
