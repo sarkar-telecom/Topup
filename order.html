@@ -2,14 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>📜 My Order History</title>
+  <title>Create Order</title>
   <script type="module">
-    // Import Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // ✅ আপনার Firebase config বসান
+    // 🔹 আপনার Firebase config বসান
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -23,71 +22,64 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const tableBody = document.getElementById("ordersTableBody");
-
-    // ইউজার লগইন আছে কিনা চেক করুন
     onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const uid = user.uid;
-        console.log("✅ Logged in:", uid);
+      if (!user) {
+        window.location.href = "login.html";
+      } else {
+        document.getElementById("orderForm").addEventListener("submit", async (e) => {
+          e.preventDefault();
 
-        // শুধুমাত্র ইউজারের অর্ডারগুলো আনুন
-        const q = query(
-          collection(db, "orders"),
-          where("userId", "==", uid),
-          orderBy("createdAt", "desc")
-        );
+          const clientId = document.getElementById("clientId").value;
+          const amount = document.querySelector('input[name="amount"]:checked')?.value;
 
-        // Realtime listener
-        onSnapshot(q, (snapshot) => {
-          tableBody.innerHTML = "";
-          if (snapshot.empty) {
-            tableBody.innerHTML = `<tr><td colspan="5">No orders found.</td></tr>`;
+          if (!clientId || !amount) {
+            alert("⚠️ Client ID & Amount required!");
             return;
           }
-          snapshot.forEach((doc) => {
-            const data = doc.data();
-            const row = `
-              <tr>
-                <td>${doc.id}</td>
-                <td>${data.clientId}</td>
-                <td>💎 ${data.amount}</td>
-                <td>${new Date(data.createdAt).toLocaleString()}</td>
-                <td>${data.status}</td>
-              </tr>
-            `;
-            tableBody.innerHTML += row;
-          });
-        });
 
-      } else {
-        // লগইন না থাকলে লগইন পেজে পাঠিয়ে দিন
-        window.location.href = "login.html";
+          try {
+            await addDoc(collection(db, "orders"), {
+              clientId: clientId,
+              amount: Number(amount),
+              status: "WAITING",
+              createdAt: Date.now(),
+              userId: user.uid
+            });
+
+            alert("✅ Order successfully placed!");
+            window.location.href = "order-history.html";
+          } catch (err) {
+            console.error(err);
+            alert("❌ Error placing order!");
+          }
+        });
       }
     });
   </script>
 </head>
 <body style="background:#111; color:#fff; font-family:sans-serif;">
-  <h2>📜 My Order History</h2>
-  <table border="1" cellpadding="8" cellspacing="0" style="width:100%; text-align:center; background:#222;">
-    <thead>
-      <tr>
-        <th>Order ID</th>
-        <th>Client ID</th>
-        <th>Amount</th>
-        <th>Date & Time</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="ordersTableBody">
-      <tr><td colspan="5">Loading...</td></tr>
-    </tbody>
-  </table>
+  <h2>💎 Create Order</h2>
+  <form id="orderForm">
+    <label>Client ID:</label><br>
+    <input type="text" id="clientId" placeholder="Enter Client ID" style="padding:6px;"><br><br>
 
-  <br>
-  <button onclick="window.location.href='order.html'" 
-          style="padding:10px 20px; background:#0af; border:none; color:#fff; border-radius:6px;">
-    ➕ Make New Order
-  </button>
+    <label>Select Amount:</label><br>
+    <div>
+      <label><input type="radio" name="amount" value="10"> 💎10</label>
+      <label><input type="radio" name="amount" value="50"> 💎50</label>
+      <label><input type="radio" name="amount" value="100"> 💎100</label>
+      <label><input type="radio" name="amount" value="200"> 💎200</label>
+      <label><input type="radio" name="amount" value="500"> 💎500</label>
+      <label><input type="radio" name="amount" value="1000"> 💎1000</label>
+      <label><input type="radio" name="amount" value="2000"> 💎2000</label>
+      <label><input type="radio" name="amount" value="5000"> 💎5000</label>
+      <label><input type="radio" name="amount" value="10000"> 💎10000</label>
+      <label><input type="radio" name="amount" value="20000"> 💎20000</label>
+    </div>
+    <br>
+    <button type="submit" style="padding:10px 20px; background:#0af; color:#fff; border:none; border-radius:6px;">
+      Confirm Order
+    </button>
+  </form>
 </body>
 </html>
