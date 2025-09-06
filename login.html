@@ -1,35 +1,100 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
   <meta charset="UTF-8">
-  <title>Login</title>
+  <title>Diamond Recharge - Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body{margin:0;padding:0;font-family:sans-serif;background:#0f1115;color:#e7eaf0;display:flex;align-items:center;justify-content:center;height:100vh}
+    .card{background:#171a21;padding:30px;border-radius:16px;width:100%;max-width:400px;box-shadow:0 6px 16px rgba(0,0,0,.4)}
+    h2{text-align:center;margin-bottom:20px}
+    input{width:100%;padding:12px;margin:8px 0;border:none;border-radius:10px;background:#0c111a;color:#fff}
+    button{width:100%;padding:12px;margin-top:12px;border:none;border-radius:10px;background:#06b6d4;color:#001;font-weight:600;cursor:pointer}
+    p{text-align:center;margin-top:12px;color:#9aa3b2}
+    a{color:#06b6d4;cursor:pointer}
+    .hidden{display:none}
+  </style>
 </head>
 <body>
+
+<div class="card" id="loginBox">
   <h2>Login</h2>
   <form id="loginForm">
-    <input type="email" id="loginEmail" placeholder="Email" required><br>
-    <input type="password" id="loginPassword" placeholder="Password" required><br>
+    <input id="loginEmail" type="email" placeholder="Email" required>
+    <input id="loginPassword" type="password" placeholder="Password" required>
     <button type="submit">Login</button>
   </form>
+  <p>Don't have an account? <a onclick="toggleForm('signup')">Register</a></p>
+</div>
 
-  <p>Don't have an account? <a href="signup.html">Sign up</a></p>
+<div class="card hidden" id="signupBox">
+  <h2>Register</h2>
+  <form id="signupForm">
+    <input id="signupName" type="text" placeholder="Full Name" required>
+    <input id="signupEmail" type="email" placeholder="Email" required>
+    <input id="signupPassword" type="password" placeholder="Password" required>
+    <button type="submit">Sign Up</button>
+  </form>
+  <p>Already have an account? <a onclick="toggleForm('login')">Login</a></p>
+</div>
 
-  <script type="module">
-    import { auth } from "./app.js";
-    import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = document.getElementById("loginEmail").value;
-      const password = document.getElementById("loginPassword").value;
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        alert("Login successful!");
-        window.location.href = "dashboard.html";
-      } catch (error) {
-        alert("Login failed: " + error.message);
-      }
-    });
-  </script>
+  // আপনার Firebase Config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+    projectId: "diamond-recharge-f7f59",
+    storageBucket: "diamond-recharge-f7f59.firebasestorage.app",
+    messagingSenderId: "657717928489",
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+    measurementId: "G-TDK78BQ8SQ"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Toggle form
+  window.toggleForm = (mode)=>{
+    document.getElementById("loginBox").classList.toggle("hidden",mode==="signup");
+    document.getElementById("signupBox").classList.toggle("hidden",mode==="login");
+  };
+
+  // Login
+  document.getElementById("loginForm").addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    const email=document.getElementById("loginEmail").value;
+    const pass=document.getElementById("loginPassword").value;
+    try{
+      await signInWithEmailAndPassword(auth,email,pass);
+      alert("Login successful!");
+      location.href="index.html"; // লগিন হলে ড্যাশবোর্ডে নিয়ে যান
+    }catch(err){ alert(err.message); }
+  });
+
+  // Signup
+  document.getElementById("signupForm").addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    const name=document.getElementById("signupName").value;
+    const email=document.getElementById("signupEmail").value;
+    const pass=document.getElementById("signupPassword").value;
+    try{
+      const cred=await createUserWithEmailAndPassword(auth,email,pass);
+      await updateProfile(cred.user,{displayName:name});
+      await setDoc(doc(db,"users",cred.user.uid),{
+        name,email,
+        balance:0,status:"active",
+        createdAt:serverTimestamp()
+      });
+      alert("Account created!");
+      location.href="index.html";
+    }catch(err){ alert(err.message); }
+  });
+</script>
+
 </body>
 </html>
