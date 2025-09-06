@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Make Order - Sarkar Telecom</title>
+  <style>
+    body { background:#121212; color:#e7eaf0; font-family:Arial, sans-serif; margin:0; padding:20px; }
+    .card { max-width:420px; margin:auto; background:#1e1e1e; padding:20px; border-radius:8px; text-align:center; }
+    input, button { width:100%; padding:10px; margin:10px 0; border:none; border-radius:6px; }
+    input { background:#2a2a2a; color:#fff; }
+    button { background:#06b6d4; color:#001; font-weight:600; cursor:pointer; }
+    button:disabled { background:#333; color:#555; cursor:not-allowed; }
+    .diamond-btns { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+    .diamond-btn { flex:1 0 30%; background:#333; color:#0ff; padding:10px; border-radius:6px; cursor:pointer; text-align:center; }
+    .diamond-btn.active { background:#06b6d4; color:#000; }
+    #loading { text-align:center; padding:30px; font-size:16px; color:#9aa3b2; }
+  </style>
+</head>
+<body>
+  <div id="loading">⏳ Checking login…</div>
+  <div class="card" id="orderCard" style="display:none;">
+    <h2>💎 Make an Order</h2>
+    <input type="text" id="clientId" placeholder="Enter Profile ID / Number" />
+    <div class="diamond-btns" id="diamondBtns">
+      <div class="diamond-btn" data-amount="100">💎 100</div>
+      <div class="diamond-btn" data-amount="200">💎 200</div>
+      <div class="diamond-btn" data-amount="300">💎 300</div>
+      <div class="diamond-btn" data-amount="500">💎 500</div>
+      <div class="diamond-btn" data-amount="1000">💎 1000</div>
+      <div class="diamond-btn" data-amount="2000">💎 2000</div>
+      <div class="diamond-btn" data-amount="5000">💎 5000</div>
+      <div class="diamond-btn" data-amount="10000">💎 10000</div>
+    </div>
+    <button id="confirmBtn" disabled>✅ Confirm Order</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    setPersistence(auth, browserLocalPersistence);
+
+    let selectedAmount = null;
+    const loading = document.getElementById("loading");
+    const orderCard = document.getElementById("orderCard");
+    const clientIdInput = document.getElementById("clientId");
+    const confirmBtn = document.getElementById("confirmBtn");
+    const diamondBtns = document.getElementById("diamondBtns").querySelectorAll(".diamond-btn");
+
+    diamondBtns.forEach(btn => {
+      btn.onclick = () => {
+        diamondBtns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        selectedAmount = parseInt(btn.dataset.amount);
+        toggleConfirm();
+      };
+    });
+
+    clientIdInput.oninput = toggleConfirm;
+
+    function toggleConfirm() {
+      confirmBtn.disabled = !(clientIdInput.value.trim() && selectedAmount);
+    }
+
+    confirmBtn.onclick = async () => {
+      const uid = auth.currentUser.uid;
+      await addDoc(collection(db, "orders"), {
+        userId: uid,
+        clientId: clientIdInput.value.trim(),
+        amount: selectedAmount,
+        status: "WAITING",
+        createdAt: serverTimestamp()
+      });
+      alert("✅ Order placed successfully!");
+      window.location.href = "order-history.html";
+    };
+
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = "login.html";
+      } else {
+        loading.style.display = "none";
+        orderCard.style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>
