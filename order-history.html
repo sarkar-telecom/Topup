@@ -3,46 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order History</title>
+  <title>Order History - Sarkar Telecom</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#121212; color:white; text-align:center; }
-    .container { max-width:600px; margin:20px auto; padding:20px; }
-    table { width:100%; border-collapse:collapse; margin-top:20px; }
-    th, td { border:1px solid #444; padding:10px; text-align:center; }
-    th { background:#333; }
-    tr:nth-child(even) { background:#1e1e1e; }
-    button { margin-top:20px; padding:10px 20px; border:none; background:#4CAF50; color:white; font-weight:bold; border-radius:5px; cursor:pointer; }
-    button:hover { background:#45a049; }
+    :root {
+      --bg: #0f1115;
+      --card: #171a21;
+      --text: #e7eaf0;
+      --muted: #9aa3b2;
+      --accent: #06b6d4;
+      --ok: #10b981;
+      --bad: #ef4444;
+      --wait: #facc15;
+    }
+    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
+    header { background: var(--card); padding: 10px; border-bottom: 1px solid #202635; display: flex; justify-content: space-between; }
+    .site-name { font-size: 20px; font-weight: bold; color: var(--accent); }
+    .btn { background: var(--accent); color: #001; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-weight: bold; }
+
+    main { padding: 20px; max-width: 700px; margin: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #333; }
+    th { color: var(--muted); }
+    .status { padding: 4px 8px; border-radius: 6px; font-weight: bold; text-align: center; }
+    .WAITING { background: var(--wait); color: #000; }
+    .CONFIRMED { background: var(--ok); color: #fff; }
+    .CANCELLED { background: var(--bad); color: #fff; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>📜 Your Order History</h2>
+  <header>
+    <span class="site-name">📜 Order History</span>
+    <a href="order.html" class="btn">➕ New Order</a>
+  </header>
+
+  <main>
     <table>
       <thead>
         <tr>
-          <th>Client ID</th>
+          <th>Order ID</th>
+          <th>Profile ID</th>
           <th>Amount</th>
           <th>Status</th>
-          <th>Date</th>
+          <th>Time</th>
         </tr>
       </thead>
-      <tbody id="orderTable"></tbody>
+      <tbody id="ordersTable"></tbody>
     </table>
-    <button onclick="window.location.href='order.html'">➕ Place New Order</button>
-  </div>
+  </main>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, collection, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-    // ✅ Firebase Config
     const firebaseConfig = {
-      apiKey: "AIzaSyCCRD0u3KtZfkhKmwaRn40Ipqn13Bcw3Xw",
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
       authDomain: "diamond-recharge-f7f59.firebaseapp.com",
       projectId: "diamond-recharge-f7f59",
-      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      storageBucket: "diamond-recharge-f7f59.firebasestorage.app",
       messagingSenderId: "657717928489",
       appId: "1:657717928489:web:70431ebc9afb7002d4b238",
       measurementId: "G-TDK78BQ8SQ"
@@ -52,33 +70,34 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const orderTable = document.getElementById("orderTable");
+    const ordersTable = document.getElementById("ordersTable");
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
-        window.location.href = "login.html"; // যদি login না করা থাকে
+        window.location.href = "login.html";
         return;
       }
 
       const q = query(
         collection(db, "orders"),
         where("userId", "==", user.uid),
-        orderBy("createdAt", "desc")
+        orderBy("createdAt", "desc"),
+        limit(20)
       );
 
       onSnapshot(q, (snapshot) => {
-        orderTable.innerHTML = "";
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          const row = `
-            <tr>
-              <td>${data.clientId}</td>
-              <td>${data.amount}</td>
-              <td>${data.status}</td>
-              <td>${data.createdAt?.toDate().toLocaleString() || "N/A"}</td>
-            </tr>
+        ordersTable.innerHTML = "";
+        snapshot.forEach(doc => {
+          const order = doc.data();
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${doc.id}</td>
+            <td>${order.profileId}</td>
+            <td>${order.amount} 💎</td>
+            <td><span class="status ${order.status}">${order.status}</span></td>
+            <td>${order.createdAt?.toDate().toLocaleString() || ""}</td>
           `;
-          orderTable.innerHTML += row;
+          ordersTable.appendChild(row);
         });
       });
     });
