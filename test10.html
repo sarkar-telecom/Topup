@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order History</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#0f1115; color:#e7eaf0; padding:20px; text-align:center; }
+    h2 { color:#06b6d4; margin-bottom:15px; }
+    table { width:80%; margin:auto; border-collapse:collapse; background:#171a21; font-size:14px; }
+    th, td { border:1px solid #333; padding:6px; text-align:center; }
+    th { background:#06b6d4; color:#001; font-size:13px; }
+    td { font-size:13px; }
+
+    /* Status colors */
+    .status-box {
+      display:inline-block; 
+      width:28px; height:28px; 
+      line-height:28px; 
+      border-radius:6px;
+      color:#fff; font-size:16px;
+    }
+    .waiting { background:#eab308; } /* Yellow */
+    .completed { background:#22c55e; } /* Green */
+    .cancelled { background:#ef4444; } /* Red */
+
+    .pagination { margin-top:15px; }
+    .pagination button {
+      background:#06b6d4; border:none; color:#001;
+      padding:6px 14px; margin:3px; border-radius:6px;
+      cursor:pointer; font-size:14px;
+    }
+    .pagination button:disabled {
+      background:#333; color:#777; cursor:not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h2>📜 Order History</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>SL</th>
+        <th>Profile ID</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="orderTable"></tbody>
+  </table>
+
+  <div class="pagination">
+    <button id="prevBtn">⬅ Prev</button>
+    <button id="nextBtn">Next ➡</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const orderTable = document.getElementById("orderTable");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+
+    let orders = [];
+    let currentPage = 1;
+    const rowsPerPage = 10;
+
+    function renderTable() {
+      orderTable.innerHTML = "";
+      const start = (currentPage - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+      const paginated = orders.slice(start, end);
+
+      paginated.forEach((data, index) => {
+        const tr = document.createElement("tr");
+
+        let statusClass = "waiting", statusSymbol = "⏳";
+        if (data.status === "COMPLETED") {
+          statusClass = "completed"; statusSymbol = "✅";
+        } else if (data.status === "CANCELLED") {
+          statusClass = "cancelled"; statusSymbol = "🚫";
+        }
+
+        const timeStr = data.createdAt?.toDate ? 
+          data.createdAt.toDate().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"}) : "-";
+
+        tr.innerHTML = `
+          <td>${orders.length - (start + index)}</td>
+          <td>${data.profileId || "-"}</td>
+          <td>${data.amount || "-"}</td>
+          <td><span class="status-box ${statusClass}">${statusSymbol}</span></td>
+          <td>${timeStr}</td>
+        `;
+        orderTable.appendChild(tr);
+      });
+
+      prevBtn.disabled = currentPage === 1;
+      nextBtn.disabled = end >= orders.length;
+    }
+
+    async function loadOrders() {
+      const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+      orders = snapshot.docs.map(doc => doc.data());
+      renderTable();
+    }
+
+    prevBtn.addEventListener("click", () => { if (currentPage > 1) { currentPage--; renderTable(); } });
+    nextBtn.addEventListener("click", () => { if ((currentPage * rowsPerPage) < orders.length) { currentPage++; renderTable(); } });
+
+    loadOrders();
+  </script>
+</body>
+</html>
