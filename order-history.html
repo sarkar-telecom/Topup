@@ -1,251 +1,270 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Order History - Sarkar Telecom</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order History</title>
+  <link rel="stylesheet" href="style.css">
 
   <style>
-    :root{
-      --bg:#0f1115;--card:#171a21;--text:#e7eaf0;--muted:#9aa3b2;
-      --accent:#06b6d4;--ok:#10b981;--warn:#f59e0b;--bad:#ef4444;
+    body {
+      background: #111827;
+      color: white;
+      font-family: Arial, sans-serif;
     }
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
-    header{background:var(--card);border-bottom:1px solid #202635;padding:10px}
-    .top-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-    .site-info{display:flex;align-items:center;gap:10px}
-    .site-logo{height:40px;border-radius:8px}
-    .site-name{font-size:20px;font-weight:800;color:var(--accent)}
-    .user-info{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-    .user-box{background:#1f2430;padding:6px 12px;border-radius:8px;font-weight:600}
-    .user-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;background:#2b3347}
-    .btn{padding:6px 12px;border:none;border-radius:8px;font-weight:700;cursor:pointer}
-    .btn.logout{background:var(--bad);color:#fff}
-    .nav-row{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
-    .nav-row a{background:#1f2430;padding:8px 14px;border-radius:8px;text-decoration:none;color:var(--text);font-weight:700}
-    .nav-row a:hover{background:var(--accent);color:#001}
-
-    main{padding:20px}
-    .card{background:var(--card);border-radius:16px;padding:16px;box-shadow:0 6px 16px rgba(0,0,0,.25);max-width:980px;margin:0 auto}
-    h1{margin:8px 0 16px 0;text-align:center}
-    .filters{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:10px}
-    .input{background:#1f2430;border:none;border-radius:8px;padding:10px 12px;color:var(--text);min-width:220px}
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    thead th{background:#1f2430;color:var(--text);padding:12px;border-radius:8px 8px 0 0}
-    tbody td{padding:10px;border-top:1px solid #222}
-    .status{padding:6px 10px;border-radius:8px;font-weight:800;display:inline-block}
-    .WAITING{background:var(--warn);color:#111}
-    .CONFIRMED,.COMPLETED{background:var(--ok);color:#051}
-    .CANCELLED{background:var(--bad)}
-    .muted{color:var(--muted)}
-    .center{text-align:center}
+    .container {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 15px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .filter-bar input,
+    .filter-bar select {
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      flex: 1;
+      min-width: 150px;
+    }
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1px solid #333;
+    }
+    th {
+      background: #1f2937;
+    }
+    tr:nth-child(even) {
+      background: #1a2234;
+    }
+    .status-box {
+      padding: 4px 8px;
+      border-radius: 5px;
+      font-weight: bold;
+      display: inline-block;
+      min-width: 90px;
+    }
+    .waiting {
+      background: #facc15;
+      color: black;
+    }
+    .confirmed {
+      background: #22c55e;
+    }
+    .cancelled {
+      background: #ef4444;
+    }
+    .pagination {
+      margin-top: 15px;
+      text-align: center;
+    }
+    .pagination button {
+      padding: 6px 12px;
+      margin: 2px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background: #374151;
+      color: white;
+    }
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <header>
-    <div class="top-row">
-      <div class="site-info">
-        <img src="https://sarkar-telecom.github.io/Topup/logo.png" class="site-logo" alt="Logo">
-        <span class="site-name">SARKAR TELECOM</span>
-      </div>
-      <div class="user-info" id="userInfo"></div>
+  <div class="container">
+    <h2>My Order History</h2>
+
+    <div class="filter-bar">
+      <input type="text" id="searchOrder" placeholder="Search by Order ID / Profile ID">
+      <select id="statusFilter">
+        <option value="all">All Status</option>
+        <option value="WAITING">WAITING</option>
+        <option value="CONFIRMED">CONFIRMED</option>
+        <option value="CANCELLED">CANCELLED</option>
+      </select>
     </div>
-    <div class="nav-row">
-      <a href="dashboard.html">Dashboard</a>
-      <a href="order.html">Order</a>
-      <a href="order-history.html">Order History</a>
-      <a href="profile.html">Profile</a>
-    </div>
-  </header>
 
-  <!-- Page -->
-  <main>
-    <div class="card">
-      <h1>My Order History</h1>
-
-      <div class="filters">
-        <input id="searchBox" class="input" type="text" placeholder="Search by Order ID / Profile ID">
-        <select id="statusFilter" class="input">
-          <option value="">All Status</option>
-          <option>WAITING</option>
-          <option>CONFIRMED</option>
-          <option>COMPLETED</option>
-          <option>CANCELLED</option>
-        </select>
-      </div>
-
+    <div class="table-wrapper">
       <table>
         <thead>
           <tr>
             <th>Order ID</th>
             <th>Profile ID / Number</th>
             <th>💎 Amount</th>
-            <th>Date &amp; Time</th>
+            <th>Date & Time</th>
             <th>Status</th>
           </tr>
         </thead>
-        <tbody id="rows">
-          <tr><td colspan="5" class="center muted">Loading…</td></tr>
+        <tbody id="orderTable">
+          <tr>
+            <td colspan="5">⚠ Please login to see your orders</td>
+          </tr>
         </tbody>
       </table>
     </div>
-  </main>
 
-  <!-- Firebase v10 (modular) -->
+    <div class="pagination">
+      <button id="prevPage">Prev</button>
+      <button id="nextPage">Next</button>
+    </div>
+  </div>
+
+  <!-- Firebase Scripts -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import { 
-      getFirestore, collection, query, where, onSnapshot, doc, getDoc, updateDoc, Timestamp 
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, query, where, orderBy, limit, getDocs, startAfter } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // ✅ Your Firebase config (as you use everywhere)
+    // 🔹 আপনার Firebase Config বসান
     const firebaseConfig = {
-      apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
-      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
-      projectId: "diamond-recharge-f7f59",
-      storageBucket: "diamond-recharge-f7f59.appspot.com",
-      messagingSenderId: "657717928489",
-      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
-      measurementId: "G-TDK78BQ8SQ"
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
     };
 
-    const app  = initializeApp(firebaseConfig);
+    const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db   = getFirestore(app);
+    const db = getFirestore(app);
 
-    // Header refs
-    const userInfo   = document.getElementById("userInfo");
-    const rowsEl     = document.getElementById("rows");
-    const searchBox  = document.getElementById("searchBox");
+    let lastVisible = null;
+    let currentUserId = null;
+
+    const orderTable = document.getElementById("orderTable");
+    const searchInput = document.getElementById("searchOrder");
     const statusFilter = document.getElementById("statusFilter");
+    const prevBtn = document.getElementById("prevPage");
+    const nextBtn = document.getElementById("nextPage");
 
-    // Helpers
-    const fmt = (ts) => {
-      try {
-        if (!ts) return "-";
-        if (ts instanceof Timestamp) return ts.toDate().toLocaleString();
-        if (typeof ts === "number") return new Date(ts).toLocaleString();
-        if (ts.seconds) return new Date(ts.seconds*1000).toLocaleString();
-      } catch(e){}
-      return "-";
-    };
-    const millis = (ts) => {
-      if (!ts) return 0;
-      if (ts instanceof Timestamp) return ts.toMillis();
-      if (typeof ts === "number") return ts;
-      if (ts.seconds) return ts.seconds*1000;
-      return 0;
-    };
+    let orderCache = [];
+    let currentPage = 0;
 
-    // Live state
-    let allOrders = [];   // merged list from both (userId/uid)
-    let unsub1 = null, unsub2 = null;
-
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        userInfo.innerHTML = `<button class="btn" style="background:var(--accent);color:#001" onclick="location.href='login.html'">Login</button>`;
-        rowsEl.innerHTML = `<tr><td colspan="5" class="center">⚠ Please login to see your orders</td></tr>`;
+    function renderOrders(orders) {
+      orderTable.innerHTML = "";
+      if (orders.length === 0) {
+        orderTable.innerHTML = `<tr><td colspan="5">❌ No orders found</td></tr>`;
         return;
       }
 
-      // Header fill (email, avatar, balance)
-      let avatar = user.photoURL || "https://via.placeholder.com/40";
-      let balance = 0;
-      try {
-        const uref = doc(db, "users", user.uid);
-        const usnap = await getDoc(uref);
-        if (usnap.exists()) {
-          const u = usnap.data();
-          balance = u.balance || 0;
-          if (u.avatar) avatar = u.avatar;
-        }
-      } catch(e){ console.warn(e); }
+      orders.forEach(order => {
+        const tr = document.createElement("tr");
+        const statusClass = order.status === "WAITING" ? "waiting" :
+                            order.status === "CONFIRMED" ? "confirmed" : "cancelled";
+        const profileCell = order.profileId || order.number || "-";
 
-      userInfo.innerHTML = `
-        <img class="user-avatar" src="${avatar}" alt="User" onerror="this.src='https://via.placeholder.com/40'"/>
-        <div class="user-box">${user.email}</div>
-        <div class="user-box" style="color:var(--ok)">💎 ${balance}</div>
-        <button class="btn logout" id="logoutBtn">Logout</button>
-      `;
-      document.getElementById("logoutBtn").onclick = async () => { await signOut(auth); location.href="login.html"; };
-
-      // Attach listeners (support both field names)
-      const colRef = collection(db, "orders");
-
-      // Clear old
-      if (unsub1) unsub1(); if (unsub2) unsub2();
-      allOrders = [];
-
-      const applySnapshot = (snapshot) => {
-        const map = new Map(allOrders.map(o => [o.id, o])); // dedupe
-        snapshot.forEach(d => {
-          const data = d.data();
-          map.set(d.id, { id: d.id, ...data });
-        });
-        allOrders = Array.from(map.values())
-          .sort((a,b) => millis(b.createdAt || b.timestamp) - millis(a.createdAt || a.timestamp))
-          .slice(0, 20);
-        render();
-        // Auto-cancel (5 mins) for WAITING only
-        allOrders.forEach(async (o) => {
-          try {
-            const created = millis(o.createdAt || o.timestamp);
-            if (o.status === "WAITING" && Date.now() - created > 5*60*1000) {
-              await updateDoc(doc(db,"orders",o.id), { status: "CANCELLED" });
-            }
-          } catch(e){}
-        });
-      };
-
-      unsub1 = onSnapshot(query(colRef, where("userId","==",user.uid)), applySnapshot);
-      unsub2 = onSnapshot(query(colRef, where("uid","==",user.uid)),    applySnapshot);
-    });
-
-    function render() {
-      if (!allOrders.length) {
-        rowsEl.innerHTML = `<tr><td colspan="5" class="center muted">No orders found</td></tr>`;
-        return;
-      }
-      const term = (searchBox.value||"").trim().toLowerCase();
-      const flt  = statusFilter.value;
-
-      const filtered = allOrders.filter(o => {
-        const id = (o.id||"").toLowerCase();
-        const pid = (o.profileId || o.clientId || "").toString().toLowerCase();
-        const okText = !term || id.includes(term) || pid.includes(term);
-        const okStatus = !flt || (o.status === flt);
-        return okText && okStatus;
-      });
-
-      if (!filtered.length) {
-        rowsEl.innerHTML = `<tr><td colspan="5" class="center muted">No matching orders</td></tr>`;
-        return;
-      }
-
-      rowsEl.innerHTML = filtered.map(o => {
-        const status = o.status || "-";
-        const cls = (status === "WAITING") ? "WAITING" :
-                    (status === "CANCELLED") ? "CANCELLED" :
-                    (status === "CONFIRMED" || status === "COMPLETED") ? "COMPLETED" : "";
-        const amount = o.amount ?? o.diamonds ?? 0;
-        const profile = o.profileId || o.clientId || "-";
-        const ts = fmt(o.createdAt || o.timestamp);
-        return `
-          <tr data-id="${o.id}" data-status="${status}">
-            <td class="center">${o.id}</td>
-            <td class="center">${profile}</td>
-            <td class="center">💎 ${amount}</td>
-            <td class="center">${ts}</td>
-            <td class="center"><span class="status ${cls}">${status}</span></td>
-          </tr>
+        tr.innerHTML = `
+          <td>${order.id}</td>
+          <td>${profileCell}</td>
+          <td>💎 ${order.amount}</td>
+          <td>${order.date}</td>
+          <td><span class="status-box ${statusClass}">${order.status}</span></td>
         `;
-      }).join("");
+        orderTable.appendChild(tr);
+      });
     }
 
-    searchBox.addEventListener("input", render);
-    statusFilter.addEventListener("change", render);
+    async function loadOrders(page = 0) {
+      if (!currentUserId) return;
+
+      let q = query(
+        collection(db, "orders"),
+        where("userId", "==", currentUserId),
+        orderBy("createdAt", "desc"),
+        limit(20)
+      );
+
+      if (page > 0 && lastVisible) {
+        q = query(
+          collection(db, "orders"),
+          where("userId", "==", currentUserId),
+          orderBy("createdAt", "desc"),
+          startAfter(lastVisible),
+          limit(20)
+        );
+      }
+
+      const querySnapshot = await getDocs(q);
+      orderCache = [];
+      querySnapshot.forEach(doc => {
+        const data = doc.data();
+        orderCache.push({
+          id: doc.id,
+          profileId: data.profileId || "",
+          number: data.number || "",
+          amount: data.amount || 0,
+          status: data.status || "WAITING",
+          date: data.createdAt?.toDate().toLocaleString() || "-"
+        });
+      });
+
+      lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+      renderOrders(orderCache);
+    }
+
+    // 🔹 Authentication Check
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUserId = user.uid;
+        loadOrders();
+      } else {
+        orderTable.innerHTML = `<tr><td colspan="5">⚠ Please login to see your orders</td></tr>`;
+      }
+    });
+
+    // 🔹 Filter by status or search
+    statusFilter.addEventListener("change", () => {
+      let filtered = orderCache;
+      const status = statusFilter.value;
+      if (status !== "all") {
+        filtered = filtered.filter(o => o.status === status);
+      }
+      renderOrders(filtered);
+    });
+
+    searchInput.addEventListener("input", () => {
+      const keyword = searchInput.value.toLowerCase();
+      const filtered = orderCache.filter(o =>
+        o.id.toLowerCase().includes(keyword) ||
+        (o.profileId && o.profileId.toLowerCase().includes(keyword)) ||
+        (o.number && o.number.toLowerCase().includes(keyword))
+      );
+      renderOrders(filtered);
+    });
+
+    // 🔹 Pagination
+    prevBtn.addEventListener("click", () => {
+      if (currentPage > 0) {
+        currentPage--;
+        loadOrders(currentPage);
+      }
+    });
+    nextBtn.addEventListener("click", () => {
+      currentPage++;
+      loadOrders(currentPage);
+    });
   </script>
 </body>
 </html>
