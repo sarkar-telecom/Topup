@@ -4,19 +4,18 @@
   <meta charset="UTF-8">
   <title>📜 My Order History</title>
   <script type="module">
-    // Import Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { getFirestore, collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // ✅ আপনার Firebase config বসান
+    // ✅ আপনার Firebase config
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyBL-_2hFduDHHya03iCZHqv5EKQabS5XlQ",
+      authDomain: "topup-2e5c3.firebaseapp.com",
+      projectId: "topup-2e5c3",
+      storageBucket: "topup-2e5c3.appspot.com",
+      messagingSenderId: "157913706904",
+      appId: "1:157913706904:web:6dcb1d2c9e6d7a86ebf0f7"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -25,24 +24,20 @@
 
     const tableBody = document.getElementById("ordersTableBody");
 
-    // ইউজার লগইন আছে কিনা চেক করুন
     onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const uid = user.uid;
-        console.log("✅ Logged in:", uid);
-
-        // শুধুমাত্র ইউজারের অর্ডারগুলো আনুন
+      if (!user) {
+        window.location.href = "login.html";
+      } else {
         const q = query(
           collection(db, "orders"),
-          where("userId", "==", uid),
+          where("userId", "==", user.uid),
           orderBy("createdAt", "desc")
         );
 
-        // Realtime listener
         onSnapshot(q, (snapshot) => {
           tableBody.innerHTML = "";
           if (snapshot.empty) {
-            tableBody.innerHTML = `<tr><td colspan="5">No orders found.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="5">কোনো অর্ডার পাওয়া যায়নি।</td></tr>`;
             return;
           }
           snapshot.forEach((doc) => {
@@ -53,16 +48,15 @@
                 <td>${data.clientId}</td>
                 <td>💎 ${data.amount}</td>
                 <td>${new Date(data.createdAt).toLocaleString()}</td>
-                <td>${data.status}</td>
+                <td style="color:${
+                  data.status === "CONFIRMED" ? "lime" : 
+                  data.status === "CANCELLED" ? "red" : "yellow"
+                };">${data.status}</td>
               </tr>
             `;
             tableBody.innerHTML += row;
           });
         });
-
-      } else {
-        // লগইন না থাকলে লগইন পেজে পাঠিয়ে দিন
-        window.location.href = "login.html";
       }
     });
   </script>
