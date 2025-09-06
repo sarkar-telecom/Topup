@@ -3,28 +3,83 @@
 <head>
   <meta charset="UTF-8">
   <title>Dashboard</title>
-</head>
-<body>
-  <h2>Welcome to Dashboard</h2>
-  <p>You are logged in.</p>
-  <button id="logoutBtn">Logout</button>
+  <style>
+    body { font-family: Arial, sans-serif; background:#0f1115; color:#e7eaf0; text-align:center; }
+    .card { background:#171a21; padding:20px; border-radius:12px; max-width:400px; margin:50px auto; box-shadow:0 6px 16px rgba(0,0,0,.25); }
+    .btn { padding:10px 14px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
+    .btn.logout { background:#ef4444; color:#fff; }
+  </style>
 
   <script type="module">
-    import { auth } from "./app.js";
-    import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { 
+      getAuth, onAuthStateChanged, signOut 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { 
+      getFirestore, doc, getDoc 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    const logoutBtn = document.getElementById("logoutBtn");
-    logoutBtn.addEventListener("click", async () => {
-      await signOut(auth);
-      alert("Logged out!");
-      window.location.href = "login.html";
-    });
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
+    };
 
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const nameEl = document.getElementById("name");
+    const emailEl = document.getElementById("email");
+    const balanceEl = document.getElementById("balance");
+
+    // Check user state
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const ref = doc(db, "users", user.uid);
+          const snap = await getDoc(ref);
+
+          if (snap.exists()) {
+            const data = snap.data();
+            nameEl.textContent = data.name;
+            emailEl.textContent = data.email;
+            balanceEl.textContent = data.balance ?? 0;
+
+            // Save to localStorage
+            localStorage.setItem("user", JSON.stringify(data));
+          } else {
+            alert("⚠️ User data not found in Firestore");
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      } else {
         window.location.href = "login.html";
       }
     });
+
+    // Logout
+    async function logoutUser() {
+      await signOut(auth);
+      localStorage.removeItem("user");
+      window.location.href = "login.html";
+    }
+
+    window.logoutUser = logoutUser;
   </script>
+</head>
+<body>
+  <div class="card">
+    <h2>Welcome, <span id="name">Loading...</span></h2>
+    <p><b>Email:</b> <span id="email"></span></p>
+    <p><b>Balance:</b> 💎 <span id="balance">0</span></p>
+    <button class="btn logout" onclick="logoutUser()">Logout</button>
+  </div>
 </body>
 </html>
