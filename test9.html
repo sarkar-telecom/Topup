@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Order History</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background:#0f1115;
+      color:#e7eaf0;
+      padding:20px;
+      text-align:center;
+    }
+    h2 { color:#06b6d4; }
+    table {
+      width:80%;
+      margin:15px auto;
+      border-collapse:collapse;
+      font-size:14px;
+      background:#171a21;
+    }
+    th, td {
+      border:1px solid #333;
+      padding:6px;
+      text-align:center;
+      white-space:nowrap;
+    }
+    th {
+      background:#06b6d4;
+      color:#001;
+      font-size:13px;
+    }
+    td { font-size:13px; }
+
+    /* Status Colors */
+    .status-waiting { background:#facc15; color:#000; font-weight:bold; }
+    .status-completed { background:#22c55e; color:#fff; font-weight:bold; }
+    .status-cancelled { background:#ef4444; color:#fff; font-weight:bold; }
+
+    /* Pagination */
+    .pagination {
+      margin-top:15px;
+    }
+    .pagination button {
+      background:#06b6d4;
+      color:#001;
+      border:none;
+      padding:6px 12px;
+      margin:2px;
+      border-radius:4px;
+      cursor:pointer;
+      font-weight:bold;
+    }
+    .pagination button:disabled {
+      background:#333;
+      color:#666;
+      cursor:not-allowed;
+    }
+    @media(max-width:600px){
+      table { width:95%; font-size:12px; }
+      th,td{ padding:4px; font-size:11px; }
+    }
+  </style>
+</head>
+<body>
+  <h2>📜 All Orders (Test)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>SL</th>
+        <th>Order ID</th>
+        <th>Profile</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="orderTable"></tbody>
+  </table>
+
+  <div class="pagination">
+    <button id="prevBtn">⬅ Prev</button>
+    <button id="nextBtn">Next ➡</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    // 🔑 Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const orderTable = document.getElementById("orderTable");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+
+    let orders = [];
+    let currentPage = 1;
+    const perPage = 10;
+
+    function renderTable() {
+      orderTable.innerHTML = "";
+      if (orders.length === 0) {
+        orderTable.innerHTML = "<tr><td colspan='6'>⚠ No orders found.</td></tr>";
+        return;
+      }
+
+      let start = (currentPage - 1) * perPage;
+      let end = start + perPage;
+      let pageOrders = orders.slice(start, end);
+
+      pageOrders.forEach((data, index) => {
+        const tr = document.createElement("tr");
+        let statusClass = "";
+        let statusSymbol = "";
+
+        if (data.status === "WAITING") {
+          statusClass = "status-waiting";
+          statusSymbol = "⏳";
+        } else if (data.status === "COMPLETED") {
+          statusClass = "status-completed";
+          statusSymbol = "✅";
+        } else if (data.status === "CANCELLED") {
+          statusClass = "status-cancelled";
+          statusSymbol = "🚫";
+        }
+
+        let timeStr = "-";
+        if (data.createdAt?.toDate) {
+          const d = data.createdAt.toDate();
+          timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        }
+
+        tr.innerHTML = `
+          <td>${orders.length - (start + index)}</td>
+          <td>${data.id}</td>
+          <td>${data.profileId || "-"}</td>
+          <td>${data.amount || "-"}</td>
+          <td class="${statusClass}">${statusSymbol}</td>
+          <td>${timeStr}</td>
+        `;
+        orderTable.appendChild(tr);
+      });
+
+      prevBtn.disabled = currentPage === 1;
+      nextBtn.disabled = end >= orders.length;
+    }
+
+    prevBtn.addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTable();
+      }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      if (currentPage * perPage < orders.length) {
+        currentPage++;
+        renderTable();
+      }
+    });
+
+    async function loadOrders() {
+      orderTable.innerHTML = "<tr><td colspan='6'>⏳ Loading...</td></tr>";
+      try {
+        const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
+        orders = [];
+        snapshot.forEach(doc => {
+          orders.push({ id: doc.id, ...doc.data() });
+        });
+        renderTable();
+      } catch (err) {
+        orderTable.innerHTML = "<tr><td colspan='6'>❌ " + err.message + "</td></tr>";
+      }
+    }
+
+    loadOrders();
+  </script>
+</body>
+</html>
