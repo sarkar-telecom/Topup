@@ -2,84 +2,89 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Create Order</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Place Order</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#121212; color:white; text-align:center; }
+    .container { max-width:400px; margin:40px auto; padding:20px; background:#1e1e1e; border-radius:10px; }
+    input, select, button { width:100%; padding:10px; margin:10px 0; border-radius:5px; border:none; }
+    button { background:#4CAF50; color:white; cursor:pointer; font-weight:bold; }
+    button:hover { background:#45a049; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>💎 Place Your Order</h2>
+    <input type="text" id="clientId" placeholder="Enter Client ID" required />
+    <select id="amount">
+      <option value="100">100 Diamond</option>
+      <option value="500">500 Diamond</option>
+      <option value="1000">1000 Diamond</option>
+      <option value="5000">5000 Diamond</option>
+      <option value="10000">10000 Diamond</option>
+    </select>
+    <button id="placeOrderBtn">Place Order</button>
+    <p id="msg"></p>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // ✅ আপনার Firebase config
+    // ✅ Firebase Config
     const firebaseConfig = {
-      apiKey: "AIzaSyBL-_2hFduDHHya03iCZHqv5EKQabS5XlQ",
-      authDomain: "topup-2e5c3.firebaseapp.com",
-      projectId: "topup-2e5c3",
-      storageBucket: "topup-2e5c3.appspot.com",
-      messagingSenderId: "157913706904",
-      appId: "1:157913706904:web:6dcb1d2c9e6d7a86ebf0f7"
+      apiKey: "AIzaSyCCRD0u3KtZfkhKmwaRn40Ipqn13Bcw3Xw",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    const clientIdInput = document.getElementById("clientId");
+    const amountSelect = document.getElementById("amount");
+    const placeOrderBtn = document.getElementById("placeOrderBtn");
+    const msg = document.getElementById("msg");
+
     onAuthStateChanged(auth, (user) => {
       if (!user) {
-        window.location.href = "login.html";
-      } else {
-        document.getElementById("orderForm").addEventListener("submit", async (e) => {
-          e.preventDefault();
+        window.location.href = "login.html"; // যদি login না করা থাকে
+      }
+    });
 
-          const clientId = document.getElementById("clientId").value.trim();
-          const amount = document.querySelector('input[name="amount"]:checked')?.value;
+    placeOrderBtn.addEventListener("click", async () => {
+      const clientId = clientIdInput.value.trim();
+      const amount = parseInt(amountSelect.value);
 
-          if (!clientId || !amount) {
-            alert("⚠️ Client ID এবং Amount দিতে হবে!");
-            return;
-          }
+      if (!clientId) {
+        msg.textContent = "⚠️ Client ID is required!";
+        return;
+      }
 
-          try {
-            await addDoc(collection(db, "orders"), {
-              clientId: clientId,
-              amount: Number(amount),
-              status: "WAITING",
-              createdAt: Date.now(),
-              userId: user.uid
-            });
-
-            alert("✅ Order সফলভাবে সম্পন্ন হয়েছে!");
-            window.location.href = "order-history.html";
-          } catch (err) {
-            console.error(err);
-            alert("❌ Order করতে সমস্যা হয়েছে!");
-          }
+      try {
+        const user = auth.currentUser;
+        await addDoc(collection(db, "orders"), {
+          clientId: clientId,
+          amount: amount,
+          status: "WAITING",
+          userId: user.uid,
+          createdAt: serverTimestamp()
         });
+
+        msg.textContent = "✅ Order successfully placed!";
+        setTimeout(() => {
+          window.location.href = "order-history.html";
+        }, 1200);
+      } catch (error) {
+        msg.textContent = "❌ Error: " + error.message;
       }
     });
   </script>
-</head>
-<body style="background:#111; color:#fff; font-family:sans-serif;">
-  <h2>💎 Create Order</h2>
-  <form id="orderForm">
-    <label>Client ID:</label><br>
-    <input type="text" id="clientId" placeholder="Enter Client ID" style="padding:6px; border-radius:5px;"><br><br>
-
-    <label>Select Amount:</label><br>
-    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin:10px 0;">
-      <label><input type="radio" name="amount" value="10"> 💎10</label>
-      <label><input type="radio" name="amount" value="50"> 💎50</label>
-      <label><input type="radio" name="amount" value="100"> 💎100</label>
-      <label><input type="radio" name="amount" value="200"> 💎200</label>
-      <label><input type="radio" name="amount" value="500"> 💎500</label>
-      <label><input type="radio" name="amount" value="1000"> 💎1000</label>
-      <label><input type="radio" name="amount" value="2000"> 💎2000</label>
-      <label><input type="radio" name="amount" value="5000"> 💎5000</label>
-      <label><input type="radio" name="amount" value="10000"> 💎10000</label>
-      <label><input type="radio" name="amount" value="20000"> 💎20000</label>
-    </div>
-
-    <button type="submit" style="padding:10px 20px; background:#0af; color:#fff; border:none; border-radius:6px;">
-      Confirm Order
-    </button>
-  </form>
 </body>
 </html>
