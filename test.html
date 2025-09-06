@@ -3,92 +3,82 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Place Order</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <title>Test Order History</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#0f1115; color:#e7eaf0; padding:20px; }
+    h2 { text-align:center; color:#06b6d4; }
+    table { width:100%; border-collapse:collapse; margin-top:20px; background:#171a21; }
+    th, td { border:1px solid #333; padding:10px; text-align:center; }
+    th { background:#06b6d4; color:#001; }
+  </style>
 </head>
-<body class="bg-gray-900 text-white">
+<body>
+  <h2>📜 All Orders (Test)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Email</th>
+        <th>Profile ID</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="orderTable"></tbody>
+  </table>
 
-  <div class="p-4 bg-gray-800 shadow flex justify-between items-center">
-    <h1 class="text-lg font-bold">➕ Place Order</h1>
-    <button id="logoutBtn" class="bg-red-500 px-3 py-1 rounded">Logout</button>
-  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  <div class="p-6">
-    <label class="block mb-2">Profile ID / Number</label>
-    <input type="text" id="profileId" class="w-full p-2 rounded bg-gray-800 border border-gray-600 text-white mb-4">
-
-    <label class="block mb-2">Amount</label>
-    <select id="amount" class="w-full p-2 rounded bg-gray-800 border border-gray-600 text-white mb-4">
-      <option value="50">💎 50</option>
-      <option value="200">💎 200</option>
-      <option value="500">💎 500</option>
-      <option value="1000">💎 1000</option>
-      <option value="5000">💎 5000</option>
-      <option value="10000">💎 10000</option>
-      <option value="20000">💎 20000</option>
-    </select>
-
-    <button id="orderBtn" class="bg-blue-500 px-4 py-2 rounded w-full">Place Order</button>
-  </div>
-
-  <script>
-    // 🔥 আপনার Firebase Config বসান
+    // 🔑 তোমার নতুন Firebase Config
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-    const orderBtn = document.getElementById("orderBtn");
-
-    // Auth check
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = "login.html";
-      }
-    });
-
-    // Place order
-    orderBtn.addEventListener("click", async () => {
-      const user = auth.currentUser;
-      if (!user) return alert("Login required!");
-
-      const profileId = document.getElementById("profileId").value.trim();
-      const amount = parseInt(document.getElementById("amount").value);
-
-      if (!profileId) return alert("Please enter Profile ID / Number");
+    async function loadOrders() {
+      const orderTable = document.getElementById("orderTable");
+      orderTable.innerHTML = "<tr><td colspan='6'>⏳ Loading...</td></tr>";
 
       try {
-        await db.collection("orders").add({
-          clientId: profileId,
-          amount: amount,
-          status: "WAITING",
-          userId: user.uid,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+          orderTable.innerHTML = "<tr><td colspan='6'>⚠ No orders found.</td></tr>";
+          return;
+        }
+
+        orderTable.innerHTML = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${doc.id}</td>
+            <td>${data.email || "-"}</td>
+            <td>${data.profileId || "-"}</td>
+            <td>${data.amount || "-"}</td>
+            <td>${data.status || "-"}</td>
+            <td>${data.createdAt?.toDate ? data.createdAt.toDate().toLocaleString() : "-"}</td>
+          `;
+          orderTable.appendChild(tr);
         });
-
-        alert("✅ Order Successfully Placed!");
-        window.location.href = "order-history.html"; // redirect to history
-      } catch (error) {
-        console.error(error);
-        alert("❌ Failed to place order!");
+      } catch (err) {
+        orderTable.innerHTML = "<tr><td colspan='6'>❌ " + err.message + "</td></tr>";
       }
-    });
+    }
 
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      auth.signOut();
-    });
+    loadOrders();
   </script>
-
 </body>
 </html>
