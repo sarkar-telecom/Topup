@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order History</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#0f1115; color:#e7eaf0; padding:20px; text-align:center; margin:0; }
+    header {
+      background:#171a21;
+      padding:12px 20px;
+      text-align:center;
+      color:#06b6d4;
+      font-size:18px;
+      font-weight:bold;
+      box-shadow:0 2px 6px rgba(0,0,0,0.4);
+      margin-bottom:15px;
+    }
+    h2 { color:#06b6d4; margin-bottom:10px; }
+    .top-bar { display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:15px; }
+    .search-box input {
+      padding:8px 12px; width:80%; max-width:320px;
+      border-radius:6px; border:1px solid #333;
+      background:#171a21; color:#e7eaf0;
+    }
+    .nav-btn {
+      background:#22c55e; border:none; color:#001;
+      padding:8px 14px; border-radius:6px; cursor:pointer;
+      font-size:14px; font-weight:bold;
+    }
+    .nav-btn:hover { background:#16a34a; }
+
+    table { width:95%; margin:auto; border-collapse:collapse; background:#171a21; font-size:14px; }
+    th, td { border:1px solid #333; padding:6px; text-align:center; }
+    th { background:#06b6d4; color:#001; font-size:13px; }
+    td { font-size:13px; }
+
+    .status-box {
+      display:inline-block; width:28px; height:28px;
+      line-height:28px; border-radius:6px;
+      color:#fff; font-size:16px;
+    }
+    .waiting { background:#eab308; }
+    .completed { background:#22c55e; }
+    .cancelled { background:#ef4444; }
+
+    .pagination { margin-top:15px; }
+    .pagination button {
+      background:#06b6d4; border:none; color:#001;
+      padding:6px 14px; margin:3px; border-radius:6px;
+      cursor:pointer; font-size:14px;
+    }
+    .pagination button:disabled {
+      background:#333; color:#777; cursor:not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <header>💎 Sarkar Telecom - Order History</header>
+
+  <h2>📜 Order History</h2>
+
+  <div class="top-bar">
+    <!-- 🔍 Search -->
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="🔍 Search by Profile ID / Amount / Status">
+    </div>
+    <!-- ➕ Go to Order Page -->
+    <button class="nav-btn" onclick="window.location.href='order.html'">➕ New Order</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>SL</th>
+        <th>Profile ID</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="orderTable"></tbody>
+  </table>
+
+  <div class="pagination">
+    <button id="prevBtn">⬅ Prev</button>
+    <button id="nextBtn">Next ➡</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const orderTable = document.getElementById("orderTable");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const searchInput = document.getElementById("searchInput");
+
+    let orders = [];
+    let filteredOrders = [];
+    let currentPage = 1;
+    const rowsPerPage = 10;
+
+    function renderTable() {
+      orderTable.innerHTML = "";
+      const activeOrders = filteredOrders.length ? filteredOrders : orders;
+      const start = (currentPage - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+      const paginated = activeOrders.slice(start, end);
+
+      paginated.forEach((data, index) => {
+        const tr = document.createElement("tr");
+
+        let statusClass = "waiting", statusSymbol = "⏳";
+        if (data.status === "COMPLETED") { statusClass = "completed"; statusSymbol = "✅"; }
+        else if (data.status === "CANCELLED") { statusClass = "cancelled"; statusSymbol = "🚫"; }
+
+        const timeStr = data.createdAt?.toDate
+          ? data.createdAt.toDate().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})
+          : "-";
+
+        tr.innerHTML = `
+          <td>${activeOrders.length - (start + index)}</td>
+          <td>${data.profileId || "-"}</td>
+          <td>${data.amount || "-"}</td>
+          <td><span class="status-box ${statusClass}">${statusSymbol}</span></td>
+          <td>${timeStr}</td>
+        `;
+        orderTable.appendChild(tr);
+      });
+
+      prevBtn.disabled = currentPage === 1;
+      nextBtn.disabled = end >= activeOrders.length;
+    }
+
+    async function loadOrders() {
+      const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+      orders = snapshot.docs.map(doc => doc.data());
+      filteredOrders = [];
+      renderTable();
+    }
+
+    // 🔍 Search Filter
+    searchInput.addEventListener("input", () => {
+      const term = searchInput.value.toLowerCase();
+      if (term) {
+        filteredOrders = orders.filter(o =>
+          (o.profileId && o.profileId.toLowerCase().includes(term)) ||
+          (o.amount && String(o.amount).toLowerCase().includes(term)) ||
+          (o.status && o.status.toLowerCase().includes(term))
+        );
+      } else {
+        filteredOrders = [];
+      }
+      currentPage = 1;
+      renderTable();
+    });
+
+    prevBtn.addEventListener("click", () => { if (currentPage > 1) { currentPage--; renderTable(); } });
+    nextBtn.addEventListener("click", () => { 
+      const activeOrders = filteredOrders.length ? filteredOrders : orders;
+      if ((currentPage * rowsPerPage) < activeOrders.length) { currentPage++; renderTable(); }
+    });
+
+    loadOrders();
+  </script>
+</body>
+</html>
