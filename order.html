@@ -3,80 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order - Sarkar Telecom</title>
+  <title>New Order</title>
   <style>
-    :root {
-      --bg: #0f1115;
-      --card: #171a21;
-      --text: #e7eaf0;
-      --muted: #9aa3b2;
-      --accent: #06b6d4;
-      --ok: #10b981;
-      --bad: #ef4444;
-      --wait: #facc15;
+    body { font-family: Arial, sans-serif; background: #0f1115; color: #e7eaf0; padding: 20px; }
+    h2 { color: #06b6d4; text-align: center; }
+    .form {
+      max-width: 400px; margin: auto; background: #171a21; padding: 20px;
+      border-radius: 12px; box-shadow: 0 6px 16px rgba(0,0,0,.25);
     }
-    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
-    header { background: var(--card); padding: 10px; border-bottom: 1px solid #202635; }
-    .site-name { font-size: 20px; font-weight: bold; color: var(--accent); }
-
-    main { padding: 20px; max-width: 500px; margin: auto; }
-    .card { background: var(--card); padding: 20px; border-radius: 10px; }
-    h2 { margin-top: 0; }
-
     input {
-      width: 100%; padding: 10px; margin: 10px 0;
-      border-radius: 6px; border: none; outline: none;
-      background: #1f2430; color: var(--text);
+      width: 100%; padding: 10px; margin: 8px 0;
+      border: 1px solid #333; border-radius: 6px;
+      background: #1f2430; color: #e7eaf0;
     }
-
-    .amount-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
-    .amount-buttons button {
-      flex: 1; padding: 10px; border: none; border-radius: 6px;
-      background: #1f2430; color: var(--text); font-weight: bold; cursor: pointer;
+    button {
+      width: 100%; padding: 10px; margin-top: 12px;
+      border: none; border-radius: 6px; cursor: pointer;
+      background: #06b6d4; color: #001; font-weight: 600;
     }
-    .amount-buttons button.active { background: var(--accent); color: #001; }
-
-    .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-    .btn.confirm { background: var(--ok); color: #fff; }
-    .btn.confirm:disabled { background: #444; cursor: not-allowed; }
-
-    .message { margin-top: 15px; font-weight: bold; text-align: center; }
-    .success { color: var(--ok); }
-    .error { color: var(--bad); }
+    button:hover { background: #05a0bb; }
+    .msg { text-align: center; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <header>
-    <span class="site-name">💎 Place Order</span>
-  </header>
-
-  <main>
-    <div class="card">
-      <h2>New Order</h2>
-      <input type="text" id="profileId" placeholder="Enter Profile ID / Mobile Number" />
-
-      <div class="amount-buttons" id="amountButtons">
-        <button data-amount="50">50 💎</button>
-        <button data-amount="100">100 💎</button>
-        <button data-amount="200">200 💎</button>
-        <button data-amount="500">500 💎</button>
-      </div>
-
-      <button class="btn confirm" id="confirmOrder" disabled>Confirm Order</button>
-      <div class="message" id="msgBox"></div>
-    </div>
-  </main>
+  <h2>➕ Place New Order</h2>
+  <div class="form">
+    <input type="text" id="profileId" placeholder="Enter Profile ID" required>
+    <input type="number" id="amount" placeholder="Enter Amount" required>
+    <button id="orderBtn">Submit Order</button>
+    <div class="msg" id="msg"></div>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
+    // ✅ Updated Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
       authDomain: "diamond-recharge-f7f59.firebaseapp.com",
       projectId: "diamond-recharge-f7f59",
-      storageBucket: "diamond-recharge-f7f59.firebasestorage.app",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
       messagingSenderId: "657717928489",
       appId: "1:657717928489:web:70431ebc9afb7002d4b238",
       measurementId: "G-TDK78BQ8SQ"
@@ -86,76 +54,47 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const profileIdInput = document.getElementById("profileId");
-    const confirmBtn = document.getElementById("confirmOrder");
-    const msgBox = document.getElementById("msgBox");
-    let selectedAmount = null;
+    const orderBtn = document.getElementById("orderBtn");
+    const msg = document.getElementById("msg");
 
-    // Select order amount
-    document.querySelectorAll("#amountButtons button").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll("#amountButtons button").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        selectedAmount = parseInt(btn.dataset.amount);
-        checkForm();
-      });
+    let currentUser = null;
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "login.html"; 
+      } else {
+        currentUser = user;
+      }
     });
 
-    // Enable confirm only if valid
-    function checkForm() {
-      confirmBtn.disabled = !(profileIdInput.value && selectedAmount);
-    }
-    profileIdInput.addEventListener("input", checkForm);
+    orderBtn.addEventListener("click", async () => {
+      const profileId = document.getElementById("profileId").value.trim();
+      const amount = parseInt(document.getElementById("amount").value.trim());
+      msg.textContent = "";
 
-    // Place order
-    confirmBtn.addEventListener("click", async () => {
-      msgBox.textContent = "";
-      const profileId = profileIdInput.value.trim();
+      if (!profileId || !amount) {
+        msg.textContent = "⚠ Please fill all fields.";
+        msg.style.color = "red";
+        return;
+      }
 
-      if (!profileId || !selectedAmount) return;
-
-      onAuthStateChanged(auth, async (user) => {
-        if (!user) {
-          window.location.href = "login.html";
-          return;
-        }
-
-        const userRef = doc(db, "users", user.uid);
-        const snap = await getDoc(userRef);
-
-        if (!snap.exists()) {
-          msgBox.textContent = "User data not found!";
-          msgBox.className = "message error";
-          return;
-        }
-
-        const data = snap.data();
-        let balance = data.balance || 0;
-
-        if (balance < selectedAmount) {
-          msgBox.textContent = "❌ Insufficient balance!";
-          msgBox.className = "message error";
-          return;
-        }
-
-        // Deduct balance
-        await updateDoc(userRef, { balance: balance - selectedAmount });
-
-        // Add order
+      try {
         await addDoc(collection(db, "orders"), {
-          userId: user.uid,
-          email: user.email,
+          userId: currentUser.uid,
+          email: currentUser.email,
           profileId: profileId,
-          amount: selectedAmount,
+          amount: amount,
           status: "WAITING",
           createdAt: serverTimestamp()
         });
 
-        msgBox.textContent = "✅ Order successfully placed!";
-        msgBox.className = "message success";
-
-        setTimeout(() => { window.location.href = "order-history.html"; }, 2000);
-      });
+        msg.textContent = "✅ Order placed successfully!";
+        msg.style.color = "lightgreen";
+        setTimeout(() => window.location.href = "order-history.html", 1500);
+      } catch (err) {
+        msg.textContent = "❌ " + err.message;
+        msg.style.color = "red";
+      }
     });
   </script>
 </body>
