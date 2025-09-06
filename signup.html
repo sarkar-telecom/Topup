@@ -3,51 +3,68 @@
 <head>
   <meta charset="UTF-8">
   <title>Signup</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { 
+      getAuth, createUserWithEmailAndPassword 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { 
+      getFirestore, doc, setDoc, serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Signup Function
+    async function signupUser(e) {
+      e.preventDefault();
+      const name  = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const pass  = document.getElementById("password").value.trim();
+
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, pass);
+
+        await setDoc(doc(db, "users", cred.user.uid), {
+          uid: cred.user.uid,
+          name: name,
+          email: email,
+          balance: 0,
+          role: "user",
+          approved: false,
+          createdAt: serverTimestamp()
+        });
+
+        alert("✅ Signup successful! এখন Login করুন");
+        window.location.href = "login.html";
+      } catch (err) {
+        alert("❌ Error: " + err.message);
+      }
+    }
+
+    window.signupUser = signupUser;
+  </script>
 </head>
 <body>
   <h2>Signup</h2>
-  <form id="signupForm">
-    <input type="text" id="signupName" placeholder="Full Name" required><br>
-    <input type="email" id="signupEmail" placeholder="Email" required><br>
-    <input type="password" id="signupPassword" placeholder="Password" required><br>
-    <button type="submit">Sign Up</button>
+  <form onsubmit="signupUser(event)">
+    <input id="name" type="text" placeholder="Full Name" required><br>
+    <input id="email" type="email" placeholder="Email" required><br>
+    <input id="password" type="password" placeholder="Password" required><br>
+    <button type="submit">Signup</button>
   </form>
-
-  <p>Already have an account? <a href="login.html">Login</a></p>
-
-  <script type="module">
-    import { auth, db } from "./app.js";
-    import { createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    document.getElementById("signupForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const name = document.getElementById("signupName").value;
-      const email = document.getElementById("signupEmail").value;
-      const password = document.getElementById("signupPassword").value;
-
-      try {
-        // create account
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(cred.user, { displayName: name });
-
-        // save user data in Firestore
-        await setDoc(doc(db, "users", cred.user.uid), {
-          uid: cred.user.uid,
-          name,
-          email,
-          createdAt: serverTimestamp(),
-          balance: 0,
-          status: "pending",
-          role: "user"
-        });
-
-        alert("Signup successful!");
-        window.location.href = "dashboard.html";
-      } catch (error) {
-        alert("Signup failed: " + error.message);
-      }
-    });
-  </script>
+  <p>Already have account? <a href="login.html">Login</a></p>
 </body>
 </html>
