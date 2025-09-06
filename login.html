@@ -1,35 +1,20 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Login</title>
-  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="content max-400">
-    <h2>Login</h2>
+    <h2>🔑 Login</h2>
     <form id="loginForm" class="form">
-      <input type="email" id="email" placeholder="Email" required>
-      <input type="password" id="password" placeholder="Password" required>
+      <input type="email" id="loginEmail" placeholder="Email" required>
+      <input type="password" id="loginPassword" placeholder="Password" required>
       <button class="btn w-100">Login</button>
     </form>
-    <p class="mt">No account? <a href="signup.html">Create one</a></p>
+    <p class="mt">Don't have an account? <a href="signup.html">Sign up</a></p>
   </div>
-
-  <script type="module">
-    import { auth } from "./assets/app.js";
-    import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-    const form=document.getElementById("loginForm");
-    form.onsubmit=async(e)=>{
-      e.preventDefault();
-      const email=form.email.value;
-      const pass=form.password.value;
-      try{
-        await signInWithEmailAndPassword(auth,email,pass);
-        location.href="dashboard.html";
-      }catch(err){ alert(err.message); }
-    };
-  </script>
+  <script type="module" src="page.js"></script>
 </body>
 </html>
