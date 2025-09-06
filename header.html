@@ -1,7 +1,14 @@
 <!-- header.html -->
-<div class="topbar">
-  <h2>Diamond Recharge</h2>
-  <nav>
+<header class="header">
+  <div class="logo-area">
+    <img src="assets/logo.png" alt="logo" class="logo" />
+    <h2>SARKAR TELECOM</h2>
+  </div>
+
+  <button class="menu-toggle" id="menuToggle">☰</button>
+
+  <nav class="nav" id="navMenu">
+    <span id="userInfo"></span>
     <a href="dashboard.html">Dashboard</a>
     <a href="balance.html">Balance</a>
     <a href="order.html">Orders</a>
@@ -9,25 +16,38 @@
     <a href="admin.html">Admin</a>
     <a href="logout.html" class="logout-btn">Logout</a>
   </nav>
-</div>
+</header>
 
 <style>
-.topbar {
+/* Base */
+.header {
   background:#171a21;
-  padding:12px 20px;
+  color:#e7eaf0;
   display:flex;
   align-items:center;
   justify-content:space-between;
+  padding:10px 20px;
   border-bottom:1px solid #202635;
+  position:sticky;
+  top:0;
+  z-index:1000;
 }
-.topbar h2 {margin:0; color:#06b6d4;}
-.topbar nav a {
+.logo-area { display:flex; align-items:center; gap:10px; }
+.logo { height:32px; width:32px; border-radius:50%; }
+h2 { margin:0; color:#06b6d4; }
+
+/* Nav */
+.nav {
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+.nav a {
   color:#e7eaf0;
-  margin-left:16px;
   text-decoration:none;
   font-weight:600;
 }
-.topbar nav a:hover { color:#06b6d4; }
+.nav a:hover { color:#06b6d4; }
 .logout-btn {
   background:#1f2430;
   border:1px solid #2b3347;
@@ -35,4 +55,74 @@
   border-radius:8px;
 }
 .logout-btn:hover { background:#ef4444; border-color:#ef4444; color:#fff; }
+
+/* User info */
+#userInfo {
+  font-size:14px;
+  color:#9aa3b2;
+  margin-right:12px;
+  white-space:nowrap;
+}
+
+/* Mobile */
+.menu-toggle {
+  display:none;
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:22px;
+  cursor:pointer;
+}
+@media(max-width:768px){
+  .menu-toggle { display:block; }
+  .nav {
+    position:absolute;
+    top:60px; right:0;
+    background:#0f1115;
+    flex-direction:column;
+    align-items:flex-start;
+    padding:12px;
+    gap:10px;
+    width:200px;
+    border-left:1px solid #202635;
+    display:none;
+  }
+  .nav.show { display:flex; }
+}
 </style>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+  authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+  projectId: "diamond-recharge-f7f59",
+  storageBucket: "diamond-recharge-f7f59.appspot.com",
+  messagingSenderId: "657717928489",
+  appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Toggle menu (mobile)
+document.getElementById("menuToggle").addEventListener("click", ()=>{
+  document.getElementById("navMenu").classList.toggle("show");
+});
+
+// Show user info
+onAuthStateChanged(auth, async (user)=>{
+  if(user){
+    const uref = doc(db,"users",user.uid);
+    const snap = await getDoc(uref);
+    let balance = 0;
+    if(snap.exists()) balance = snap.data().balance || 0;
+    document.getElementById("userInfo").innerHTML =
+      `${user.displayName || "User"} | ${user.email} | 💎 ${balance}`;
+  }
+});
+</script>
