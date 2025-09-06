@@ -1,23 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Order History</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body { background:#121212; color:#fff; font-family:sans-serif; margin:0; padding:10px; }
-    .card { background:#1e1e1e; padding:20px; border-radius:10px; margin:auto; max-width:800px; }
-    table { width:100%; border-collapse:collapse; margin-top:15px; }
-    th, td { padding:10px; border-bottom:1px solid #333; text-align:center; }
-    th { background:#222; }
-    .status { padding:4px 8px; border-radius:6px; font-weight:bold; }
-    .WAITING { background:gold; color:#000; }
-    .CONFIRMED { background:limegreen; color:#000; }
-    .CANCELLED { background:red; color:#fff; }
-  </style>
-</head>
 <body>
-  <div class="card">
+  <div id="loading">⏳ Checking login...</div>
+  <div class="card" style="display:none;" id="historyCard">
     <h2>📜 My Order History</h2>
     <table>
       <thead>
@@ -33,56 +16,62 @@
     </table>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, collection, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // ✅ আপনার config এখানে বসান
-    const firebaseConfig = {
-      apiKey: "AIzaSy***************",
-      authDomain: "your-project.firebaseapp.com",
-      projectId: "your-project",
-      storageBucket: "your-project.appspot.com",
-      messagingSenderId: "**********",
-      appId: "1:**********:web:**********"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+    projectId: "diamond-recharge-f7f59",
+    storageBucket: "diamond-recharge-f7f59.appspot.com",
+    messagingSenderId: "657717928489",
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+    measurementId: "G-TDK78BQ8SQ"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    setPersistence(auth, browserLocalPersistence);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  setPersistence(auth, browserLocalPersistence);
 
-    const table = document.getElementById("orderTable");
+  const loading = document.getElementById("loading");
+  const historyCard = document.getElementById("historyCard");
+  const table = document.getElementById("orderTable");
 
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        window.location.href="login.html";
-      } else {
-        const q = query(
-          collection(db, "orders"),
-          where("userId", "==", user.uid),
-          orderBy("createdAt", "desc"),
-          limit(20)
-        );
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
 
-        onSnapshot(q, (snapshot) => {
-          table.innerHTML="";
-          snapshot.forEach((doc) => {
-            const d=doc.data();
-            const t = d.createdAt?.toDate().toLocaleString() || "-";
-            table.innerHTML += `
-              <tr>
-                <td>${doc.id}</td>
-                <td>${d.clientId}</td>
-                <td>💎 ${d.amount}</td>
-                <td>${t}</td>
-                <td><span class="status ${d.status}">${d.status}</span></td>
-              </tr>`;
-          });
-        });
-      }
+    // hide loader, show card
+    loading.style.display = "none";
+    historyCard.style.display = "block";
+
+    const q = query(
+      collection(db, "orders"),
+      where("userId", "==", user.uid),
+      orderBy("createdAt", "desc"),
+      limit(20)
+    );
+
+    onSnapshot(q, (snapshot) => {
+      table.innerHTML = "";
+      snapshot.forEach((doc) => {
+        const d = doc.data();
+        const t = d.createdAt?.toDate().toLocaleString() || "-";
+        table.innerHTML += `
+          <tr>
+            <td>${doc.id}</td>
+            <td>${d.clientId}</td>
+            <td>💎 ${d.amount}</td>
+            <td>${t}</td>
+            <td><span class="status ${d.status}">${d.status}</span></td>
+          </tr>`;
+      });
     });
-  </script>
+  });
+</script>
 </body>
-</html>
