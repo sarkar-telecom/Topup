@@ -33,6 +33,11 @@
       border: 1px solid #333; border-radius: 6px;
       background: #1f2430; color: var(--text);
     }
+    .remember {
+      display: flex; align-items: center; gap: 6px;
+      margin-top: 5px; margin-bottom: 10px;
+      font-size: 14px;
+    }
     button {
       width: 100%; padding: 10px;
       background: var(--accent); color: #001;
@@ -51,6 +56,12 @@
   <h2>Login</h2>
   <input type="email" id="email" placeholder="Email" required>
   <input type="password" id="password" placeholder="Password" required>
+
+  <div class="remember">
+    <input type="checkbox" id="rememberMe">
+    <label for="rememberMe">Remember Me</label>
+  </div>
+
   <button id="loginBtn">Login</button>
   <p class="error" id="errorBox"></p>
 </div>
@@ -76,7 +87,20 @@
   const loginBtn = document.getElementById("loginBtn");
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
+  const rememberMe = document.getElementById("rememberMe");
   const errorBox = document.getElementById("errorBox");
+
+  // ✅ আগেরবার Remember Me দিয়ে সেভ করা থাকলে ইনপুটে বসিয়ে দেবে
+  window.addEventListener("DOMContentLoaded", () => {
+    const savedEmail = localStorage.getItem("savedEmail");
+    const savedPassword = localStorage.getItem("savedPassword");
+
+    if (savedEmail && savedPassword) {
+      emailInput.value = savedEmail;
+      passwordInput.value = savedPassword;
+      rememberMe.checked = true;
+    }
+  });
 
   // ✅ যদি ইউজার আগে থেকেই লগইন করা থাকে → সরাসরি dashboard.html এ
   onAuthStateChanged(auth, (user) => {
@@ -93,6 +117,16 @@
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
+
+      // 🔹 Remember Me হলে save করো
+      if (rememberMe.checked) {
+        localStorage.setItem("savedEmail", email);
+        localStorage.setItem("savedPassword", password);
+      } else {
+        localStorage.removeItem("savedEmail");
+        localStorage.removeItem("savedPassword");
+      }
+
       window.location.href = "dashboard.html"; // সফল হলে ড্যাশবোর্ড এ রিডিরেক্ট
     } catch (error) {
       errorBox.textContent = error.message;
