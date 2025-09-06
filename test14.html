@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sarkar Telecom Header</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card: #171a21;
+      --text: #e7eaf0;
+      --muted: #9aa3b2;
+      --accent: #06b6d4;
+      --ok: #10b981;
+      --bad: #ef4444;
+    }
+    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
+    header { background: var(--card); border-bottom: 1px solid #202635; padding: 10px; }
+
+    .top-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    .site-info { display: flex; align-items: center; gap: 10px; }
+    .site-logo { height: 40px; width: auto; border-radius: 8px; }
+    .site-name { font-size: 20px; font-weight: 800; color: var(--accent); }
+
+    .user-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: #2b3347; object-fit: cover; }
+    .user-box { background: #1f2430; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .balance { color: var(--ok); font-weight: bold; }
+
+    .btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
+    .btn.logout { background: var(--bad); color: #fff; }
+    .btn.login { background: var(--accent); color: #001; }
+
+    .nav-row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .nav-row a { background: #1f2430; padding: 8px 14px; border-radius: 8px; text-decoration: none; color: var(--text); font-weight: 600; transition: background 0.2s; }
+    .nav-row a:hover { background: var(--accent); color: #001; }
+
+    @media (max-width: 600px) {
+      .top-row { flex-direction: column; align-items: flex-start; }
+      .user-info { width: 100%; justify-content: space-between; }
+      .nav-row { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <!-- First Row -->
+  <div class="top-row">
+    <div class="site-info">
+      <img src="https://sarkar-telecom.github.io/Topup/logo.png" alt="Logo" class="site-logo">
+      <span class="site-name">SARKAR TELECOM</span>
+    </div>
+    <div class="user-info" id="userInfo">
+      <!-- User Data will load here -->
+    </div>
+  </div>
+
+  <!-- Second Row -->
+  <div class="nav-row">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="order.html">Order</a>
+    <a href="order-history.html">Order History</a>
+    <a href="profile.html">Profile</a>
+  </div>
+</header>
+
+<!-- Firebase v10 Modular Scripts -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  // ✅ Firebase Config (apiKey updated)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+    projectId: "diamond-recharge-f7f59",
+    storageBucket: "diamond-recharge-f7f59.appspot.com",
+    messagingSenderId: "657717928489",
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+    measurementId: "G-TDK78BQ8SQ"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const userInfo = document.getElementById("userInfo");
+
+  // ✅ Auth State
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      let balance = 0;
+      let avatarUrl = user.photoURL || "https://via.placeholder.com/40";
+
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (snap.exists()) {
+          const data = snap.data();
+          balance = data.balance || 0;
+          if (data.avatar) {
+            avatarUrl = data.avatar;
+          }
+        }
+      } catch (e) {
+        console.error("Firestore error", e);
+      }
+
+      userInfo.innerHTML = `
+        <img src="${avatarUrl}" class="user-avatar" alt="User">
+        <div class="user-box">${user.email}</div>
+        <div class="user-box balance">💎 ${balance}</div>
+        <button class="btn logout" id="logoutBtn">Logout</button>
+      `;
+
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
+        await signOut(auth);
+        window.location.href = "login.html";
+      });
+
+    } else {
+      userInfo.innerHTML = `
+        <button class="btn login" onclick="window.location.href='login.html'">Login</button>
+      `;
+    }
+  });
+</script>
+
+</body>
+</html>
