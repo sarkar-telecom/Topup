@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Logging Out...</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      background:#0f1115; 
+      color:#e7eaf0; 
+      display:flex; 
+      justify-content:center; 
+      align-items:center; 
+      height:100vh; 
+    }
+    .box {
+      background:#171a21; 
+      padding:30px; 
+      border-radius:12px; 
+      text-align:center; 
+      box-shadow:0 6px 16px rgba(0,0,0,.25);
+    }
+    .loader {
+      border:4px solid #2c3140;
+      border-top:4px solid #06b6d4;
+      border-radius:50%;
+      width:30px;
+      height:30px;
+      animation: spin 1s linear infinite;
+      margin:15px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    async function doLogout() {
+      try {
+        await signOut(auth);
+        localStorage.removeItem("user");
+        document.getElementById("msg").innerText = "✅ Logout successful!";
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 1500);
+      } catch (err) {
+        document.getElementById("msg").innerText = "❌ Logout failed: " + err.message;
+      }
+    }
+
+    doLogout();
+  </script>
+</head>
+<body>
+  <div class="box">
+    <h2 id="msg">Logging you out...</h2>
+    <div class="loader"></div>
+  </div>
+</body>
+</html>
