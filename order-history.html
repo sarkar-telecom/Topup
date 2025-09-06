@@ -2,117 +2,84 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Order History</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding:20px; }
+    table { width:100%; border-collapse:collapse; margin-top:10px; }
+    th, td { border:1px solid #ccc; padding:6px; text-align:center; }
+    th { background:#eee; }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h2>📜 My Order History</h2>
-    <input type="text" id="searchBox" placeholder="Search by Order ID / Client ID">
-    <select id="statusFilter">
-      <option value="ALL">All Status</option>
-      <option value="PENDING">Pending</option>
-      <option value="COMPLETED">Completed</option>
-      <option value="CANCELLED">Cancelled</option>
-    </select>
+  <h2>📜 My Order History</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Client ID</th>
+        <th>💎 Amount</th>
+        <th>Date & Time</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="orderTable"></tbody>
+  </table>
 
-    <table id="ordersTable">
-      <thead>
-        <tr>
-          <th>Order ID</th>
-          <th>Client ID</th>
-          <th>💎 Amount</th>
-          <th>Date & Time</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="ordersBody"></tbody>
-    </table>
-  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { getFirestore, collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-<script>
-  // 🔥 Firebase Config (একই config এখানে বসাবেন)
-  const firebaseConfig = {
-    apiKey: "YOUR_KEY",
-    authDomain: "YOUR_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_BUCKET",
-    messagingSenderId: "YOUR_MSG_ID",
-    appId: "YOUR_APP_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+    // ✅ আপনার Firebase config বসান
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
 
-  let orders = [];
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      db.collection("orders")
-        .where("userId", "==", user.uid)
-        .orderBy("timestamp", "desc")
-        .onSnapshot(snapshot => {
-          orders = [];
-          snapshot.forEach(doc => {
-            let data = doc.data();
-            let orderTime = data.timestamp?.toDate ? data.timestamp.toDate() : null;
+    const orderTable=document.getElementById("orderTable");
 
-            // Auto Cancel after 5 min
-            if (orderTime && data.status === "PENDING") {
-              const now = new Date();
-              const diff = (now - orderTime) / 1000 / 60;
-              if (diff >= 5) {
-                db.collection("orders").doc(doc.id).update({ status: "CANCELLED" });
-                data.status = "CANCELLED";
-              }
-            }
+    onAuthStateChanged(auth, (user)=>{
+      if(!user){
+        orderTable.innerHTML="<tr><td colspan='5'>⚠️ Please login to see your orders</td></tr>";
+        return;
+      }
 
-            orders.push({
-              id: doc.id,
-              clientId: data.clientId || "-",
-              amount: data.amount || 0,
-              status: data.status || "Unknown",
-              timestamp: orderTime
-            });
-          });
-          renderOrders();
+      const q=query(
+        collection(db,"orders"),
+        where("userId","==",user.uid),
+        orderBy("createdAt","desc")
+      );
+
+      onSnapshot(q,(snapshot)=>{
+        orderTable.innerHTML="";
+        if(snapshot.empty){
+          orderTable.innerHTML="<tr><td colspan='5'>No orders found</td></tr>";
+        }
+        snapshot.forEach(doc=>{
+          const d=doc.data();
+          const tr=document.createElement("tr");
+          tr.innerHTML=`
+            <td>${d.orderId}</td>
+            <td>${d.clientId}</td>
+            <td>${d.amount}</td>
+            <td>${d.createdAt ? d.createdAt.toDate().toLocaleString() : ''}</td>
+            <td>${d.status}</td>
+          `;
+          orderTable.appendChild(tr);
         });
-    } else {
-      document.getElementById("ordersBody").innerHTML =
-        `<tr><td colspan="5">⚠ Please login to see orders</td></tr>`;
-    }
-  });
-
-  function renderOrders() {
-    const search = document.getElementById("searchBox").value.toLowerCase();
-    const filter = document.getElementById("statusFilter").value;
-    const tbody = document.getElementById("ordersBody");
-    tbody.innerHTML = "";
-
-    orders
-      .filter(o =>
-        (o.id.toLowerCase().includes(search) || o.clientId.toLowerCase().includes(search)) &&
-        (filter === "ALL" || o.status === filter)
-      )
-      .forEach(o => {
-        let row = `
-          <tr>
-            <td>${o.id}</td>
-            <td>${o.clientId}</td>
-            <td>💎 ${o.amount}</td>
-            <td>${o.timestamp ? o.timestamp.toLocaleString() : "-"}</td>
-            <td>${o.status}</td>
-          </tr>`;
-        tbody.innerHTML += row;
       });
-  }
-
-  document.getElementById("searchBox").addEventListener("input", renderOrders);
-  document.getElementById("statusFilter").addEventListener("change", renderOrders);
-</script>
+    });
+  </script>
 </body>
 </html>
