@@ -1,85 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register - Sarkar Telecom</title>
-  <style>
-    :root {
-      --bg: #0f1115;
-      --card: #171a21;
-      --text: #e7eaf0;
-      --accent: #06b6d4;
-      --bad: #ef4444;
-      --ok: #10b981;
-    }
-    body {
-      margin: 0; font-family: Arial, sans-serif;
-      background: var(--bg); color: var(--text);
-      display: flex; align-items: center; justify-content: center;
-      height: 100vh;
-    }
-    .login-card {
-      background: var(--card);
-      padding: 20px;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 380px;
-      box-shadow: 0 6px 16px rgba(0,0,0,.25);
-      text-align: center;
-    }
-    h2 { color: var(--accent); margin-bottom: 20px; }
-    input {
-      width: 100%; padding: 10px; margin: 8px 0;
-      border: 1px solid #333; border-radius: 6px;
-      background: #1f2430; color: var(--text);
-    }
-    .btn {
-      width: 100%; padding: 10px;
-      background: var(--accent); color: #001;
-      border: none; border-radius: 6px;
-      font-size: 16px; font-weight: 600;
-      cursor: pointer; margin: 6px 0;
-      transition: background 0.2s;
-    }
-    .btn:hover { background: #05a0bb; }
-    .btn-alt {
-      background: #1f2430; color: var(--text);
-    }
-    .btn-alt:hover { background: #2a3142; }
-    .error { color: var(--bad); margin-top: 10px; font-size: 14px; }
-    .success { color: var(--ok); margin-top: 10px; font-size: 14px; }
-  </style>
-</head>
-<body>
-
-<div class="login-card">
-  <h2>Register</h2>
-
-  <input type="text" id="name" placeholder="Full Name" required>
-  <input type="email" id="email" placeholder="Email" required>
-  <input type="password" id="password" placeholder="Password" required>
-  <input type="text" id="phone" placeholder="Phone Number">
-  <input type="text" id="avatar" placeholder="Profile Image URL (optional)">
-
-  <!-- Register Button -->
-  <button class="btn" id="registerBtn">Register</button>
-
-  <!-- Navigation style buttons -->
-  <button class="btn-alt" onclick="window.location.href='login.html'">🔑 Already have an account? Login</button>
-  <button class="btn-alt" onclick="window.location.href='forgot.html'">❓ Forgot Password</button>
-
-  <p class="error" id="errorBox"></p>
-  <p class="success" id="successBox"></p>
-</div>
-
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
   import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
+  // ✅ Updated Firebase Config
   const firebaseConfig = {
-    apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+    apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
     authDomain: "diamond-recharge-f7f59.firebaseapp.com",
     projectId: "diamond-recharge-f7f59",
     storageBucket: "diamond-recharge-f7f59.appspot.com",
@@ -112,17 +38,17 @@
     }
 
     try {
-      // Firebase Auth এ ইউজার তৈরি
+      // ✅ Firebase Auth এ ইউজার তৈরি
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Update profile (displayName, photoURL)
+      // ✅ Update profile (displayName, photoURL)
       await updateProfile(user, {
         displayName: name,
         photoURL: avatar || "https://via.placeholder.com/40"
       });
 
-      // Firestore এ ডাটা সেভ
+      // ✅ Firestore এ ডাটা সেভ
       await setDoc(doc(db, "users", user.uid), {
         name: name,
         email: email,
@@ -140,6 +66,3 @@
     }
   });
 </script>
-
-</body>
-</html>
