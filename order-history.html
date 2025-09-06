@@ -2,83 +2,86 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>My Order History</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
+  <title>Order History</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: Arial, sans-serif; padding:20px; }
-    table { width:100%; border-collapse:collapse; margin-top:10px; }
-    th, td { border:1px solid #ccc; padding:6px; text-align:center; }
-    th { background:#eee; }
+    body { background:#121212; color:#fff; font-family:sans-serif; margin:0; padding:10px; }
+    .card { background:#1e1e1e; padding:20px; border-radius:10px; margin:auto; max-width:800px; }
+    table { width:100%; border-collapse:collapse; margin-top:15px; }
+    th, td { padding:10px; border-bottom:1px solid #333; text-align:center; }
+    th { background:#222; }
+    .status { padding:4px 8px; border-radius:6px; font-weight:bold; }
+    .WAITING { background:gold; color:#000; }
+    .CONFIRMED { background:limegreen; color:#000; }
+    .CANCELLED { background:red; color:#fff; }
   </style>
 </head>
 <body>
-  <h2>📜 My Order History</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Order ID</th>
-        <th>Client ID</th>
-        <th>💎 Amount</th>
-        <th>Date & Time</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="orderTable"></tbody>
-  </table>
+  <div class="card">
+    <h2>📜 My Order History</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Client ID</th>
+          <th>💎 Amount</th>
+          <th>Date & Time</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="orderTable"></tbody>
+    </table>
+  </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-    import { getFirestore, collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // ✅ আপনার Firebase config বসান
+    // ✅ আপনার config এখানে বসান
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "SENDER_ID",
-      appId: "APP_ID"
+      apiKey: "AIzaSy***************",
+      authDomain: "your-project.firebaseapp.com",
+      projectId: "your-project",
+      storageBucket: "your-project.appspot.com",
+      messagingSenderId: "**********",
+      appId: "1:**********:web:**********"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    setPersistence(auth, browserLocalPersistence);
 
-    const orderTable=document.getElementById("orderTable");
+    const table = document.getElementById("orderTable");
 
-    onAuthStateChanged(auth, (user)=>{
-      if(!user){
-        orderTable.innerHTML="<tr><td colspan='5'>⚠️ Please login to see your orders</td></tr>";
-        return;
-      }
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href="login.html";
+      } else {
+        const q = query(
+          collection(db, "orders"),
+          where("userId", "==", user.uid),
+          orderBy("createdAt", "desc"),
+          limit(20)
+        );
 
-      const q=query(
-        collection(db,"orders"),
-        where("userId","==",user.uid),
-        orderBy("createdAt","desc")
-      );
-
-      onSnapshot(q,(snapshot)=>{
-        orderTable.innerHTML="";
-        if(snapshot.empty){
-          orderTable.innerHTML="<tr><td colspan='5'>No orders found</td></tr>";
-        }
-        snapshot.forEach(doc=>{
-          const d=doc.data();
-          const tr=document.createElement("tr");
-          tr.innerHTML=`
-            <td>${d.orderId}</td>
-            <td>${d.clientId}</td>
-            <td>${d.amount}</td>
-            <td>${d.createdAt ? d.createdAt.toDate().toLocaleString() : ''}</td>
-            <td>${d.status}</td>
-          `;
-          orderTable.appendChild(tr);
+        onSnapshot(q, (snapshot) => {
+          table.innerHTML="";
+          snapshot.forEach((doc) => {
+            const d=doc.data();
+            const t = d.createdAt?.toDate().toLocaleString() || "-";
+            table.innerHTML += `
+              <tr>
+                <td>${doc.id}</td>
+                <td>${d.clientId}</td>
+                <td>💎 ${d.amount}</td>
+                <td>${t}</td>
+                <td><span class="status ${d.status}">${d.status}</span></td>
+              </tr>`;
+          });
         });
-      });
+      }
     });
   </script>
 </body>
