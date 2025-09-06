@@ -1,41 +1,228 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Place Order</title>
-  <link rel="stylesheet" href="assets/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Order - Sarkar Telecom</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card: #171a21;
+      --text: #e7eaf0;
+      --accent: #06b6d4;
+      --ok: #10b981;
+      --bad: #ef4444;
+    }
+    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
+
+    header { background: var(--card); border-bottom: 1px solid #202635; padding: 10px; }
+    .top-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+    .site-info { display: flex; align-items: center; gap: 10px; }
+    .site-logo { height: 40px; border-radius: 8px; }
+    .site-name { font-size: 20px; font-weight: 800; color: var(--accent); }
+    .user-info { display: flex; align-items: center; gap: 10px; }
+    .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+    .user-box { background: #1f2430; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; }
+    .balance { color: var(--ok); }
+
+    .nav-row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .nav-row a { background: #1f2430; padding: 8px 14px; border-radius: 8px; text-decoration: none; color: var(--text); font-weight: 600; }
+    .nav-row a:hover { background: var(--accent); color: #001; }
+
+    main { padding: 20px; }
+    .card {
+      background: var(--card);
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 500px;
+      margin: 0 auto;
+      box-shadow: 0 6px 16px rgba(0,0,0,.25);
+      text-align: center;
+    }
+    input {
+      width: 100%; padding: 12px; margin: 10px 0;
+      border: 1px solid #333; border-radius: 6px;
+      background: #1f2430; color: var(--text);
+      font-size: 15px;
+    }
+    .gifts {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 10px; margin: 20px 0;
+    }
+    .gift-btn {
+      background: #1f2430; border: 1px solid #333;
+      padding: 14px; border-radius: 8px;
+      font-size: 16px; font-weight: 600;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .gift-btn.selected { background: var(--accent); color: #001; }
+    .btn-submit {
+      width: 100%; padding: 14px;
+      background: var(--accent); color: #001;
+      border: none; border-radius: 6px;
+      font-size: 16px; font-weight: 600;
+      cursor: pointer;
+    }
+    .error { color: var(--bad); margin-top: 10px; }
+    .success { color: var(--ok); margin-top: 10px; }
+  </style>
 </head>
 <body>
-<button id="openSidebar" class="open-btn">&#9776; Menu</button>
-<div id="sidebar" class="sidebar">
-  <button id="closeSidebar" class="close-btn">&times;</button>
-  <a href="index.html">Home</a>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="order.html">Place Order</a>
-  <a href="order-history.html">Order History</a>
-  <a href="profile.html">Profile</a>
-  <a href="admin.html">Admin</a>
-  <button id="logoutBtn" class="logout-btn">Logout</button>
-</div>
-<div class="content">
 
-  <div class="card max-500">
-    <h2>Place Order</h2>
-    <form id="orderForm" class="form">
-      <label>Game ID</label>
-      <input id="gameId" required placeholder="e.g., 123456789">
-      <label>Diamonds</label>
-      <input id="diamonds" type="number" min="1" required placeholder="e.g., 100">
-      <label>Note (optional)</label>
-      <input id="note" placeholder="Any note">
-      <button class="btn w-100" type="submit">Submit Order</button>
-    </form>
-    <small class="muted">New orders start as WAITING. If not processed within 5 minutes, they'll auto-cancel.</small>
+<!-- 🔹 Header -->
+<header>
+  <div class="top-row">
+    <div class="site-info">
+      <img src="https://sarkar-telecom.github.io/Topup/logo.png" alt="Logo" class="site-logo">
+      <span class="site-name">SARKAR TELECOM</span>
+    </div>
+    <div class="user-info" id="userInfo"></div>
   </div>
+  <div class="nav-row">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="order.html">Order</a>
+    <a href="order-history.html">Order History</a>
+    <a href="profile.html">Profile</a>
+  </div>
+</header>
 
-</div>
-<script type="module" src="assets/app.js"></script>
-<script type="module" src="assets/page.js"></script>
+<!-- 🔹 Order Page -->
+<main>
+  <div class="card">
+    <h2>Create Order</h2>
+    <input type="text" id="recipient" placeholder="Enter Profile ID or Number">
+    <div class="gifts" id="gifts">
+      <button class="gift-btn" data-amount="10">💎 10</button>
+      <button class="gift-btn" data-amount="50">💎 50</button>
+      <button class="gift-btn" data-amount="100">💎 100</button>
+      <button class="gift-btn" data-amount="200">💎 200</button>
+      <button class="gift-btn" data-amount="500">💎 500</button>
+      <button class="gift-btn" data-amount="1000">💎 1000</button>
+      <button class="gift-btn" data-amount="2000">💎 2000</button>
+      <button class="gift-btn" data-amount="5000">💎 5000</button>
+      <button class="gift-btn" data-amount="10000">💎 10000</button>
+      <button class="gift-btn" data-amount="20000">💎 20000</button>
+    </div>
+    <button class="btn-submit" id="confirmBtn">Confirm Order</button>
+    <p class="error" id="errorBox"></p>
+    <p class="success" id="successBox"></p>
+  </div>
+</main>
+
+<!-- 🔹 Firebase Scripts -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { getFirestore, doc, getDoc, updateDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+    projectId: "diamond-recharge-f7f59",
+    storageBucket: "diamond-recharge-f7f59.appspot.com",
+    messagingSenderId: "657717928489",
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+    measurementId: "G-TDK78BQ8SQ"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const userInfo = document.getElementById("userInfo");
+  const recipient = document.getElementById("recipient");
+  const confirmBtn = document.getElementById("confirmBtn");
+  const errorBox = document.getElementById("errorBox");
+  const successBox = document.getElementById("successBox");
+
+  let currentUser, balance = 0, selectedAmount = null;
+
+  // 🔹 Handle Gift Button Selection
+  document.querySelectorAll(".gift-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".gift-btn").forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      selectedAmount = parseInt(btn.dataset.amount);
+    });
+  });
+
+  // 🔹 Auth State
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUser = user;
+      let avatarUrl = user.photoURL || "https://via.placeholder.com/40";
+
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (snap.exists()) {
+          const data = snap.data();
+          balance = data.balance || 0;
+          if (data.avatar) avatarUrl = data.avatar;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+
+      userInfo.innerHTML = `
+        <img src="${avatarUrl}" class="user-avatar" alt="User">
+        <div class="user-box">${user.email}</div>
+        <div class="user-box balance">💎 ${balance}</div>
+        <button class="btn logout" id="logoutBtn">Logout</button>
+      `;
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
+        await signOut(auth);
+        window.location.href = "login.html";
+      });
+
+    } else {
+      window.location.href = "login.html";
+    }
+  });
+
+  // 🔹 Confirm Order
+  confirmBtn.addEventListener("click", async () => {
+    errorBox.textContent = "";
+    successBox.textContent = "";
+
+    if (!recipient.value.trim()) {
+      errorBox.textContent = "⚠ Please enter Profile ID or Number!";
+      return;
+    }
+    if (!selectedAmount) {
+      errorBox.textContent = "⚠ Please select a gift amount!";
+      return;
+    }
+    if (selectedAmount > balance) {
+      errorBox.textContent = "⚠ Insufficient balance!";
+      return;
+    }
+
+    try {
+      // Deduct balance
+      await updateDoc(doc(db, "users", currentUser.uid), {
+        balance: balance - selectedAmount
+      });
+
+      // Save order in Firestore
+      await addDoc(collection(db, "orders"), {
+        uid: currentUser.uid,
+        email: currentUser.email,
+        recipient: recipient.value.trim(),
+        amount: selectedAmount,
+        status: "success",
+        createdAt: serverTimestamp()
+      });
+
+      successBox.textContent = "✅ Order placed successfully!";
+      setTimeout(() => {
+        window.location.href = "order-history.html";
+      }, 1500);
+
+    } catch (e) {
+      errorBox.textContent = "⚠ " + e.message;
+    }
+  });
+</script>
+
 </body>
 </html>
