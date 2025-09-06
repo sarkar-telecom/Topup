@@ -6,16 +6,16 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // 🔹 আপনার Firebase config বসান
+    // ✅ আপনার Firebase config
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyBL-_2hFduDHHya03iCZHqv5EKQabS5XlQ",
+      authDomain: "topup-2e5c3.firebaseapp.com",
+      projectId: "topup-2e5c3",
+      storageBucket: "topup-2e5c3.appspot.com",
+      messagingSenderId: "157913706904",
+      appId: "1:157913706904:web:6dcb1d2c9e6d7a86ebf0f7"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -29,11 +29,11 @@
         document.getElementById("orderForm").addEventListener("submit", async (e) => {
           e.preventDefault();
 
-          const clientId = document.getElementById("clientId").value;
+          const clientId = document.getElementById("clientId").value.trim();
           const amount = document.querySelector('input[name="amount"]:checked')?.value;
 
           if (!clientId || !amount) {
-            alert("⚠️ Client ID & Amount required!");
+            alert("⚠️ Client ID এবং Amount দিতে হবে!");
             return;
           }
 
@@ -46,11 +46,11 @@
               userId: user.uid
             });
 
-            alert("✅ Order successfully placed!");
+            alert("✅ Order সফলভাবে সম্পন্ন হয়েছে!");
             window.location.href = "order-history.html";
           } catch (err) {
             console.error(err);
-            alert("❌ Error placing order!");
+            alert("❌ Order করতে সমস্যা হয়েছে!");
           }
         });
       }
@@ -61,10 +61,10 @@
   <h2>💎 Create Order</h2>
   <form id="orderForm">
     <label>Client ID:</label><br>
-    <input type="text" id="clientId" placeholder="Enter Client ID" style="padding:6px;"><br><br>
+    <input type="text" id="clientId" placeholder="Enter Client ID" style="padding:6px; border-radius:5px;"><br><br>
 
     <label>Select Amount:</label><br>
-    <div>
+    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin:10px 0;">
       <label><input type="radio" name="amount" value="10"> 💎10</label>
       <label><input type="radio" name="amount" value="50"> 💎50</label>
       <label><input type="radio" name="amount" value="100"> 💎100</label>
@@ -76,7 +76,7 @@
       <label><input type="radio" name="amount" value="10000"> 💎10000</label>
       <label><input type="radio" name="amount" value="20000"> 💎20000</label>
     </div>
-    <br>
+
     <button type="submit" style="padding:10px 20px; background:#0af; color:#fff; border:none; border-radius:6px;">
       Confirm Order
     </button>
