@@ -1,5 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order History - Sarkar Telecom</title>
+  <style>
+    body { margin:0; font-family: Arial, sans-serif; background:#0f1115; color:#e7eaf0; }
+    h2 { text-align:center; margin:20px 0; color:#06b6d4; }
+    .card { background:#171a21; padding:20px; border-radius:12px; max-width:900px; margin:20px auto; box-shadow:0 6px 16px rgba(0,0,0,.25); }
+    table { width:100%; border-collapse:collapse; margin-top:15px; font-size:14px; }
+    th, td { padding:10px; border-bottom:1px solid #2c2f36; text-align:center; }
+    th { background:#1f2430; color:#06b6d4; }
+    .status { padding:4px 8px; border-radius:6px; font-weight:bold; }
+    .WAITING { background:#facc15; color:#000; }
+    .CONFIRMED { background:#10b981; color:#fff; }
+    .CANCELLED { background:#ef4444; color:#fff; }
+    #loading { text-align:center; padding:40px; font-size:16px; color:#9aa3b2; }
+    @media (max-width:600px) {
+      table, thead, tbody, th, td, tr { display:block; }
+      tr { margin-bottom:12px; background:#1f2430; border-radius:8px; padding:10px; }
+      td { border:none; text-align:left; padding:6px 0; }
+      th { display:none; }
+    }
+  </style>
+</head>
 <body>
+
   <div id="loading">⏳ Checking login...</div>
+
   <div class="card" style="display:none;" id="historyCard">
     <h2>📜 My Order History</h2>
     <table>
@@ -18,9 +46,14 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { getFirestore, collection, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { 
+    getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence 
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { 
+    getFirestore, collection, query, where, orderBy, limit, onSnapshot 
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+  // ✅ আপনার Firebase Config
   const firebaseConfig = {
     apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
     authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -40,13 +73,13 @@
   const historyCard = document.getElementById("historyCard");
   const table = document.getElementById("orderTable");
 
+  // ✅ Auth state properly handle
   onAuthStateChanged(auth, (user) => {
     if (!user) {
       window.location.href = "login.html";
       return;
     }
 
-    // hide loader, show card
     loading.style.display = "none";
     historyCard.style.display = "block";
 
@@ -65,7 +98,7 @@
         table.innerHTML += `
           <tr>
             <td>${doc.id}</td>
-            <td>${d.clientId}</td>
+            <td>${d.clientId || "-"}</td>
             <td>💎 ${d.amount}</td>
             <td>${t}</td>
             <td><span class="status ${d.status}">${d.status}</span></td>
@@ -74,4 +107,6 @@
     });
   });
 </script>
+
 </body>
+</html>
