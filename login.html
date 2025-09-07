@@ -24,7 +24,7 @@
     <input type="password" id="password" placeholder="Password" autocomplete="current-password">
 
     <button id="loginBtn" onclick="login()">Login</button>
-    <button id="regBtn" onclick="signup()">Register</button>
+    <button id="regBtn" onclick="goRegister()">Register</button>
     <button class="extra-btn" onclick="forgotPass()">Forgot Password?</button>
     <button class="extra-btn" onclick="toggleRemember()">Remember Me</button>
     <label style="font-size:13px;display:block;margin-top:8px;">
@@ -38,7 +38,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { 
-      getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
+      getAuth, signInWithEmailAndPassword, 
       sendPasswordResetEmail, setPersistence, 
       browserLocalPersistence, browserSessionPersistence 
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
@@ -77,15 +77,13 @@
 
     function friendly(e){
       const code = (e && e.code) || "";
-      if(code === "auth/email-already-in-use") return "This email is already registered. Try Login or Forgot Password.";
-      if(code === "auth/weak-password") return "Password is too weak (min 6 characters).";
-      if(code === "auth/invalid-email") return "Invalid email address.";
       if(code === "auth/user-not-found") return "No account found with this email.";
       if(code === "auth/wrong-password") return "Wrong password.";
+      if(code === "auth/invalid-email") return "Invalid email.";
       return e.message || "Something went wrong.";
     }
 
-    // Remember Me (button)
+    // Remember Me
     window.toggleRemember = () => {
       if(localStorage.getItem("remembered")==="true"){
         localStorage.removeItem("email");
@@ -104,7 +102,6 @@
     };
 
     async function setAuthPersistence(){
-      // If remembered, keep across restarts; otherwise for the tab only
       const remembered = localStorage.getItem("remembered")==="true";
       await setPersistence(auth, remembered ? browserLocalPersistence : browserSessionPersistence);
     }
@@ -129,26 +126,9 @@
       }
     };
 
-    // REGISTER (auto-login after create)
-    window.signup = async () => {
-      const email = emailEl.value.trim();
-      const pass  = passEl.value.trim();
-      if(!email || !pass){ msgEl.textContent="⚠️ Enter email & password!"; return; }
-      if(pass.length < 6){ msgEl.textContent="⚠️ Password must be at least 6 characters."; return; }
-
-      loginBtn.disabled = true; regBtn.disabled = true;
-      msgEl.textContent = "⏳ Creating account...";
-      try{
-        await createUserWithEmailAndPassword(auth, email, pass);
-        msgEl.textContent = "✅ Account created! Logging in...";
-        await setAuthPersistence();
-        await signInWithEmailAndPassword(auth, email, pass);
-        window.location.href = "dashboard.html";
-      }catch(e){
-        msgEl.textContent = "❌ " + friendly(e);
-      }finally{
-        loginBtn.disabled = false; regBtn.disabled = false;
-      }
+    // REGISTER → redirect to register.html
+    window.goRegister = () => {
+      window.location.href = "register.html";
     };
 
     // FORGOT PASSWORD
