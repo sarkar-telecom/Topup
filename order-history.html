@@ -37,8 +37,6 @@
     </div>
     <div class="search-box">
       <input id="searchInput" type="text" placeholder="🔍 Search by Number / Amount / Status">
-      <button class="nav-btn" onclick="applySearch()">Search</button>
-      <button class="nav-btn" style="background:#444;color:#fff" onclick="clearSearch()">Reset</button>
     </div>
   </div>
 
@@ -64,7 +62,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script>
-    // ✅ Your Firebase config
+    // ✅ Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAyhjOsIXNAkBglpRllt0OZIOJYpdB_9-8",
       authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -77,7 +75,7 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
-    // 🟢 Apps Script endpoint (doGet)
+    // 🟢 Apps Script endpoint
     const API_URL = "https://script.google.com/macros/s/AKfycbx_sBNjUxFX931jcDyEw2IVzrVpZCmzSVwVCboJx7DVaKN8YBI6E6z0pYoCwF-vhHvc1Q/exec";
 
     // DOM
@@ -90,9 +88,9 @@
 
     // State
     let currentUser = null;
-    let orders = [];          // all rows for this user
-    let filteredOrders = [];  // search results
-    let searchTerm = "";      // 🔑 flag to know search is active
+    let orders = [];          
+    let filteredOrders = [];  
+    let searchTerm = "";      
     let currentPage = 1;
     const rowsPerPage = 10;
 
@@ -119,14 +117,12 @@
       else { window.location.href = "login.html"; }
     });
 
-    // 📥 Load rows from Sheet
     async function loadOrders(){
       try{
         const res = await fetch(API_URL);
         const data = await res.json();
         if(!data.ok) throw new Error("Failed to fetch");
-        const rows = data.rows.slice(1).reverse(); // skip header
-        // filter only current user's orders (Email = column E = index 4)
+        const rows = data.rows.slice(1).reverse();
         orders = rows.filter(r => r[4] && currentUser && r[4].toLowerCase() === currentUser.email.toLowerCase());
         filteredOrders = [];
         searchTerm = "";
@@ -138,15 +134,13 @@
       }
     }
 
-    // ⏰ Format time to hh:mm AM/PM safely
     function fmtTime(raw){
       if(!raw) return "-";
       const d = new Date(raw);
       if(!isNaN(d)) return d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
-      return raw; // already formatted text in sheet
+      return raw;
     }
 
-    // 🎨 Status class
     function getStatusClass(status){
       const s = (status||"").toLowerCase();
       if (s.includes("cancel")) return "cancelled";
@@ -154,16 +148,14 @@
       return "waiting";
     }
 
-    // 🖨️ Render table
     function renderTable(){
       orderTable.innerHTML = "";
-      const active = searchTerm ? filteredOrders : orders;  // ✅ key fix
+      const active = searchTerm ? filteredOrders : orders;
       if (active.length === 0){
         orderTable.innerHTML = `<tr><td colspan="5">${searchTerm ? "🔍 No results" : "No orders yet"}</td></tr>`;
         prevBtn.disabled = nextBtn.disabled = true;
         return;
       }
-
       const start = (currentPage - 1) * rowsPerPage;
       const end = start + rowsPerPage;
       const page = active.slice(start, end);
@@ -185,36 +177,22 @@
       nextBtn.disabled = end >= active.length;
     }
 
-    // 🔍 Search handlers
-    function applySearch(){
+    // 🔍 লাইভ সার্চ
+    searchInput.addEventListener("input", () => {
       searchTerm = searchInput.value.trim().toLowerCase();
       if (searchTerm){
         filteredOrders = orders.filter(o =>
-          (o[1] && String(o[1]).toLowerCase().includes(searchTerm)) || // Number
-          (o[2] && String(o[2]).toLowerCase().includes(searchTerm)) || // Amount
-          (o[3] && String(o[3]).toLowerCase().includes(searchTerm))    // Status
+          (o[1] && String(o[1]).toLowerCase().includes(searchTerm)) || 
+          (o[2] && String(o[2]).toLowerCase().includes(searchTerm)) || 
+          (o[3] && String(o[3]).toLowerCase().includes(searchTerm))
         );
       }else{
         filteredOrders = [];
       }
       currentPage = 1;
       renderTable();
-    }
-
-    function clearSearch(){
-      searchInput.value = "";
-      searchTerm = "";
-      filteredOrders = [];
-      currentPage = 1;
-      renderTable();
-    }
-
-    // Enter চাপলেও সার্চ হবে
-    searchInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") applySearch();
     });
 
-    // Pagination
     prevBtn.addEventListener("click", () => { if (currentPage > 1){ currentPage--; renderTable(); } });
     nextBtn.addEventListener("click", () => {
       const active = searchTerm ? filteredOrders : orders;
