@@ -1,53 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Order History</title>
-  <link rel="stylesheet" href="style.css">
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <style>
-    body { background:#121212; color:#fff; font-family:sans-serif; }
-    main { padding:20px; }
-    table { width:100%; border-collapse:collapse; margin-top:20px; background:#1e1e1e; border-radius:10px; overflow:hidden; }
-    th, td { padding:12px; text-align:center; border-bottom:1px solid #333; }
-    th { background:#0d6efd; color:#fff; }
-    tr:hover { background:#2a2a2a; }
-    .status-new { color:#0dcaf0; font-weight:bold; }
-    .status-WAITING { color:#ffc107; font-weight:bold; }
-    .status-COMPLETE { color:#28a745; font-weight:bold; }
-    .status-CANCEL { color:#dc3545; font-weight:bold; }
-  </style>
 </head>
-<body>
-  <!-- Header -->
-  <div id="header"></div>
+<body style="background:#000; color:#fff; padding:20px;">
 
-  <main>
-    <h2>📜 Order History</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Timestamp</th>
-          <th>Number</th>
-          <th>Amount</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="orderTable">
-        <tr><td colspan="4">⏳ Loading...</td></tr>
-      </tbody>
-    </table>
-  </main>
+  <div id="header"></div>
+  <h2>Order History</h2>
+  <table border="1" style="width:100%; color:#fff; text-align:center;" id="orders"></table>
 
   <script>
-    // Load header
-    fetch("https://sarkar-telecom.github.io/Topup/header.html")
-      .then(res => res.text())
-      .then(html => document.getElementById("header").innerHTML = html);
-
-    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAyhjOsIXNAkBglpRllt0OZIOJYpdB_9-8",
       authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -57,51 +22,27 @@
       appId: "1:657717928489:web:70431ebc9afb7002d4b238",
       measurementId: "G-TDK78BQ8SQ"
     };
-
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+    const auth=firebase.auth();
 
-    // Check login
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = "login.html";
-      } else {
-        loadOrders();
-      }
+    auth.onAuthStateChanged(user=>{
+      if(!user) window.location.href="login.html";
+      else loadOrders();
     });
 
-    async function loadOrders() {
-      try {
-        const res = await fetch("https://script.google.com/macros/s/AKfycbypLjvDmPyBh68pwoeXuR7lFyc8qb8rimTLl1KYTKPoZ0lmfkvs-Xz6X3f-sNTLR91wqQ/exec");
-        const data = await res.json();
+    fetch("header.html").then(r=>r.text()).then(h=>document.getElementById("header").innerHTML=h);
 
-        const table = document.getElementById("orderTable");
-        table.innerHTML = "";
-
-        if (data.ok && data.rows.length > 2) {
-          data.rows.slice(2).forEach(row => {
-            let ts = row[0];
-            let number = row[1];
-            let amount = row[3];
-            let status = row[4] || "new";
-
-            let statusClass = "status-" + status.toUpperCase();
-            let tr = `
-              <tr>
-                <td>${ts}</td>
-                <td>${number}</td>
-                <td>${amount}</td>
-                <td class="${statusClass}">${status}</td>
-              </tr>
-            `;
-            table.innerHTML += tr;
-          });
-        } else {
-          table.innerHTML = "<tr><td colspan='4'>⚠️ No orders found</td></tr>";
-        }
-      } catch (err) {
-        document.getElementById("orderTable").innerHTML = "<tr><td colspan='4'>❌ Error loading data</td></tr>";
+    async function loadOrders(){
+      const res=await fetch("https://script.google.com/macros/s/AKfycbypLjvDmPyBh68pwoeXuR7lFyc8qb8rimTLl1KYTKPoZ0lmfkvs-Xz6X3f-sNTLR91wqQ/exec");
+      const data=await res.json();
+      if(data.ok){
+        let html="<tr>";
+        data.rows[0].forEach(h=>html+="<th>"+h+"</th>");
+        html+="</tr>";
+        data.rows.slice(1).forEach(r=>{
+          html+="<tr>"+r.map(c=>"<td>"+c+"</td>").join("")+"</tr>";
+        });
+        document.getElementById("orders").innerHTML=html;
       }
     }
   </script>
