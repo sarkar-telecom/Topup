@@ -5,22 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Place Order - Sarkar Telecom</title>
   <style>
-    body { background:#0f1115; color:#fff; font-family:Arial, sans-serif; text-align:center; }
+    body { background:#0f1115; color:#fff; font-family:Arial, sans-serif; text-align:center; margin:0; padding:20px; }
+    header {
+      background:#171a21; padding:12px 20px; text-align:center;
+      color:#06b6d4; font-size:18px; font-weight:bold;
+      box-shadow:0 2px 6px rgba(0,0,0,0.4); margin-bottom:20px;
+    }
     .container { max-width:500px; margin:auto; padding:20px; background:#171a21; border-radius:8px; }
-    h2 { color:#06b6d4; }
+    h2 { color:#06b6d4; margin-bottom:15px; }
     input, button { padding:10px; margin:6px; font-size:16px; border-radius:6px; border:none; }
-    input { width:90%; }
+    input { width:90%; background:#1f2430; color:#fff; border:1px solid #333; }
     button { background:#06b6d4; color:#000; cursor:pointer; font-weight:bold; }
     button:hover { opacity:0.9; }
+    #diamonds { margin:10px 0; }
     #diamonds button { margin:4px; background:#1f2430; color:#fff; border:1px solid #333; }
     #diamonds button.active { background:#06b6d4; color:#000; }
     #message { margin-top:10px; font-weight:bold; }
   </style>
 </head>
 <body>
+  <header>💎 Sarkar Telecom - Place New Order</header>
+
   <div class="container">
-    <h2>💎 Place New Order</h2>
-    <input type="text" id="number" placeholder="Enter Game ID / Number">
+    <h2>📝 Place New Order</h2>
+    <input type="text" id="number" placeholder="Enter Game ID / Profile ID">
 
     <div id="diamonds">
       <button onclick="selectAmount(10)">10</button>
@@ -41,9 +49,9 @@
   </div>
 
 <script>
-  // ✅ আপনার Apps Script Web App URL
+  // 👉 এখানে আপনার Apps Script Web App doPost URL বসান
   const API_URL = "https://script.google.com/macros/s/AKfycbx_sBNjUxFX931jcDyEw2IVzrVpZCmzSVwVCboJx7DVaKN8YBI6E6z0pYoCwF-vhHvc1Q/exec";
-  const SECRET = "12345"; // Secret key
+  const SECRET = "12345"; // আপনার সিক্রেট কোড (code.gs এর সাথে মিলতে হবে)
 
   let selectedAmount = null;
 
@@ -57,7 +65,7 @@
   async function submitOrder() {
     const number = document.getElementById("number").value;
     if (!number || !selectedAmount) {
-      document.getElementById("message").innerText = "⚠️ Enter number & select amount!";
+      document.getElementById("message").innerText = "⚠️ Enter ID & Select amount!";
       return;
     }
 
@@ -73,7 +81,7 @@
           number: number,
           amount: selectedAmount,
           product: "Diamond",
-          status: "new"
+          status: "PENDING"
         })
       });
 
@@ -81,7 +89,7 @@
       if (data.ok) {
         document.getElementById("message").innerText = "✅ Order submitted!";
         setTimeout(() => {
-          window.location.href = "order-history.html"; // অর্ডার হিস্ট্রি পেজে রিডিরেক্ট
+          window.location.href = "order-history.html"; // redirect
         }, 1500);
       } else {
         document.getElementById("message").innerText = "❌ Error: " + data.error;
