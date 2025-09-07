@@ -71,7 +71,7 @@
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
   import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  // ✅ Firebase Config (apiKey updated)
+  // ✅ Firebase Config
   const firebaseConfig = {
     apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
     authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -127,6 +127,6 @@
     }
   });
 </script>
-<button onclick="firebase.auth().signOut().then(()=>window.location.href='login.html')">Logout</button>
+
 </body>
 </html>
