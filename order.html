@@ -41,8 +41,10 @@
   </div>
 
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbypLjvDmPyBh68pwoeXuR7lFyc8qb8rimTLl1KYTKPoZ0lmfkvs-Xz6X3f-sNTLR91wqQ/exec"; // আপনার doPost URL
-  const SECRET = "12345"; // আপনার সিক্রেট
+  // 🔗 আপনার Apps Script ডিপ্লয় করা URL
+  const API_URL = "https://script.google.com/macros/s/AKfycbypLjvDmPyBh68pwoeXuR7lFyc8qb8rimTLl1KYTKPoZ0lmfkvs-Xz6X3f-sNTLR91wqQ/exec";
+  // 🔑 আপনার সিক্রেট
+  const SECRET = "12345";
 
   let selectedAmount = null;
 
@@ -68,11 +70,11 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           token: SECRET,
-          name: number,          // 👈 এখানে নাম বা Game ID যাবে
+          name: number,        // 👈 Game ID বা নাম
           number: number,
           amount: selectedAmount,
           product: "Diamond",
-          status: "new"
+          status: "NEW"
         })
       });
 
@@ -80,7 +82,7 @@
       if (data.ok) {
         document.getElementById("message").innerText = "✅ Order submitted!";
         setTimeout(() => {
-          window.location.href = "order-history.html"; // redirect
+          window.location.href = "order-history.html";
         }, 1500);
       } else {
         document.getElementById("message").innerText = "❌ Error: " + data.error;
