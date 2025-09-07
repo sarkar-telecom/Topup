@@ -23,10 +23,9 @@
     <input type="email" id="email" placeholder="Email" autocomplete="username">
     <input type="password" id="password" placeholder="Password" autocomplete="current-password">
 
-    <button id="loginBtn" onclick="login()">Login</button>
-    <button id="regBtn" onclick="goRegister()">Register</button>
+    <button onclick="login()">Login</button>
+    <button class="extra-btn" onclick="window.location.href='register.html'">Register</button>
     <button class="extra-btn" onclick="forgotPass()">Forgot Password?</button>
-    <button class="extra-btn" onclick="toggleRemember()">Remember Me</button>
     <label style="font-size:13px;display:block;margin-top:8px;">
       <input type="checkbox" id="showPass"> Show password
     </label>
@@ -37,11 +36,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import {
-      getAuth, signInWithEmailAndPassword,
-      sendPasswordResetEmail, setPersistence,
-      browserLocalPersistence, browserSessionPersistence
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
@@ -55,97 +50,32 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const msgEl = document.getElementById("msg");
-    const emailEl = document.getElementById("email");
-    const passEl  = document.getElementById("password");
-    const showPassEl = document.getElementById("showPass");
-    const loginBtn = document.getElementById("loginBtn");
-    const regBtn = document.getElementById("regBtn");
+    const msgEl=document.getElementById("msg");
+    const passEl=document.getElementById("password");
 
-    // Show/Hide password
-    showPassEl.addEventListener("change",()=>{ passEl.type = showPassEl.checked ? "text" : "password"; });
+    document.getElementById("showPass").addEventListener("change",e=>{
+      passEl.type=e.target.checked?"text":"password";
+    });
 
-    // Load remembered creds
-    window.onload = () => {
-      if(localStorage.getItem("remembered")==="true"){
-        emailEl.value = localStorage.getItem("email") || "";
-        passEl.value  = localStorage.getItem("password") || "";
-      }
+    window.login=()=>{
+      const email=document.getElementById("email").value.trim();
+      const pass=document.getElementById("password").value.trim();
+      if(!email||!pass){ msgEl.textContent="⚠️ Enter email & password"; return; }
+      msgEl.textContent="⏳ Logging in...";
+      signInWithEmailAndPassword(auth,email,pass).then(()=>{
+        msgEl.textContent="✅ Login success!";
+        window.location.href="dashboard.html";
+      }).catch(e=>{
+        msgEl.textContent="❌ "+e.message;
+      });
     };
 
-    function friendly(e){
-      const code = (e && e.code) || "";
-      if(code === "auth/user-not-found") return "No account found with this email.";
-      if(code === "auth/wrong-password") return "Wrong password.";
-      if(code === "auth/invalid-email") return "Invalid email.";
-      if(code === "auth/invalid-continue-uri") return "Invalid redirect URL. Add your domain to Authorized domains.";
-      if(code === "auth/unauthorized-continue-uri") return "This redirect URL is not allowed. Add it to Authorized domains.";
-      if(code === "auth/operation-not-allowed") return "Email/Password sign-in is disabled in Firebase Console.";
-      return e.message || "Something went wrong.";
-    }
-
-    // Remember Me
-    window.toggleRemember = () => {
-      if(localStorage.getItem("remembered")==="true"){
-        localStorage.removeItem("email");
-        localStorage.removeItem("password");
-        localStorage.removeItem("remembered");
-        msgEl.textContent = "ℹ️ Remember me disabled.";
-      }else{
-        const email = emailEl.value.trim();
-        const pass  = passEl.value.trim();
-        if(!email || !pass){ msgEl.textContent="⚠️ Enter email & password first!"; return; }
-        localStorage.setItem("email", email);
-        localStorage.setItem("password", pass);
-        localStorage.setItem("remembered","true");
-        msgEl.textContent = "✅ Credentials saved!";
-      }
-    };
-
-    async function setAuthPersistence(){
-      const remembered = localStorage.getItem("remembered")==="true";
-      await setPersistence(auth, remembered ? browserLocalPersistence : browserSessionPersistence);
-    }
-
-    // LOGIN
-    window.login = async () => {
-      const email = emailEl.value.trim();
-      const pass  = passEl.value.trim();
-      if(!email || !pass){ msgEl.textContent="⚠️ Enter email & password!"; return; }
-
-      loginBtn.disabled = true; regBtn.disabled = true;
-      msgEl.textContent = "⏳ Logging in...";
-      try{
-        await setAuthPersistence();
-        await signInWithEmailAndPassword(auth, email, pass);
-        msgEl.textContent = "✅ Login success!";
-        window.location.href = "dashboard.html";
-      }catch(e){
-        msgEl.textContent = "❌ " + friendly(e);
-      }finally{
-        loginBtn.disabled = false; regBtn.disabled = false;
-      }
-    };
-
-    // REGISTER → go to register page
-    window.goRegister = () => { window.location.href = "register.html"; };
-
-    // FORGOT PASSWORD (with continueUrl back to your login page)
-    window.forgotPass = async () => {
-      const email = emailEl.value.trim();
-      if(!email){ msgEl.textContent="⚠️ Enter your email first!"; return; }
-
-      const actionCodeSettings = {
-        url: "https://sarkar-telecom.github.io/Topup/login.html", // redirect after reset
-        handleCodeInApp: false
-      };
-
-      try{
-        await sendPasswordResetEmail(auth, email, actionCodeSettings);
-        msgEl.textContent = "📩 Password reset email sent! Please check inbox/spam.";
-      }catch(e){
-        msgEl.textContent = "❌ " + friendly(e);
-      }
+    window.forgotPass=()=>{
+      const email=document.getElementById("email").value.trim();
+      if(!email){ msgEl.textContent="⚠️ Enter your email first"; return; }
+      sendPasswordResetEmail(auth,email,{url:"https://sarkar-telecom.github.io/Topup/reset.html"})
+        .then(()=>msgEl.textContent="📩 Reset email sent! Check your inbox.")
+        .catch(e=>msgEl.textContent="❌ "+e.message);
     };
   </script>
 </body>
