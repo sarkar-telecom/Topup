@@ -1,21 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Order History</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#0f1115; color:#e7eaf0; padding:20px; text-align:center; margin:0; }
-    header { background:#171a21; padding:12px 20px; text-align:center; color:#06b6d4; font-size:18px; font-weight:bold; box-shadow:0 2px 6px rgba(0,0,0,0.4); margin-bottom:15px; }
-    h2 { color:#06b6d4; margin-bottom:10px; }
-    table { width:95%; margin:auto; border-collapse:collapse; background:#171a21; font-size:14px; }
-    th, td { border:1px solid #333; padding:6px; text-align:center; }
-    th { background:#06b6d4; color:#001; font-size:13px; }
-    td { font-size:13px; }
-    .status-box { padding:4px 8px; border-radius:6px; color:#fff; font-size:13px; font-weight:bold; }
-    .waiting { background:#eab308; }
-    .completed { background:#22c55e; }
-    .cancelled { background:#ef4444; }
+    body{font-family:Arial,sans-serif;background:#0f1115;color:#e7eaf0;padding:20px;text-align:center;margin:0;}
+    header{background:#171a21;padding:12px 20px;text-align:center;color:#06b6d4;font-size:18px;font-weight:bold;margin-bottom:15px;}
+    h2{color:#06b6d4;margin-bottom:10px;}
+    table{width:95%;margin:auto;border-collapse:collapse;background:#171a21;font-size:14px;}
+    th,td{border:1px solid #333;padding:6px;text-align:center;}
+    th{background:#06b6d4;color:#001;}
+    .status-box{padding:4px 8px;border-radius:6px;color:#fff;font-size:13px;font-weight:bold;}
+    .waiting{background:#eab308;} .completed{background:#22c55e;} .cancelled{background:#ef4444;}
   </style>
 </head>
 <body>
@@ -24,68 +21,64 @@
   <table>
     <thead>
       <tr>
-        <th>SL</th>
-        <th>Number</th>
-        <th>Amount</th>
-        <th>Status</th>
-        <th>Time</th>
+        <th>SL</th><th>Number</th><th>Amount</th><th>Status</th><th>Time</th>
       </tr>
     </thead>
     <tbody id="orderTable"></tbody>
   </table>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
     const API_URL = "https://script.google.com/macros/s/AKfycbx_sBNjUxFX931jcDyEw2IVzrVpZCmzSVwVCboJx7DVaKN8YBI6E6z0pYoCwF-vhHvc1Q/exec";
-    const userEmail = localStorage.getItem("userEmail");
-    if (!userEmail) {
-      alert("⚠️ Please login first!");
-      window.location.href = "login.html";
-    }
 
-    const orderTable = document.getElementById("orderTable");
+    const table = document.getElementById("orderTable");
 
-    async function loadOrders() {
-      try {
+    onAuthStateChanged(auth, async (user)=>{
+      if(!user){
+        alert("⚠️ Please login first!");
+        window.location.href="login.html";
+        return;
+      }
+      const myEmail = user.email;
+
+      try{
         const res = await fetch(API_URL);
         const data = await res.json();
+        if(!data.ok){ table.innerHTML="<tr><td colspan='5'>❌ Failed to load!</td></tr>"; return;}
 
-        if (!data.ok) {
-          orderTable.innerHTML = "<tr><td colspan='5'>❌ Failed to load orders!</td></tr>";
-          return;
-        }
+        const rows = data.rows.slice(1).reverse().filter(r=>r[4]===myEmail);
 
-        const rows = data.rows.slice(1).reverse().filter(row => row[4] === userEmail); 
-        // ধরলাম ৫ম কলামে (index 4) ইউজারের ইমেইল/নাম্বার সেভ হচ্ছে
+        if(rows.length===0){ table.innerHTML="<tr><td colspan='5'>No orders found</td></tr>"; return;}
 
-        if (!rows.length) {
-          orderTable.innerHTML = "<tr><td colspan='5'>⚠ No orders found.</td></tr>";
-          return;
-        }
+        rows.forEach((r,i)=>{
+          const [time, number, amount, status, email] = r;
+          let cls="waiting";
+          if(status.toLowerCase()==="complete")cls="completed";
+          else if(status.toLowerCase().startsWith("cancel"))cls="cancelled";
 
-        orderTable.innerHTML = "";
-        rows.forEach((row, i) => {
-          const [time, number, amount, status, user] = row;
-          let statusClass = "waiting";
-          if (status && status.toLowerCase() === "complete") statusClass = "completed";
-          else if (status && status.toLowerCase() === "cancel") statusClass = "cancelled";
-
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${i+1}</td>
-            <td>${number || "-"}</td>
-            <td>${amount || "-"}</td>
-            <td><span class="status-box ${statusClass}">${status}</span></td>
-            <td>${time || "-"}</td>
-          `;
-          orderTable.appendChild(tr);
+          const tr=document.createElement("tr");
+          tr.innerHTML=`<td>${i+1}</td><td>${number}</td><td>${amount}</td>
+                        <td><span class="status-box ${cls}">${status}</span></td><td>${time}</td>`;
+          table.appendChild(tr);
         });
-
-      } catch (err) {
-        orderTable.innerHTML = `<tr><td colspan='5'>❌ Error: ${err.message}</td></tr>`;
+      }catch(err){
+        table.innerHTML=`<tr><td colspan='5'>Error: ${err.message}</td></tr>`;
       }
-    }
-
-    loadOrders();
+    });
   </script>
 </body>
 </html>
