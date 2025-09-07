@@ -6,42 +6,39 @@
   <title>Register - Sarkar Telecom</title>
   <style>
     body{font-family:Arial,sans-serif;background:#0f1115;color:#e7eaf0;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
-    .card{background:#171a21;padding:22px;border-radius:12px;width:340px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.5);}
+    .card{background:#171a21;padding:22px;border-radius:12px;width:320px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.5);}
     h2{color:#06b6d4;margin-bottom:18px;}
-    input{width:90%;padding:10px;margin:6px 0;border-radius:6px;border:1px solid #333;background:#0f1115;color:#e7eaf0;}
+    input{width:90%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #333;background:#0f1115;color:#e7eaf0;}
     button{background:#06b6d4;color:#001;border:none;padding:10px 14px;margin-top:10px;width:100%;border-radius:6px;font-weight:bold;cursor:pointer;}
     button:hover{background:#0ea5e9;}
     .msg{margin-top:10px;font-size:14px;min-height:20px}
-    .link{margin-top:10px;font-size:14px;}
-    .link a{color:#06b6d4;text-decoration:none;}
-    .link a:hover{text-decoration:underline;}
+    .extra-btn{background:#1f2937;color:#e7eaf0;border:none;padding:8px;margin-top:8px;width:100%;border-radius:6px;cursor:pointer;font-size:14px;}
+    .extra-btn:hover{background:#374151;}
   </style>
 </head>
 <body>
   <div class="card">
     <h2>📝 Register</h2>
     <input type="text" id="name" placeholder="Full Name">
-    <input type="email" id="email" placeholder="Email">
-    <input type="text" id="phone" placeholder="Phone (e.g. +8801XXXXXXXXX)">
-    <input type="password" id="password" placeholder="Password (min 6 chars)">
+    <input type="text" id="phone" placeholder="Phone (+880...)">
+    <input type="email" id="email" placeholder="Email" autocomplete="username">
+    <input type="password" id="password" placeholder="Password" autocomplete="new-password">
+
     <button onclick="register()">Register</button>
-    <button onclick="forgotPass()">Forgot Password?</button>
-    <div class="link">
-      Already have an account? <a href="login.html">Login</a>
-    </div>
+    <button class="extra-btn" onclick="window.location.href='login.html'">🔑 Back to Login</button>
+
     <p class="msg" id="msg"></p>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { 
-      getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail 
+      getAuth, createUserWithEmailAndPassword 
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
     import { 
       getFirestore, doc, setDoc 
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-    // ✅ আপনার Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
       authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -53,65 +50,49 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
+    const db   = getFirestore(app);
 
-    const msgEl = document.getElementById("msg");
+    const msgEl=document.getElementById("msg");
 
-    // 🔹 Register
-    window.register = async () => {
-      const name = document.getElementById("name").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const pass  = document.getElementById("password").value.trim();
+    function friendly(e){
+      const code = e?.code || "";
+      if(code==="auth/email-already-in-use") return "⚠️ Email already registered.";
+      if(code==="auth/weak-password") return "⚠️ Password must be at least 6 characters.";
+      if(code==="auth/invalid-email") return "⚠️ Invalid email format.";
+      return e.message || "❌ Something went wrong!";
+    }
 
-      if(!name || !email || !phone || !pass){
-        msgEl.textContent = "⚠️ Please fill all fields.";
+    window.register=async()=>{
+      const name=document.getElementById("name").value.trim();
+      const phone=document.getElementById("phone").value.trim();
+      const email=document.getElementById("email").value.trim();
+      const pass=document.getElementById("password").value.trim();
+
+      if(!name||!phone||!email||!pass){
+        msgEl.textContent="⚠️ Please fill all fields.";
         return;
       }
-      if(pass.length < 6){
-        msgEl.textContent = "⚠️ Password must be at least 6 characters.";
-        return;
-      }
 
-      msgEl.textContent = "⏳ Creating account...";
-      try {
-        const cred = await createUserWithEmailAndPassword(auth, email, pass);
-        const uid = cred.user.uid;
+      msgEl.textContent="⏳ Creating account...";
+      try{
+        const cred=await createUserWithEmailAndPassword(auth,email,pass);
+        const uid=cred.user.uid;
 
-        // Firestore user profile তৈরি
-        await setDoc(doc(db, "users", uid), {
-          name: name,
-          email: email,
-          phone: phone,
-          role: "user",
-          balance: 0,
-          approved: false,
-          avatar: "",
-          tier: 0,
-          weeklyDiamond: 0,
-          weeklyTotal: 0,
-          weekBoundary: Date.now()
+        // Save user profile in Firestore
+        await setDoc(doc(db,"users",uid),{
+          name:name,
+          phone:phone,
+          email:email,
+          role:"user",
+          balance:0,
+          approved:true,
+          createdAt:new Date().toISOString()
         });
 
-        msgEl.textContent = "✅ Registration successful! Redirecting...";
-        setTimeout(()=>{ window.location.href="login.html"; }, 1500);
-      } catch(e) {
-        msgEl.textContent = "❌ " + e.message;
-      }
-    };
-
-    // 🔹 Forgot Password
-    window.forgotPass = async () => {
-      const email = document.getElementById("email").value.trim();
-      if(!email){
-        msgEl.textContent = "⚠️ Enter your email to reset password.";
-        return;
-      }
-      try {
-        await sendPasswordResetEmail(auth, email);
-        msgEl.textContent = "📩 Password reset email sent!";
-      } catch(e) {
-        msgEl.textContent = "❌ " + e.message;
+        msgEl.textContent="✅ Registration successful! Redirecting...";
+        setTimeout(()=>window.location.href="login.html",1500);
+      }catch(e){
+        msgEl.textContent=friendly(e);
       }
     };
   </script>
