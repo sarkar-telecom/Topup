@@ -21,11 +21,12 @@
     tr:hover { background:#1c212e; }
     .search-box { margin:10px 0; display:flex; gap:8px; }
     .search-box input { flex:1; padding:8px; border-radius:6px; border:1px solid #2b3347; background:#0f1115; color:var(--text); }
-    .btn { padding:8px 14px; border:none; border-radius:6px; cursor:pointer; font-weight:600; }
+    .btn { padding:6px 12px; border:none; border-radius:6px; cursor:pointer; font-weight:600; }
     .btn.search { background:var(--accent); color:#001; }
     .btn.clear { background:var(--bad); color:#fff; }
     .pager { margin-top:12px; display:flex; justify-content:center; gap:10px; }
     .pager button { padding:6px 12px; border:none; border-radius:6px; background:var(--accent); color:#001; cursor:pointer; }
+    select.status-select { padding:4px 6px; border-radius:6px; background:#1f2430; color:#fff; border:1px solid #2b3347; }
   </style>
 </head>
 <body>
@@ -103,7 +104,7 @@
         authBtn.onclick=()=>signOut(auth);
 
         if(ADMIN_EMAILS.includes(user.email)){
-          loadOrders(); // ✅ শুধু অ্যাডমিন হলে ডেটা লোড হবে
+          loadOrders();
         }else{
           orderTable.innerHTML="<tr><td colspan='6'>⛔ Access denied. Not an admin.</td></tr>";
         }
@@ -154,13 +155,25 @@
           <td>${start+i+1}</td>
           <td>${o.number}</td>
           <td>${o.amount}</td>
-          <td style="color:${o.status.toLowerCase()==='cancel'?'red':o.status.toLowerCase()==='complete'?'lime':'orange'}">${o.status}</td>
+          <td>
+            <select class="status-select" onchange="updateStatus(${start+i}, this.value)">
+              <option value="Waiting" ${o.status==="Waiting"?"selected":""}>Waiting</option>
+              <option value="Complete" ${o.status==="Complete"?"selected":""}>Complete</option>
+              <option value="Cancel" ${o.status==="Cancel"?"selected":""}>Cancel</option>
+            </select>
+          </td>
           <td>${o.email}</td>
           <td>${o.time}</td>
         </tr>
       `).join("");
       orderTable.innerHTML=rows;
     }
+
+    // 🔹 Status Update Function
+    window.updateStatus=(index,newStatus)=>{
+      filteredOrders[index].status=newStatus;
+      alert("✅ Status updated to: "+newStatus+"\n\n(দ্রষ্টব্য: Google Sheet এ Write-back করতে চাইলে Apps Script ব্যবহার করতে হবে)");
+    };
 
     // 🔹 Search
     window.doSearch=()=>{
