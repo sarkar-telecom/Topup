@@ -12,6 +12,9 @@
     button{background:#06b6d4;color:#001;border:none;padding:10px 14px;margin-top:10px;width:100%;border-radius:6px;font-weight:bold;cursor:pointer;}
     button:hover{background:#0ea5e9;}
     .msg{margin-top:10px;font-size:14px;}
+    .options{margin-top:12px;text-align:left;font-size:13px;color:#9aa3b2;}
+    .options label{cursor:pointer;}
+    .link-btn{background:none;border:none;color:#06b6d4;cursor:pointer;text-decoration:underline;font-size:13px;margin-top:6px;}
   </style>
 </head>
 <body>
@@ -19,14 +22,22 @@
     <h2>🔐 Login</h2>
     <input type="email" id="email" placeholder="Email">
     <input type="password" id="password" placeholder="Password">
+    
+    <div class="options">
+      <label><input type="checkbox" id="remember"> Remember me</label><br>
+      <label><input type="checkbox" id="showPass"> Show password</label>
+    </div>
+
     <button onclick="login()">Login</button>
-    <button onclick="signup()">Signup</button>
+    <button onclick="signup()">Register</button>
+    <button class="link-btn" onclick="forgotPass()">Forgot Password?</button>
+
     <p class="msg" id="msg"></p>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
@@ -41,21 +52,59 @@
     const auth = getAuth(app);
 
     const msgEl=document.getElementById("msg");
+    const emailEl=document.getElementById("email");
+    const passEl=document.getElementById("password");
+    const rememberEl=document.getElementById("remember");
+    const showPassEl=document.getElementById("showPass");
 
+    // 🔹 Load saved credentials if "remember me" was used
+    window.onload=()=>{
+      const savedEmail=localStorage.getItem("email");
+      const savedPass=localStorage.getItem("password");
+      if(savedEmail && savedPass){
+        emailEl.value=savedEmail;
+        passEl.value=savedPass;
+        rememberEl.checked=true;
+      }
+    };
+
+    // 🔹 Show password toggle
+    showPassEl.addEventListener("change",()=>{
+      passEl.type=showPassEl.checked?"text":"password";
+    });
+
+    // 🔹 Login
     window.login=()=>{
-      const email=document.getElementById("email").value;
-      const pass=document.getElementById("password").value;
+      const email=emailEl.value.trim();
+      const pass=passEl.value.trim();
       signInWithEmailAndPassword(auth,email,pass).then(()=>{
         msgEl.textContent="✅ Login success!";
-        window.location.href="order.html";
+        if(rememberEl.checked){
+          localStorage.setItem("email",email);
+          localStorage.setItem("password",pass);
+        }else{
+          localStorage.removeItem("email");
+          localStorage.removeItem("password");
+        }
+        window.location.href="dashboard.html"; // redirect after login
       }).catch(e=>msgEl.textContent="❌ "+e.message);
     };
 
+    // 🔹 Register
     window.signup=()=>{
-      const email=document.getElementById("email").value;
-      const pass=document.getElementById("password").value;
+      const email=emailEl.value.trim();
+      const pass=passEl.value.trim();
       createUserWithEmailAndPassword(auth,email,pass).then(()=>{
         msgEl.textContent="✅ Account created! Now login.";
+      }).catch(e=>msgEl.textContent="❌ "+e.message);
+    };
+
+    // 🔹 Forgot Password
+    window.forgotPass=()=>{
+      const email=emailEl.value.trim();
+      if(!email){ msgEl.textContent="⚠️ Enter your email first!"; return; }
+      sendPasswordResetEmail(auth,email).then(()=>{
+        msgEl.textContent="📩 Password reset email sent!";
       }).catch(e=>msgEl.textContent="❌ "+e.message);
     };
   </script>
