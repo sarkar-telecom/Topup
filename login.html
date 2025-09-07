@@ -11,31 +11,37 @@
     input{width:90%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #333;background:#0f1115;color:#e7eaf0;}
     button{background:#06b6d4;color:#001;border:none;padding:10px 14px;margin-top:10px;width:100%;border-radius:6px;font-weight:bold;cursor:pointer;}
     button:hover{background:#0ea5e9;}
-    .msg{margin-top:10px;font-size:14px;}
+    .msg{margin-top:10px;font-size:14px;min-height:20px}
     .extra-btn{background:#1f2937;color:#e7eaf0;border:none;padding:8px;margin-top:8px;width:100%;border-radius:6px;cursor:pointer;font-size:14px;}
     .extra-btn:hover{background:#374151;}
+    .muted{font-size:12px;color:#9aa3b2;margin-top:6px}
   </style>
 </head>
 <body>
   <div class="card">
     <h2>🔐 Login</h2>
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Password">
+    <input type="email" id="email" placeholder="Email" autocomplete="username">
+    <input type="password" id="password" placeholder="Password" autocomplete="current-password">
 
-    <button onclick="login()">Login</button>
-    <button onclick="signup()">Register</button>
+    <button id="loginBtn" onclick="login()">Login</button>
+    <button id="regBtn" onclick="signup()">Register</button>
     <button class="extra-btn" onclick="forgotPass()">Forgot Password?</button>
     <button class="extra-btn" onclick="toggleRemember()">Remember Me</button>
     <label style="font-size:13px;display:block;margin-top:8px;">
       <input type="checkbox" id="showPass"> Show password
     </label>
 
+    <p class="muted">Password must be at least 6 characters.</p>
     <p class="msg" id="msg"></p>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { 
+      getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
+      sendPasswordResetEmail, setPersistence, 
+      browserLocalPersistence, browserSessionPersistence 
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
@@ -49,69 +55,112 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const msgEl=document.getElementById("msg");
-    const emailEl=document.getElementById("email");
-    const passEl=document.getElementById("password");
-    const showPassEl=document.getElementById("showPass");
+    const msgEl = document.getElementById("msg");
+    const emailEl = document.getElementById("email");
+    const passEl  = document.getElementById("password");
+    const showPassEl = document.getElementById("showPass");
+    const loginBtn = document.getElementById("loginBtn");
+    const regBtn = document.getElementById("regBtn");
 
-    // 🔹 Show password toggle
+    // Show password
     showPassEl.addEventListener("change",()=>{
-      passEl.type=showPassEl.checked?"text":"password";
+      passEl.type = showPassEl.checked ? "text" : "password";
     });
 
-    // 🔹 Remember Me toggle
-    function toggleRemember(){
-      if(localStorage.getItem("remembered")){
+    // Load remembered creds
+    window.onload = () => {
+      if(localStorage.getItem("remembered")==="true"){
+        emailEl.value = localStorage.getItem("email") || "";
+        passEl.value  = localStorage.getItem("password") || "";
+      }
+    };
+
+    function friendly(e){
+      const code = (e && e.code) || "";
+      if(code === "auth/email-already-in-use") return "This email is already registered. Try Login or Forgot Password.";
+      if(code === "auth/weak-password") return "Password is too weak (min 6 characters).";
+      if(code === "auth/invalid-email") return "Invalid email address.";
+      if(code === "auth/user-not-found") return "No account found with this email.";
+      if(code === "auth/wrong-password") return "Wrong password.";
+      return e.message || "Something went wrong.";
+    }
+
+    // Remember Me (button)
+    window.toggleRemember = () => {
+      if(localStorage.getItem("remembered")==="true"){
         localStorage.removeItem("email");
         localStorage.removeItem("password");
         localStorage.removeItem("remembered");
-        msgEl.textContent="ℹ️ Remember me disabled.";
+        msgEl.textContent = "ℹ️ Remember me disabled.";
       }else{
-        const email=emailEl.value.trim();
-        const pass=passEl.value.trim();
+        const email = emailEl.value.trim();
+        const pass  = passEl.value.trim();
         if(!email || !pass){ msgEl.textContent="⚠️ Enter email & password first!"; return; }
-        localStorage.setItem("email",email);
-        localStorage.setItem("password",pass);
+        localStorage.setItem("email", email);
+        localStorage.setItem("password", pass);
         localStorage.setItem("remembered","true");
-        msgEl.textContent="✅ Credentials saved!";
+        msgEl.textContent = "✅ Credentials saved!";
       }
+    };
+
+    async function setAuthPersistence(){
+      // If remembered, keep across restarts; otherwise for the tab only
+      const remembered = localStorage.getItem("remembered")==="true";
+      await setPersistence(auth, remembered ? browserLocalPersistence : browserSessionPersistence);
     }
-    window.toggleRemember=toggleRemember;
 
-    // Load remembered credentials
-    window.onload=()=>{
-      if(localStorage.getItem("remembered")){
-        emailEl.value=localStorage.getItem("email")||"";
-        passEl.value=localStorage.getItem("password")||"";
+    // LOGIN
+    window.login = async () => {
+      const email = emailEl.value.trim();
+      const pass  = passEl.value.trim();
+      if(!email || !pass){ msgEl.textContent="⚠️ Enter email & password!"; return; }
+
+      loginBtn.disabled = true; regBtn.disabled = true;
+      msgEl.textContent = "⏳ Logging in...";
+      try{
+        await setAuthPersistence();
+        await signInWithEmailAndPassword(auth, email, pass);
+        msgEl.textContent = "✅ Login success!";
+        window.location.href = "dashboard.html";
+      }catch(e){
+        msgEl.textContent = "❌ " + friendly(e);
+      }finally{
+        loginBtn.disabled = false; regBtn.disabled = false;
       }
     };
 
-    // 🔹 Login
-    window.login=()=>{
-      const email=emailEl.value.trim();
-      const pass=passEl.value.trim();
-      signInWithEmailAndPassword(auth,email,pass).then(()=>{
-        msgEl.textContent="✅ Login success!";
-        window.location.href="dashboard.html"; // redirect
-      }).catch(e=>msgEl.textContent="❌ "+e.message);
+    // REGISTER (auto-login after create)
+    window.signup = async () => {
+      const email = emailEl.value.trim();
+      const pass  = passEl.value.trim();
+      if(!email || !pass){ msgEl.textContent="⚠️ Enter email & password!"; return; }
+      if(pass.length < 6){ msgEl.textContent="⚠️ Password must be at least 6 characters."; return; }
+
+      loginBtn.disabled = true; regBtn.disabled = true;
+      msgEl.textContent = "⏳ Creating account...";
+      try{
+        await createUserWithEmailAndPassword(auth, email, pass);
+        msgEl.textContent = "✅ Account created! Logging in...";
+        await setAuthPersistence();
+        await signInWithEmailAndPassword(auth, email, pass);
+        window.location.href = "dashboard.html";
+      }catch(e){
+        msgEl.textContent = "❌ " + friendly(e);
+      }finally{
+        loginBtn.disabled = false; regBtn.disabled = false;
+      }
     };
 
-    // 🔹 Register
-    window.signup=()=>{
-      const email=emailEl.value.trim();
-      const pass=passEl.value.trim();
-      createUserWithEmailAndPassword(auth,email,pass).then(()=>{
-        msgEl.textContent="✅ Account created! Now login.";
-      }).catch(e=>msgEl.textContent="❌ "+e.message);
-    };
-
-    // 🔹 Forgot Password
-    window.forgotPass=()=>{
-      const email=emailEl.value.trim();
+    // FORGOT PASSWORD
+    window.forgotPass = async () => {
+      const email = emailEl.value.trim();
       if(!email){ msgEl.textContent="⚠️ Enter your email first!"; return; }
-      sendPasswordResetEmail(auth,email).then(()=>{
-        msgEl.textContent="📩 Password reset email sent!";
-      }).catch(e=>msgEl.textContent="❌ "+e.message);
+      try{
+        await sendPasswordResetEmail(auth, email);
+        msgEl.textContent = "📩 Password reset email sent!";
+      }catch(e){
+        msgEl.textContent = "❌ " + friendly(e);
+      }
     };
   </script>
 </body>
