@@ -1,110 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Place Order - Sarkar Telecom</title>
   <style>
-    :root{
-      --bg:#0f1115; --card:#171a21; --text:#e7eaf0; --muted:#9aa3b2;
-      --accent:#06b6d4; --ok:#22c55e; --bad:#ef4444;
-    }
-    body { background:var(--bg); color:var(--text); font-family:Arial, sans-serif; margin:0; }
-    header { background:var(--card); text-align:center; padding:14px; color:var(--accent); font-weight:800; }
-    .container { max-width:520px; margin:18px auto; background:var(--card); border-radius:10px; padding:18px; text-align:center; }
-    h2 { margin:8px 0 14px; color:var(--accent); }
-    input { width:92%; background:#0f1115; border:1px solid #2b3347; color:var(--text);
-            border-radius:8px; padding:12px; font-size:16px; text-align:center; }
-    .grid { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:12px 0 4px; }
-    .amt-btn {
-      background:#1f2430; border:1px solid #2b3347; color:var(--text); 
-      padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:700; min-width:84px;
-    }
-    .amt-btn.active { background:var(--accent); color:#001; border-color:var(--accent); }
-    .submit-btn { margin-top:10px; padding:12px 16px; font-size:16px; font-weight:800;
-                  background:var(--accent); color:#001; border:none; border-radius:8px; cursor:pointer; }
-    .submit-btn:disabled { opacity:0.6; cursor:not-allowed; }
-    #message { margin-top:10px; font-weight:700; }
-    .hint { color:var(--muted); font-size:13px; margin-top:6px; }
+    body { background:#0f1115; color:#fff; font-family:Arial, sans-serif; text-align:center; }
+    .container { max-width:500px; margin:auto; padding:20px; background:#171a21; border-radius:8px; }
+    h2 { color:#06b6d4; }
+    input, button { padding:10px; margin:6px; font-size:16px; border-radius:6px; border:none; }
+    input { width:90%; }
+    button { background:#06b6d4; color:#000; cursor:pointer; font-weight:bold; }
+    button:hover { opacity:0.9; }
+    #diamonds button { margin:4px; background:#1f2430; color:#fff; border:1px solid #333; }
+    #diamonds button.active { background:#06b6d4; color:#000; }
+    #message { margin-top:10px; font-weight:bold; }
   </style>
 </head>
 <body>
-  <header>💎 Sarkar Telecom – Place New Order</header>
-
   <div class="container">
-    <h2>📝 Place New Order</h2>
+    <h2>💎 Place New Order</h2>
+    <input type="text" id="number" placeholder="Enter Game ID / Number">
 
-    <input type="text" id="number" placeholder="Enter Game ID / Number (with country code)">
-    <div class="hint">উদাহরণ: +8801XXXXXXXXX বা গেম প্রোফাইল আইডি</div>
-
-    <p style="margin:14px 0 8px;">Select Amount</p>
-    <div id="diamonds" class="grid">
-      <button class="amt-btn" onclick="selectAmount(10, this)">10</button>
-      <button class="amt-btn" onclick="selectAmount(50, this)">50</button>
-      <button class="amt-btn" onclick="selectAmount(100, this)">100</button>
-      <button class="amt-btn" onclick="selectAmount(200, this)">200</button>
-      <button class="amt-btn" onclick="selectAmount(500, this)">500</button>
-      <button class="amt-btn" onclick="selectAmount(1000, this)">1000</button>
-      <button class="amt-btn" onclick="selectAmount(2000, this)">2000</button>
-      <button class="amt-btn" onclick="selectAmount(5000, this)">5000</button>
-      <button class="amt-btn" onclick="selectAmount(10000, this)">10000</button>
-      <button class="amt-btn" onclick="selectAmount(20000, this)">20000</button>
+    <div id="diamonds">
+      <button onclick="selectAmount(10)">10</button>
+      <button onclick="selectAmount(50)">50</button>
+      <button onclick="selectAmount(100)">100</button>
+      <button onclick="selectAmount(200)">200</button>
+      <button onclick="selectAmount(500)">500</button>
+      <button onclick="selectAmount(1000)">1000</button>
+      <button onclick="selectAmount(2000)">2000</button>
+      <button onclick="selectAmount(5000)">5000</button>
+      <button onclick="selectAmount(10000)">10000</button>
+      <button onclick="selectAmount(20000)">20000</button>
     </div>
 
-    <div class="hint">Selected: <span id="selected">None</span></div>
-
-    <button id="submitBtn" class="submit-btn" onclick="submitOrder()">✅ Confirm Order</button>
+    <p>Selected: <span id="selected">None</span></p>
+    <button onclick="submitOrder()">✅ Confirm Order</button>
     <p id="message"></p>
   </div>
 
-  <!-- Hidden Google Form submit (avoids CORS issues) -->
-  <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
-  <form id="gform" action="https://docs.google.com/forms/d/e/1FAIpQLScLsqajnZepD3HBTwnXwdjGQaItAVtnnGPRkD3TBsU3lPLzuQ/formResponse"
-        method="POST" target="hidden_iframe" style="display:none;">
-    <!-- Number / Profile ID -->
-    <input type="text" name="entry.1172671786" id="f_number">
-    <!-- Amount (must match dropdown choices in the Form) -->
-    <input type="text" name="entry.1509335158" id="f_amount">
-    <!-- Status -->
-    <input type="text" name="entry.588493421" id="f_status" value="Waiting">
-  </form>
+<script>
+  // ✅ Login check
+  const userEmail = localStorage.getItem("userEmail");
+  if (!userEmail) {
+    alert("⚠️ Please login first!");
+    window.location.href = "login.html";
+  }
 
-  <script>
-    let selectedAmount = null;
+  const API_URL = "https://script.google.com/macros/s/AKfycbx_sBNjUxFX931jcDyEw2IVzrVpZCmzSVwVCboJx7DVaKN8YBI6E6z0pYoCwF-vhHvc1Q/exec";
+  const SECRET = "12345";
 
-    function selectAmount(amount, el){
-      selectedAmount = amount;
-      document.querySelectorAll('.amt-btn').forEach(b => b.classList.remove('active'));
-      el.classList.add('active');
-      document.getElementById('selected').textContent = amount;
+  let selectedAmount = null;
+
+  function selectAmount(amount) {
+    selectedAmount = amount;
+    document.querySelectorAll("#diamonds button").forEach(btn => btn.classList.remove("active"));
+    event.target.classList.add("active");
+    document.getElementById("selected").innerText = amount;
+  }
+
+  async function submitOrder() {
+    const number = document.getElementById("number").value;
+    if (!number || !selectedAmount) {
+      document.getElementById("message").innerText = "⚠️ Enter number & select amount!";
+      return;
     }
 
-    function submitOrder(){
-      const number = document.getElementById('number').value.trim();
-      const msgEl = document.getElementById('message');
-      const btn = document.getElementById('submitBtn');
+    document.getElementById("message").innerText = "⏳ Submitting...";
 
-      if(!number || !selectedAmount){
-        msgEl.textContent = "⚠️ Enter number & select amount!";
-        return;
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: SECRET,
+          user: userEmail,   // 👈 লগইন করা ইউজার
+          number: number,
+          amount: selectedAmount,
+          product: "Diamond",
+          status: "Waiting"
+        })
+      });
+
+      const data = await res.json();
+      if (data.ok) {
+        document.getElementById("message").innerText = "✅ Order submitted!";
+        setTimeout(() => { window.location.href = "order-history.html"; }, 1500);
+      } else {
+        document.getElementById("message").innerText = "❌ Error: " + data.error;
       }
-
-      // Fill hidden form fields
-      document.getElementById('f_number').value = number;
-      document.getElementById('f_amount').value = String(selectedAmount); // must match the Form dropdown text
-      document.getElementById('f_status').value = "Waiting";
-
-      // Submit
-      btn.disabled = true;
-      msgEl.textContent = "⏳ Submitting...";
-      document.getElementById('gform').submit();
-
-      // Assume success (Google Forms blocks CORS/response); redirect after short delay
-      setTimeout(() => {
-        msgEl.textContent = "✅ Order submitted!";
-        window.location.href = "order-history.html";
-      }, 1200);
+    } catch (err) {
+      document.getElementById("message").innerText = "❌ Network error: " + err;
     }
-  </script>
+  }
+</script>
 </body>
 </html>
