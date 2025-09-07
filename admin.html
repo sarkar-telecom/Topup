@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Panel - Sarkar Telecom</title>
   <style>
-    :root {
-      --bg:#0f1115; --card:#171a21; --text:#e7eaf0;
-      --muted:#9aa3b2; --accent:#06b6d4; --bad:#ef4444;
-    }
+    :root { --bg:#0f1115; --card:#171a21; --text:#e7eaf0;
+      --muted:#9aa3b2; --accent:#06b6d4; --bad:#ef4444; }
     body { background:var(--bg); color:var(--text); font-family:Arial, sans-serif; margin:0; }
     header { background:var(--card); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }
     header h1 { margin:0; font-size:20px; color:var(--accent); }
@@ -73,6 +71,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
+    // 🔹 Firebase Config (order.html এর মতোই)
     const firebaseConfig = {
       apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
       authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -85,15 +84,16 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const ADMIN_EMAILS = [
-      "samrat.khulnas@gmail.com",  // ✅ আপনার ইমেইল
-      "admin@gmail.com"            // চাইলে ব্যাকআপ অ্যাডমিন
-    ];
+    // 🔹 শুধুমাত্র এই ইমেইলগুলো অ্যাডমিন
+    const ADMIN_EMAILS = ["samrat.khulnas@gmail.com"];
 
     let currentUser=null;
     const userInfo=document.getElementById("userInfo");
     const authBtn=document.getElementById("authBtn");
     const orderTable=document.getElementById("orderTable");
+
+    // Pagination
+    let page=0, perPage=10, orders=[], filteredOrders=[];
 
     onAuthStateChanged(auth,(user)=>{
       if(user){
@@ -104,7 +104,7 @@
         authBtn.onclick=()=>signOut(auth);
 
         if(ADMIN_EMAILS.includes(user.email)){
-          loadOrders();
+          loadOrders(); // ✅ Admin হলে অর্ডার লোড করবো
         }else{
           orderTable.innerHTML="<tr><td colspan='6'>⛔ Access denied. Not an admin.</td></tr>";
         }
@@ -118,14 +118,31 @@
       }
     });
 
-    // Dummy orders (Google Sheet / Firestore থেকে আপনার ডেটা লোড করার জায়গা)
-    let orders = [
-      {number:"+8801711111111",amount:100,status:"Waiting",email:"user1@gmail.com",time:"2025-09-07 12:00"},
-      {number:"+8801777777777",amount:500,status:"Done",email:"user2@gmail.com",time:"2025-09-07 12:05"},
-      {number:"+8801999999999",amount:200,status:"Cancel",email:"user3@gmail.com",time:"2025-09-07 12:10"},
-    ];
-
-    let page=0, perPage=5, filteredOrders=orders;
+    // 🔹 Google Sheet থেকে ডেটা লোড
+    async function loadOrders(){
+      try{
+        const sheetId="1FAIpQLScLsqajnZepD3HBTwnXwdjGQaItAVtnnGPRkD3TBsU3lPLzuQ"; // আপনার Google Form Sheet ID
+        const url=`https://opensheet.elk.sh/${sheetId}/responses`;
+        const res=await fetch(url);
+        const data=await res.json();
+        
+        // Google Form Response অনুযায়ী ফিল্ড এডজাস্ট করুন
+        orders=data.map((row,i)=>({
+          number: row["Number"] || row["entry.1172671786"] || "",
+          amount: row["Amount"] || row["entry.1509335158"] || "",
+          status: row["Status"] || row["entry.588493421"] || "Waiting",
+          email: row["Email"] || row["entry.198105099"] || "",
+          time: row["Timestamp"] || ""
+        }));
+        
+        filteredOrders=orders;
+        page=0;
+        renderTable();
+      }catch(e){
+        console.error("Sheet load error",e);
+        orderTable.innerHTML="<tr><td colspan='6'>⚠ Failed to load orders</td></tr>";
+      }
+    }
 
     function renderTable(){
       if(filteredOrders.length===0){
@@ -147,12 +164,7 @@
       orderTable.innerHTML=rows;
     }
 
-    window.loadOrders=()=>{
-      filteredOrders=orders;
-      page=0;
-      renderTable();
-    }
-
+    // 🔹 Search
     window.doSearch=()=>{
       const q=document.getElementById("searchBox").value.toLowerCase();
       filteredOrders=orders.filter(o=>
@@ -169,6 +181,7 @@
       filteredOrders=orders; page=0; renderTable();
     }
 
+    // 🔹 Pagination
     window.prevPage=()=>{ if(page>0){ page--; renderTable(); } }
     window.nextPage=()=>{ if((page+1)*perPage<filteredOrders.length){ page++; renderTable(); } }
   </script>
