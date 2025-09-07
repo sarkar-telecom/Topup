@@ -1,55 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Sarkar Telecom</title>
   <style>
-    :root {
-      --bg:#0f1115; --card:#171a21; --text:#e7eaf0;
-      --accent:#06b6d4; --ok:#22c55e; --bad:#ef4444;
-    }
-    body { margin:0; font-family:Arial, sans-serif; background:var(--bg); color:var(--text); }
-    header { background:var(--card); text-align:center; padding:14px; color:var(--accent); font-weight:800; }
-    .container {
-      max-width:400px; margin:40px auto; background:var(--card); padding:20px;
-      border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.4); text-align:center;
-    }
-    h2 { margin-bottom:18px; color:var(--accent); }
-    input {
-      width:90%; padding:12px; margin:8px 0; border:1px solid #333;
-      border-radius:8px; background:#0f1115; color:var(--text); font-size:15px;
-    }
-    button {
-      width:95%; padding:12px; margin:10px 0; border:none;
-      border-radius:8px; font-size:15px; font-weight:700; cursor:pointer;
-    }
-    .login-btn { background:var(--accent); color:#001; }
-    .login-btn:hover { opacity:0.9; }
-    .signup-btn { background:var(--ok); color:#001; }
-    .signup-btn:hover { opacity:0.9; }
-    #msg { margin-top:10px; font-weight:700; }
+    body{font-family:Arial,sans-serif;background:#0f1115;color:#e7eaf0;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
+    .card{background:#171a21;padding:20px;border-radius:10px;width:320px;text-align:center;}
+    h2{color:#06b6d4;margin-bottom:15px;}
+    input{width:90%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #333;background:#0f1115;color:#e7eaf0;}
+    button{background:#06b6d4;color:#001;border:none;padding:10px 14px;margin-top:10px;width:100%;border-radius:6px;font-weight:bold;cursor:pointer;}
+    button:hover{background:#0ea5e9;}
+    .msg{margin-top:10px;font-size:14px;}
   </style>
 </head>
 <body>
-  <header>💎 Sarkar Telecom – Login</header>
-
-  <div class="container">
-    <h2>🔑 User Login</h2>
-    <input type="email" id="email" placeholder="Enter Email" required>
-    <input type="password" id="password" placeholder="Enter Password" required>
-    
-    <button class="login-btn" onclick="login()">🔓 Login</button>
-    <button class="signup-btn" onclick="signup()">📝 Sign Up</button>
-    
-    <p id="msg"></p>
+  <div class="card">
+    <h2>🔐 Login</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <button onclick="signup()">Signup</button>
+    <p class="msg" id="msg"></p>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-    // ✅ Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
       authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -62,48 +40,24 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // 🔹 যদি আগেই লগইন থাকে → order.html এ পাঠিয়ে দেবে
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        window.location.href = "order.html";
-      }
-    });
+    const msgEl=document.getElementById("msg");
 
-    // 🔑 Login Function
-    window.login = function(){
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const msg = document.getElementById("msg");
+    window.login=()=>{
+      const email=document.getElementById("email").value;
+      const pass=document.getElementById("password").value;
+      signInWithEmailAndPassword(auth,email,pass).then(()=>{
+        msgEl.textContent="✅ Login success!";
+        window.location.href="order.html";
+      }).catch(e=>msgEl.textContent="❌ "+e.message);
+    };
 
-      signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          msg.textContent = "✅ Login successful!";
-          msg.style.color = "#22c55e";
-          setTimeout(()=> window.location.href="order.html", 800);
-        })
-        .catch(err => {
-          msg.textContent = "❌ " + err.message;
-          msg.style.color = "#ef4444";
-        });
-    }
-
-    // 📝 Sign Up Function
-    window.signup = function(){
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const msg = document.getElementById("msg");
-
-      createUserWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          msg.textContent = "✅ Account created & logged in!";
-          msg.style.color = "#22c55e";
-          setTimeout(()=> window.location.href="order.html", 800);
-        })
-        .catch(err => {
-          msg.textContent = "❌ " + err.message;
-          msg.style.color = "#ef4444";
-        });
-    }
+    window.signup=()=>{
+      const email=document.getElementById("email").value;
+      const pass=document.getElementById("password").value;
+      createUserWithEmailAndPassword(auth,email,pass).then(()=>{
+        msgEl.textContent="✅ Account created! Now login.";
+      }).catch(e=>msgEl.textContent="❌ "+e.message);
+    };
   </script>
 </body>
 </html>
