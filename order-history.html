@@ -1,50 +1,125 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Order History</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-</head>
-<body style="background:#000; color:#fff; padding:20px;">
-
-  <div id="header"></div>
-  <h2>Order History</h2>
-  <table border="1" style="width:100%; color:#fff; text-align:center;" id="orders"></table>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAyhjOsIXNAkBglpRllt0OZIOJYpdB_9-8",
-      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
-      projectId: "diamond-recharge-f7f59",
-      storageBucket: "diamond-recharge-f7f59.firebasestorage.app",
-      messagingSenderId: "657717928489",
-      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
-      measurementId: "G-TDK78BQ8SQ"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth=firebase.auth();
-
-    auth.onAuthStateChanged(user=>{
-      if(!user) window.location.href="login.html";
-      else loadOrders();
-    });
-
-    fetch("header.html").then(r=>r.text()).then(h=>document.getElementById("header").innerHTML=h);
-
-    async function loadOrders(){
-      const res=await fetch("https://script.google.com/macros/s/AKfycbypLjvDmPyBh68pwoeXuR7lFyc8qb8rimTLl1KYTKPoZ0lmfkvs-Xz6X3f-sNTLR91wqQ/exec");
-      const data=await res.json();
-      if(data.ok){
-        let html="<tr>";
-        data.rows[0].forEach(h=>html+="<th>"+h+"</th>");
-        html+="</tr>";
-        data.rows.slice(1).forEach(r=>{
-          html+="<tr>"+r.map(c=>"<td>"+c+"</td>").join("")+"</tr>";
-        });
-        document.getElementById("orders").innerHTML=html;
-      }
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order History - Sarkar Telecom</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card: #171a21;
+      --text: #e7eaf0;
+      --muted: #9aa3b2;
+      --accent: #06b6d4;
+      --ok: #22c55e;
+      --bad: #ef4444;
+      --wait: #eab308;
     }
-  </script>
+    body { margin:0; font-family:Arial,sans-serif; background:var(--bg); color:var(--text); text-align:center; }
+    header { background:var(--card); border-bottom:1px solid #202635; padding:10px; }
+    .site-name { font-size:20px; font-weight:800; color:var(--accent); }
+    h2 { color:var(--accent); margin:15px 0; }
+
+    table { width:95%; margin:auto; border-collapse:collapse; background:var(--card); font-size:14px; }
+    th,td { border:1px solid #333; padding:6px; text-align:center; }
+    th { background:var(--accent); color:#001; }
+    .status-box { padding:4px 8px; border-radius:6px; color:#fff; font-size:13px; font-weight:bold; }
+    .waiting { background:var(--wait); }
+    .completed { background:var(--ok); }
+    .cancelled { background:var(--bad); }
+
+    .card { display:none; background:var(--card); border-radius:8px; padding:10px; margin:10px auto; width:90%; text-align:left; }
+    .card p { margin:4px 0; font-size:14px; }
+
+    @media(max-width:700px) {
+      table { display:none; }
+      .card { display:block; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="site-name">SARKAR TELECOM</span>
+</header>
+
+<h2>📜 Order History</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>SL</th>
+      <th>Name</th>
+      <th>Product</th>
+      <th>Amount</th>
+      <th>Status</th>
+      <th>Time</th>
+    </tr>
+  </thead>
+  <tbody id="orderTable"></tbody>
+</table>
+
+<div id="cardContainer"></div>
+
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbx_sBNjUxFX931jcDyEw2IVzrVpZCmzSVwVCboJx7DVaKN8YBI6E6z0pYoCwF-vhHvc1Q/exec"; // আপনার doGet URL
+
+  async function loadOrders() {
+    try {
+      const res = await fetch(API_URL);
+      const data = await res.json();
+
+      if (!data.ok) {
+        document.body.innerHTML += "<p>❌ Failed to load orders!</p>";
+        return;
+      }
+
+      const rows = data.rows;
+      const table = document.getElementById("orderTable");
+      const cards = document.getElementById("cardContainer");
+      table.innerHTML = "";
+      cards.innerHTML = "";
+
+      // প্রথম row header, তাই বাদ দিচ্ছি
+      rows.slice(1).reverse().forEach((row, i) => {
+        const [time, name, product, amount, status] = row;
+
+        let statusClass = "waiting";
+        if (status === "COMPLETE") statusClass = "completed";
+        else if (status === "CANCEL") statusClass = "cancelled";
+
+        // টেবিল row
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${i+1}</td>
+          <td>${name || "-"}</td>
+          <td>${product || "-"}</td>
+          <td>${amount || "-"}</td>
+          <td><span class="status-box ${statusClass}">${status}</span></td>
+          <td>${time}</td>
+        `;
+        table.appendChild(tr);
+
+        // কার্ড ভিউ (মোবাইলের জন্য)
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <p><b>SL:</b> ${i+1}</p>
+          <p><b>Name:</b> ${name || "-"}</p>
+          <p><b>Product:</b> ${product || "-"}</p>
+          <p><b>Amount:</b> ${amount || "-"}</p>
+          <p><b>Status:</b> <span class="status-box ${statusClass}">${status}</span></p>
+          <p><b>Time:</b> ${time}</p>
+        `;
+        cards.appendChild(card);
+      });
+
+    } catch (err) {
+      document.body.innerHTML += `<p>❌ Error: ${err}</p>`;
+    }
+  }
+
+  loadOrders();
+</script>
 </body>
 </html>
