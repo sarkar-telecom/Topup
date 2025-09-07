@@ -1,68 +1,119 @@
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - Sarkar Telecom</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#0f1115;color:#e7eaf0;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
+    .card{background:#171a21;padding:22px;border-radius:12px;width:340px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.5);}
+    h2{color:#06b6d4;margin-bottom:18px;}
+    input{width:90%;padding:10px;margin:6px 0;border-radius:6px;border:1px solid #333;background:#0f1115;color:#e7eaf0;}
+    button{background:#06b6d4;color:#001;border:none;padding:10px 14px;margin-top:10px;width:100%;border-radius:6px;font-weight:bold;cursor:pointer;}
+    button:hover{background:#0ea5e9;}
+    .msg{margin-top:10px;font-size:14px;min-height:20px}
+    .link{margin-top:10px;font-size:14px;}
+    .link a{color:#06b6d4;text-decoration:none;}
+    .link a:hover{text-decoration:underline;}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>📝 Register</h2>
+    <input type="text" id="name" placeholder="Full Name">
+    <input type="email" id="email" placeholder="Email">
+    <input type="text" id="phone" placeholder="Phone (e.g. +8801XXXXXXXXX)">
+    <input type="password" id="password" placeholder="Password (min 6 chars)">
+    <button onclick="register()">Register</button>
+    <button onclick="forgotPass()">Forgot Password?</button>
+    <div class="link">
+      Already have an account? <a href="login.html">Login</a>
+    </div>
+    <p class="msg" id="msg"></p>
+  </div>
 
-  // ✅ Updated Firebase Config
-  const firebaseConfig = {
-    apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
-    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
-    projectId: "diamond-recharge-f7f59",
-    storageBucket: "diamond-recharge-f7f59.appspot.com",
-    messagingSenderId: "657717928489",
-    appId: "1:657717928489:web:70431ebc9afb7002d4b238",
-    measurementId: "G-TDK78BQ8SQ"
-  };
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { 
+      getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail 
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { 
+      getFirestore, doc, setDoc 
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+    // ✅ আপনার Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+    };
 
-  const registerBtn = document.getElementById("registerBtn");
-  const errorBox = document.getElementById("errorBox");
-  const successBox = document.getElementById("successBox");
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  registerBtn.addEventListener("click", async () => {
-    const name = document.getElementById("name").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const avatar = document.getElementById("avatar").value.trim();
+    const msgEl = document.getElementById("msg");
 
-    errorBox.textContent = "";
-    successBox.textContent = "";
+    // 🔹 Register
+    window.register = async () => {
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const pass  = document.getElementById("password").value.trim();
 
-    if (!name || !email || !password) {
-      errorBox.textContent = "⚠ Please fill in all required fields.";
-      return;
-    }
+      if(!name || !email || !phone || !pass){
+        msgEl.textContent = "⚠️ Please fill all fields.";
+        return;
+      }
+      if(pass.length < 6){
+        msgEl.textContent = "⚠️ Password must be at least 6 characters.";
+        return;
+      }
 
-    try {
-      // ✅ Firebase Auth এ ইউজার তৈরি
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      msgEl.textContent = "⏳ Creating account...";
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, pass);
+        const uid = cred.user.uid;
 
-      // ✅ Update profile (displayName, photoURL)
-      await updateProfile(user, {
-        displayName: name,
-        photoURL: avatar || "https://via.placeholder.com/40"
-      });
+        // Firestore user profile তৈরি
+        await setDoc(doc(db, "users", uid), {
+          name: name,
+          email: email,
+          phone: phone,
+          role: "user",
+          balance: 0,
+          approved: false,
+          avatar: "",
+          tier: 0,
+          weeklyDiamond: 0,
+          weeklyTotal: 0,
+          weekBoundary: Date.now()
+        });
 
-      // ✅ Firestore এ ডাটা সেভ
-      await setDoc(doc(db, "users", user.uid), {
-        name: name,
-        email: email,
-        phone: phone,
-        avatar: avatar || "",
-        balance: 0,
-        createdAt: new Date().toISOString()
-      });
+        msgEl.textContent = "✅ Registration successful! Redirecting...";
+        setTimeout(()=>{ window.location.href="login.html"; }, 1500);
+      } catch(e) {
+        msgEl.textContent = "❌ " + e.message;
+      }
+    };
 
-      successBox.textContent = "✅ Registration successful! Redirecting...";
-      setTimeout(() => window.location.href = "dashboard.html", 1500);
-
-    } catch (error) {
-      errorBox.textContent = error.message;
-    }
-  });
-</script>
+    // 🔹 Forgot Password
+    window.forgotPass = async () => {
+      const email = document.getElementById("email").value.trim();
+      if(!email){
+        msgEl.textContent = "⚠️ Enter your email to reset password.";
+        return;
+      }
+      try {
+        await sendPasswordResetEmail(auth, email);
+        msgEl.textContent = "📩 Password reset email sent!";
+      } catch(e) {
+        msgEl.textContent = "❌ " + e.message;
+      }
+    };
+  </script>
+</body>
+</html>
