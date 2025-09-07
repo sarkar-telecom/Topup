@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -75,28 +75,38 @@
   <button id="nextBtn">Next ➡</button>
 </div>
 
+<!-- 🔒 Hidden Google Form submit (reliable like order page) -->
+<iframe name="hidden_iframe_admin" id="hidden_iframe_admin" style="display:none;"></iframe>
+<form id="gformUpdate" action="https://docs.google.com/forms/d/e/1FAIpQLScLsqajnZepD3HBTwnXwdjGQaItAVtnnGPRkD3TBsU3lPLzuQ/formResponse"
+      method="POST" target="hidden_iframe_admin" style="display:none;">
+  <input type="text" name="entry.1172671786" id="u_number">
+  <input type="text" name="entry.1509335158" id="u_amount">
+  <input type="text" name="entry.588493421" id="u_status">
+  <input type="text" name="entry.198105099" id="u_email">
+</form>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-  // Firebase Config
+  // Firebase Config (same as order/order-history)
   const firebaseConfig = {
     apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
     authDomain: "diamond-recharge-f7f59.firebaseapp.com",
     projectId: "diamond-recharge-f7f59",
     storageBucket: "diamond-recharge-f7f59.appspot.com",
     messagingSenderId: "657717928489",
-    appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+    measurementId: "G-TDK78BQ8SQ"
   };
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
-  // Google Sheet → JSON
+  // Apps Script → JSON (cache-busting added)
   const API_URL = "https://script.google.com/macros/s/AKfycbx_sBNjUxFX931jcDyEw2IVzrVpZCmzSVwVCboJx7DVaKN8YBI6E6z0pYoCwF-vhHvc1Q/exec";
-  // Google Form link (Status Update)
-  const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScLsqajnZepD3HBTwnXwdjGQaItAVtnnGPRkD3TBsU3lPLzuQ/formResponse";
 
+  // DOM
   const orderTable = document.getElementById("orderTable");
   const authBtn = document.getElementById("authBtn");
   const userInfo = document.getElementById("userInfo");
@@ -106,9 +116,16 @@
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
 
-  let currentUser = null;
+  // Hidden form DOM
+  const fNumber = document.getElementById("u_number");
+  const fAmount = document.getElementById("u_amount");
+  const fStatus = document.getElementById("u_status");
+  const fEmail  = document.getElementById("u_email");
+  const gformUpdate = document.getElementById("gformUpdate");
+
   const ADMIN_EMAIL = "samrat.khulnas@gmail.com";
 
+  let currentUser = null;
   let latestOrders = [];
   let viewOrders = [];
   let currentPage = 1;
@@ -130,23 +147,23 @@
   async function loadOrders() {
     orderTable.innerHTML = "<tr><td colspan='6'>⏳ Loading...</td></tr>";
     try {
-      const res = await fetch(API_URL);
+      const res = await fetch(API_URL + "?t=" + Date.now());
       const data = await res.json();
       if (!data.ok) {
         orderTable.innerHTML = "<tr><td colspan='6'>❌ Failed to load orders!</td></tr>";
         return;
       }
 
-      const rows = data.rows.slice(1);
+      const rows = data.rows.slice(1); // [time, number, amount, status, email]
       const latestMap = new Map();
-
       rows.forEach(r => {
         const [time, number, amount, status, email] = r;
         const key = `${normalize(number)}|${normalize(amount)}|${normalize(email)}`;
+        // overwrite keeps last (latest) seen for that key
         latestMap.set(key, r);
       });
 
-      latestOrders = Array.from(latestMap.values()).reverse();
+      latestOrders = Array.from(latestMap.values()).reverse(); // latest first
       viewOrders = [...latestOrders];
       currentPage = 1;
       renderTable();
@@ -166,6 +183,7 @@
     } else {
       pageSlice.forEach((r, idx) => {
         const [time, number, amount, status, email] = r;
+        const rowKey = btoa(`${number}|${amount}|${email}`); // unique for disable/UX
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${start + idx + 1}</td>
@@ -173,9 +191,9 @@
           <td>${amount || "-"}</td>
           <td><span class="status-box ${statusClassOf(status)}">${status}</span></td>
           <td>${formatTime(time)}</td>
-          <td>
-            <button class="btn-sm btn-done" onclick="submitStatus('${number}','${amount}','${email}','Completed')">✔ Done</button>
-            <button class="btn-sm btn-cancel" onclick="submitStatus('${number}','${amount}','${email}','Cancelled')">✖ Cancel</button>
+          <td data-key="${rowKey}">
+            <button class="btn-sm btn-done"   onclick="submitStatus('${encodeURIComponent(number)}','${encodeURIComponent(amount)}','${encodeURIComponent(email)}','Completed','${rowKey}')">✔ Done</button>
+            <button class="btn-sm btn-cancel" onclick="submitStatus('${encodeURIComponent(number)}','${encodeURIComponent(amount)}','${encodeURIComponent(email)}','Cancelled','${rowKey}')">✖ Cancel</button>
           </td>
         `;
         orderTable.appendChild(tr);
@@ -188,15 +206,13 @@
 
   function applySearch() {
     const term = normalize(searchInput.value);
-    if (!term) {
-      viewOrders = [...latestOrders];
-    } else {
-      viewOrders = latestOrders.filter(r => 
-        normalize(r[1]).includes(term) || 
-        normalize(r[2]).includes(term) || 
-        normalize(r[3]).includes(term)
-      );
-    }
+    viewOrders = term
+      ? latestOrders.filter(r =>
+          normalize(r[1]).includes(term) || // number
+          normalize(r[2]).includes(term) || // amount
+          normalize(r[3]).includes(term)    // status
+        )
+      : [...latestOrders];
     currentPage = 1;
     renderTable();
   }
@@ -208,23 +224,40 @@
   prevBtn.onclick = ()=>{ if(currentPage>1){ currentPage--; renderTable(); } };
   nextBtn.onclick = ()=>{ if((currentPage*rowsPerPage)<viewOrders.length){ currentPage++; renderTable(); } };
 
-  window.submitStatus = (number, amount, email, status) => {
-    const formData = new FormData();
-    formData.append("entry.1172671786", number);
-    formData.append("entry.1509335158", amount);
-    formData.append("entry.588493421", status);
-    formData.append("entry.198105099", email);
+  // ✅ Submit via hidden iframe (exactly like order page)
+  window.submitStatus = (numberEnc, amountEnc, emailEnc, newStatus, rowKey) => {
+    // IMPORTANT: Status text must exactly match Google Form dropdown options
+    // Using "Completed" / "Cancelled" here.
+    const number = decodeURIComponent(numberEnc);
+    const amount = decodeURIComponent(amountEnc);
+    const email  = decodeURIComponent(emailEnc);
 
-    fetch(FORM_URL, { method:"POST", body:formData, mode:"no-cors" })
-      .then(()=>{ alert("✅ Status updated: "+status); loadOrders(); })
-      .catch(()=> alert("❌ Failed to update!"));
+    // Fill hidden form
+    fNumber.value = number;
+    fAmount.value = amount;
+    fStatus.value = newStatus;
+    fEmail.value  = email;
+
+    // Disable buttons for this row
+    const cell = document.querySelector(`[data-key="${rowKey}"]`);
+    if (cell) cell.innerHTML = "⏳ Updating...";
+
+    // Submit the form (no CORS issues)
+    gformUpdate.submit();
+
+    // After short delay, reload from Sheet (cache-busted)
+    setTimeout(() => {
+      alert("✅ Status updated: " + newStatus);
+      loadOrders();
+    }, 1200);
   };
 
+  // Auth toggle
   authBtn.onclick = async () => {
     if (currentUser) {
       await signOut(auth);
     } else {
-      window.location.href = "login.html";
+      window.location.href = "https://sarkar-telecom.github.io/Topup/login.html";
     }
   };
 
