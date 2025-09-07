@@ -1,45 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Order Form</title></head>
+<head>
+  <meta charset="UTF-8">
+  <title>Order Form</title>
+  <style>
+    body {
+      background: #121212;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .form-container {
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 10px;
+      width: 300px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 5px;
+    }
+    input, select {
+      background: #2a2a2a;
+      color: #fff;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .msg {
+      margin-top: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
 <body>
-  <form id="orderForm">
-    <input id="profileId" placeholder="Profile ID" required />
-    <input id="amount" type="number" placeholder="Amount" required />
-    <select id="product">
-      <option>Diamond 100</option>
-      <option>Diamond 500</option>
-      <option>Diamond 1000</option>
-    </select>
-    <button type="submit">Submit</button>
-  </form>
+  <div class="form-container">
+    <h2>Place Order</h2>
+    <form id="orderForm">
+      <input type="text" name="name" placeholder="Your Name" required>
+      <select name="product" required>
+        <option value="">Select Product</option>
+        <option value="Diamond 500">Diamond 500</option>
+        <option value="Diamond 1000">Diamond 1000</option>
+      </select>
+      <input type="number" name="amount" placeholder="Amount" required>
+      <button type="submit">Submit</button>
+    </form>
+    <div class="msg" id="msg"></div>
+  </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyl1qiDq2HtSjTR_LbyifCbGcaTKirS6IS-2F5i5Q63BP61qa2j947oZK6bRFdIbYRLnA/exec";
-    const SECRET = "12345";
-
-    document.getElementById('orderForm').addEventListener('submit', async (e) => {
+    document.getElementById("orderForm").addEventListener("submit", function(e) {
       e.preventDefault();
+
+      const form = e.target;
       const data = {
-        token: SECRET,
-        profileId: document.getElementById('profileId').value,
-        amount: document.getElementById('amount').value,
-        product: document.getElementById('product').value
+        name: form.name.value,
+        product: form.product.value,
+        amount: form.amount.value,
+        token: "12345" // আপনার SECRET
       };
-      console.log('Sending', data);
-      try {
-        const res = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(data),
-        });
-        console.log('Raw response', res);
-        const json = await res.json();
-        console.log('Parsed:', json);
-        alert(json.ok ? '✅ Order placed!' : '❌ Error: ' + (json.error || json.message));
-      } catch (err) {
-        console.error(err);
-        alert('Network error: ' + err.message);
-      }
+
+      fetch("https://script.google.com/macros/s/AKfycbx_issV79GwlsTJmVkWbsenpJIoufqX_M8FV8DPM7nt3K22LS45WhGIkF0Ce9XeF_bd_A/exec", {
+        method: "POST",
+        body: JSON.stringify(data),
+      })
+      .then(res => res.json())
+      .then(response => {
+        document.getElementById("msg").innerText = response.message || "Order saved!";
+      })
+      .catch(err => {
+        document.getElementById("msg").innerText = "Error: " + err;
+      });
     });
   </script>
 </body>
