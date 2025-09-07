@@ -1,124 +1,35 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Pagination Order History</title>
-  <style>
-    body{font-family:sans-serif;background:#0f1115;color:#e7eaf0;margin:0}
-    header{padding:12px;background:#171a21;color:#06b6d4;font-size:20px;font-weight:bold}
-    table{width:95%;margin:20px auto;border-collapse:collapse;background:#171a21}
-    th,td{border:1px solid #2b3340;padding:8px;text-align:center}
-    th{background:#06b6d4;color:#001}
-    .status{padding:4px 8px;border-radius:6px;color:#fff;font-weight:bold}
-    .waiting{background:#eab308}
-    .completed{background:#22c55e}
-    .cancelled{background:#ef4444}
-    .pagination{display:flex;gap:10px;justify-content:center;margin:16px}
-    .pagination button{padding:6px 12px;background:#06b6d4;color:#001;border:none;border-radius:6px;font-weight:bold;cursor:pointer}
-    .pagination button:disabled{background:#333;color:#777;cursor:not-allowed}
-    .empty{text-align:center;margin:20px;color:#9aa3b2}
-  </style>
-</head>
-<body>
-  <header>Pagination Order History</header>
+<script type="module">
+  import { getFirestore, collection, query, where, orderBy, limit, startAfter, getDocs } 
+    from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  <table>
-    <thead>
-      <tr>
-        <th>SL</th>
-        <th>Profile ID</th>
-        <th>Amount</th>
-        <th>Status</th>
-        <th>Time</th>
-      </tr>
-    </thead>
-    <tbody id="orderTable"></tbody>
-  </table>
+  const db=getFirestore();
 
-  <div class="empty" id="emptyBox" style="display:none;">No orders found.</div>
+  let lastDoc=null;
+  let firstDoc=null;
 
-  <div class="pagination">
-    <button id="prevBtn">⬅ Prev</button>
-    <button id="nextBtn">Next ➡</button>
-  </div>
+  async function loadOrders(uid){
+    const q=query(
+      collection(db,"orders"),
+      where("userId","==",uid),
+      orderBy("createdAt","desc"),
+      limit(10)
+    );
+    const snap=await getDocs(q);
+    firstDoc=snap.docs[0];
+    lastDoc=snap.docs[snap.docs.length-1];
+    renderOrders(snap.docs);
+  }
 
-  <script type="module">
-    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
-      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
-      projectId: "diamond-recharge-f7f59",
-      storageBucket: "diamond-recharge-f7f59.appspot.com",
-      messagingSenderId: "657717928489",
-      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
-      measurementId: "G-TDK78BQ8SQ"
-    };
-
-    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    const orderTable=document.getElementById("orderTable");
-    const emptyBox=document.getElementById("emptyBox");
-    const prevBtn=document.getElementById("prevBtn");
-    const nextBtn=document.getElementById("nextBtn");
-
-    let orders=[],currentPage=1;
-    const rowsPerPage=10;
-
-    function formatTime(ts){
-      if(!ts) return "-";
-      const d=ts.toDate?ts.toDate():new Date(ts);
-      return d.toLocaleString();
-    }
-
-    function render(){
-      orderTable.innerHTML="";
-      if(!orders.length){emptyBox.style.display="block";return;}
-      emptyBox.style.display="none";
-      const start=(currentPage-1)*rowsPerPage;
-      const end=start+rowsPerPage;
-      const page=orders.slice(start,end);
-      page.forEach((o,idx)=>{
-        let cls="waiting",txt="⏳";
-        if(o.status==="COMPLETED"){cls="completed";txt="✅";}
-        else if(o.status==="CANCELLED"){cls="cancelled";txt="🚫";}
-        const tr=document.createElement("tr");
-        tr.innerHTML=`
-          <td>${orders.length-(start+idx)}</td>
-          <td>${o.profileId||"-"}</td>
-          <td>${o.amount||"-"}</td>
-          <td><span class="status ${cls}">${txt}</span></td>
-          <td>${formatTime(o.createdAt)}</td>
-        `;
-        orderTable.appendChild(tr);
-      });
-      prevBtn.disabled=currentPage===1;
-      nextBtn.disabled=end>=orders.length;
-    }
-
-    prevBtn.onclick=()=>{if(currentPage>1){currentPage--;render();}};
-    nextBtn.onclick=()=>{if(currentPage*rowsPerPage<orders.length){currentPage++;render();}};
-
-    async function loadOrders(uid){
-      const q=query(collection(db,"orders"),where("userId","==",uid),orderBy("createdAt","desc"));
-      const snap=await getDocs(q);
-      orders=snap.docs.map(d=>d.data());
-      render();
-    }
-
-    onAuthStateChanged(auth,(user)=>{
-      if(!user){
-        orders=[];render();
-        emptyBox.textContent="Please login to view orders.";
-        return;
-      }
-      loadOrders(user.uid);
-    });
-  </script>
-</body>
-</html>
+  async function nextPage(uid){
+    const q=query(
+      collection(db,"orders"),
+      where("userId","==",uid),
+      orderBy("createdAt","desc"),
+      startAfter(lastDoc),
+      limit(10)
+    );
+    const snap=await getDocs(q);
+    lastDoc=snap.docs[snap.docs.length-1];
+    renderOrders(snap.docs);
+  }
+</script>
