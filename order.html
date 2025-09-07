@@ -34,8 +34,6 @@
   <div class="container">
     <h2>📝 Place New Order</h2>
 
-    <p id="welcomeUser" style="font-size:14px; color:#9aa3b2; margin-bottom:12px;"></p>
-
     <input type="text" id="number" placeholder="Enter Game ID / Number (with country code)">
     <div class="hint">উদাহরণ: +8801XXXXXXXXX বা গেম প্রোফাইল আইডি</div>
 
@@ -66,30 +64,48 @@
     <input type="text" name="entry.1172671786" id="f_number">
     <input type="text" name="entry.1509335158" id="f_amount">
     <input type="text" name="entry.588493421" id="f_status" value="Waiting">
-    <!-- ✅ ইউজারের নাম/ইমেইলও ফর্মে যাবে -->
-    <input type="text" name="entry.999999999" id="f_user"> <!-- নতুন hidden field (Users) -->
+    <input type="text" name="entry.2000000000" id="f_email"> <!-- logged user email -->
   </form>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    let currentUser = null;
+
+    // ✅ Check user is logged in
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user.email;
+        console.log("Logged in:", currentUser);
+      } else {
+        alert("⚠️ Please login first!");
+        window.location.href = "login.html";
+      }
+    });
+
     let selectedAmount = null;
 
-    // ✅ চেক ইউজার লগইন
-    const currentUser = localStorage.getItem("userEmail");
-    if (!currentUser) {
-      alert("⚠️ Please login first!");
-      window.location.href = "login.html";
-    } else {
-      document.getElementById("welcomeUser").textContent = "👤 Logged in as: " + currentUser;
-    }
-
-    function selectAmount(amount, el){
+    window.selectAmount = function(amount, el){
       selectedAmount = amount;
       document.querySelectorAll('.amt-btn').forEach(b => b.classList.remove('active'));
       el.classList.add('active');
       document.getElementById('selected').textContent = amount;
     }
 
-    function submitOrder(){
+    window.submitOrder = function(){
       const number = document.getElementById('number').value.trim();
       const msgEl = document.getElementById('message');
       const btn = document.getElementById('submitBtn');
@@ -98,13 +114,18 @@
         msgEl.textContent = "⚠️ Enter number & select amount!";
         return;
       }
+      if(!currentUser){
+        msgEl.textContent = "⚠️ You must be logged in!";
+        return;
+      }
 
-      // Fill hidden form fields
+      // fill hidden form
       document.getElementById('f_number').value = number;
       document.getElementById('f_amount').value = String(selectedAmount);
       document.getElementById('f_status').value = "Waiting";
-      document.getElementById('f_user').value = currentUser; // ✅ logged in user
+      document.getElementById('f_email').value = currentUser;
 
+      // submit
       btn.disabled = true;
       msgEl.textContent = "⏳ Submitting...";
       document.getElementById('gform').submit();
