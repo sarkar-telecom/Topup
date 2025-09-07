@@ -1,139 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sarkar Telecom - Order</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0f1115;
-      color: #e7eaf0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .form-box {
-      background: #171a21;
-      padding: 20px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0px 4px 10px rgba(0,0,0,0.4);
-    }
-    h2 {
-      text-align: center;
-      margin-bottom: 15px;
-      color: #06b6d4;
-    }
-    label {
-      display: block;
-      margin: 10px 0 5px;
-      font-size: 14px;
-      color: #9aa3b2;
-    }
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      font-size: 14px;
-    }
-    input, select {
-      background: #1f2430;
-      color: #fff;
-    }
-    button {
-      background: #06b6d4;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0bbcd9;
-    }
-    .success {
-      background: #10b981;
-      color: #fff;
-      padding: 10px;
-      border-radius: 6px;
-      text-align: center;
-      display: none;
-    }
-    .error {
-      background: #ef4444;
-      color: #fff;
-      padding: 10px;
-      border-radius: 6px;
-      text-align: center;
-      display: none;
-    }
-  </style>
-</head>
+<head><meta charset="UTF-8"><title>Order Form</title></head>
 <body>
-
-<div class="form-box">
-  <h2>Place Your Order</h2>
   <form id="orderForm">
-    <label>Profile ID</label>
-    <input type="text" id="profileId" required placeholder="Enter your profile ID">
-
-    <label>Amount</label>
-    <input type="number" id="amount" required placeholder="Enter amount">
-
-    <label>Product</label>
+    <input id="profileId" placeholder="Profile ID" required />
+    <input id="amount" type="number" placeholder="Amount" required />
     <select id="product">
-      <option value="Diamond 100">Diamond 100</option>
-      <option value="Diamond 500">Diamond 500</option>
-      <option value="Diamond 1000">Diamond 1000</option>
+      <option>Diamond 100</option>
+      <option>Diamond 500</option>
+      <option>Diamond 1000</option>
     </select>
-
-    <button type="submit">Submit Order</button>
+    <button type="submit">Submit</button>
   </form>
-  <div class="success" id="successMsg">✅ Order placed successfully!</div>
-  <div class="error" id="errorMsg">❌ Failed to place order.</div>
-</div>
 
-<script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjEMeYIGvVL3TS3DNUD0wvC-waj1uHg8YA1lxKp41bsnGaEWsyjYXRID_RstG6udkl/exec";
-  const SECRET = "12345"; // আপনার সিক্রেট
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyl1qiDq2HtSjTR_LbyifCbGcaTKirS6IS-2F5i5Q63BP61qa2j947oZK6bRFdIbYRLnA/exec";
+    const SECRET = "12345";
 
-  document.getElementById("orderForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const profileId = document.getElementById("profileId").value;
-    const amount = document.getElementById("amount").value;
-    const product = document.getElementById("product").value;
-
-    try {
-      const res = await fetch(SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          token: SECRET,
-          profileId,
-          amount,
-          product
-        }),
-        headers: { "Content-Type": "application/json" }
-      });
-
-      const data = await res.json();
-      if (data.status === "success") {
-        document.getElementById("successMsg").style.display = "block";
-        document.getElementById("errorMsg").style.display = "none";
-        document.getElementById("orderForm").reset();
-      } else {
-        document.getElementById("errorMsg").style.display = "block";
-        document.getElementById("successMsg").style.display = "none";
+    document.getElementById('orderForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        token: SECRET,
+        profileId: document.getElementById('profileId').value,
+        amount: document.getElementById('amount').value,
+        product: document.getElementById('product').value
+      };
+      console.log('Sending', data);
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data),
+        });
+        console.log('Raw response', res);
+        const json = await res.json();
+        console.log('Parsed:', json);
+        alert(json.ok ? '✅ Order placed!' : '❌ Error: ' + (json.error || json.message));
+      } catch (err) {
+        console.error(err);
+        alert('Network error: ' + err.message);
       }
-    } catch (err) {
-      document.getElementById("errorMsg").style.display = "block";
-      document.getElementById("successMsg").style.display = "none";
-    }
-  });
-</script>
-
+    });
+  </script>
 </body>
 </html>
