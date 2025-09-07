@@ -4,130 +4,110 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Place Order</title>
-  <link rel="stylesheet" href="https://sarkar-telecom.github.io/Topup/header.html">
-  <style>
-    body {
-      background: #121212;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 20px;
-    }
-    .amount-btn {
-      display: inline-block;
-      margin: 8px;
-      padding: 15px 25px;
-      border-radius: 10px;
-      background: #1e1e1e;
-      border: 1px solid #444;
-      color: white;
-      font-size: 18px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .amount-btn.selected {
-      background: #00bcd4;
-      color: black;
-      font-weight: bold;
-    }
-    input {
-      padding: 12px;
-      width: 80%;
-      border-radius: 8px;
-      border: none;
-      margin-bottom: 20px;
-      font-size: 16px;
-    }
-    button {
-      background: #00bcd4;
-      border: none;
-      padding: 15px 25px;
-      font-size: 18px;
-      border-radius: 10px;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-    button:hover {
-      background: #0097a7;
-    }
-    .msg {
-      margin-top: 20px;
-      font-size: 16px;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 </head>
 <body>
-  <h2>Place New Order</h2>
-  <input type="text" id="number" placeholder="Enter Profile ID or Number">
-
-  <div id="amounts">
-    <div class="amount-btn" data-value="10">10</div>
-    <div class="amount-btn" data-value="50">50</div>
-    <div class="amount-btn" data-value="100">100</div>
-    <div class="amount-btn" data-value="200">200</div>
-    <div class="amount-btn" data-value="500">500</div>
-    <div class="amount-btn" data-value="1000">1000</div>
-    <div class="amount-btn" data-value="2000">2000</div>
-    <div class="amount-btn" data-value="5000">5000</div>
-    <div class="amount-btn" data-value="10000">10000</div>
-    <div class="amount-btn" data-value="20000">20000</div>
-  </div>
-
-  <button id="submitBtn">✅ Confirm Order</button>
-
-  <div class="msg" id="msg"></div>
+  <!-- Header load -->
+  <div id="header"></div>
+  
+  <main>
+    <h2>Place New Order</h2>
+    <input type="text" id="number" placeholder="Enter Game ID / Number">
+    <div id="diamonds">
+      <button onclick="selectAmount(10)">10</button>
+      <button onclick="selectAmount(50)">50</button>
+      <button onclick="selectAmount(100)">100</button>
+      <button onclick="selectAmount(200)">200</button>
+      <button onclick="selectAmount(500)">500</button>
+      <button onclick="selectAmount(1000)">1000</button>
+      <button onclick="selectAmount(2000)">2000</button>
+      <button onclick="selectAmount(5000)">5000</button>
+      <button onclick="selectAmount(10000)">10000</button>
+      <button onclick="selectAmount(20000)">20000</button>
+    </div>
+    <p>Selected: <span id="selected">None</span></p>
+    <button onclick="submitOrder()">✅ Confirm Order</button>
+    <p id="message"></p>
+  </main>
 
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycby71yO5wnTd65-qtEN-LkGuouMls0jj5jih698uQy2DmJc4bxHZmG-rLjgBBice0JmNmQ/exec"; 
-    const token = "12345"; // আপনার Apps Script এর SECRET
+    // Load header
+    fetch("https://sarkar-telecom.github.io/Topup/header.html")
+      .then(res => res.text())
+      .then(html => document.getElementById("header").innerHTML = html);
 
-    let selectedAmount = null;
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAyhjOsIXNAkBglpRllt0OZIOJYpdB_9-8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.firebasestorage.app",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+      measurementId: "G-TDK78BQ8SQ"
+    };
 
-    // amount select
-    document.querySelectorAll(".amount-btn").forEach(btn => {
-      btn.addEventListener("click", function() {
-        document.querySelectorAll(".amount-btn").forEach(b => b.classList.remove("selected"));
-        this.classList.add("selected");
-        selectedAmount = this.getAttribute("data-value");
-      });
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Check login status
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "login.html"; // not logged in → redirect
+      }
     });
 
-    // submit order
-    document.getElementById("submitBtn").addEventListener("click", () => {
-      const number = document.getElementById("number").value;
-      const msg = document.getElementById("msg");
+    let selectedAmount = null;
+    function selectAmount(amount) {
+      selectedAmount = amount;
+      document.getElementById("selected").textContent = amount;
+    }
 
-      if (!number || !selectedAmount) {
-        msg.innerHTML = "❌ Please enter number and select amount.";
-        msg.style.color = "red";
+    async function submitOrder() {
+      const user = auth.currentUser;
+      if (!user) {
+        document.getElementById("message").innerText = "⚠️ Please login first!";
         return;
       }
 
-      msg.innerHTML = "⏳ Submitting...";
-      msg.style.color = "yellow";
+      const number = document.getElementById("number").value;
+      if (!number || !selectedAmount) {
+        document.getElementById("message").innerText = "⚠️ Enter number and select amount!";
+        return;
+      }
 
-      fetch(scriptURL, {
-        method: "POST",
-        mode: "no-cors",   // important
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          number: number,
-          diamond: selectedAmount,
-          token: token
-        })
-      }).then(() => {
-        msg.innerHTML = "✅ Order submitted successfully!";
-        msg.style.color = "lightgreen";
-        setTimeout(() => {
-          window.location.href = "order-history.html"; // অর্ডার শেষে রিডাইরেক্ট
-        }, 2000);
-      }).catch(error => {
-        msg.innerHTML = "❌ Error: " + error;
-        msg.style.color = "red";
-      });
-    });
+      document.getElementById("message").innerText = "⏳ Submitting...";
+
+      try {
+        const res = await fetch("https://script.google.com/macros/s/AKfycbxp0AqBAkyE5CMK8pISxJLRkhcppBQBl3AHecyp11ZN9v420mAhOm_kF0LI8xYoiqhTNQ/exec", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: "12345", 
+            name: user.email,
+            product: "Diamond",
+            amount: selectedAmount,
+            number: number,
+            status: "new"
+          })
+        });
+
+        const data = await res.json();
+        if (data.ok) {
+          document.getElementById("message").innerText = "✅ Order submitted!";
+          setTimeout(() => {
+            window.location.href = "order-history.html";
+          }, 1500);
+        } else {
+          document.getElementById("message").innerText = "❌ Error: " + data.error;
+        }
+      } catch (err) {
+        document.getElementById("message").innerText = "❌ Network error: " + err;
+      }
+    }
   </script>
 </body>
 </html>
