@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Password - Sarkar Telecom</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#0f1115;color:#e7eaf0;
+      display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
+    .card{background:#171a21;padding:22px;border-radius:12px;width:320px;text-align:center;
+      box-shadow:0 4px 12px rgba(0,0,0,0.5);}
+    h2{color:#06b6d4;margin-bottom:18px;}
+    input{width:90%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #333;
+      background:#0f1115;color:#e7eaf0;}
+    button{background:#06b6d4;color:#001;border:none;padding:10px 14px;margin-top:10px;
+      width:100%;border-radius:6px;font-weight:bold;cursor:pointer;}
+    button:hover{background:#0ea5e9;}
+    .msg{margin-top:10px;font-size:14px;min-height:20px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>🔑 Reset Password</h2>
+    <input type="password" id="newPass" placeholder="Enter new password">
+    <button onclick="resetPassword()">Update Password</button>
+    <p class="msg" id="msg"></p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, confirmPasswordReset } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const msgEl = document.getElementById("msg");
+
+    // ✅ লিঙ্ক থেকে oobCode (reset token) বের করা
+    const urlParams = new URLSearchParams(window.location.search);
+    const oobCode = urlParams.get("oobCode");
+
+    window.resetPassword = async () => {
+      const newPass = document.getElementById("newPass").value.trim();
+      if(!newPass){ msgEl.textContent="⚠️ Enter new password"; return; }
+      if(newPass.length < 6){ msgEl.textContent="⚠️ Password must be at least 6 characters."; return; }
+
+      try {
+        await confirmPasswordReset(auth, oobCode, newPass);
+        msgEl.textContent = "✅ Password updated! Redirecting to login...";
+        setTimeout(()=> window.location.href="login.html", 2000);
+      } catch (e) {
+        msgEl.textContent = "❌ " + e.message;
+      }
+    };
+  </script>
+</body>
+</html>
