@@ -13,59 +13,41 @@
       --accent: #06b6d4;
       --ok: #10b981;
       --bad: #ef4444;
-      --wait: #f59e0b;
+      --pending: #f59e0b;
     }
     body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
-    header { background: var(--card); border-bottom: 1px solid #202635; padding: 10px; }
 
-    .top-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-    .site-info { display: flex; align-items: center; gap: 10px; }
-    .site-logo { height: 40px; width: auto; border-radius: 8px; }
-    .site-name { font-size: 20px; font-weight: 800; color: var(--accent); }
-
-    .user-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: #2b3347; object-fit: cover; }
-    .user-box { background: #1f2430; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
-    .balance { color: var(--ok); font-weight: bold; }
-
-    .btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
-    .btn.logout { background: var(--bad); color: #fff; }
-    .btn.login { background: var(--accent); color: #001; }
-
-    .nav-row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-    .nav-row a { background: #1f2430; padding: 8px 14px; border-radius: 8px; text-decoration: none; color: var(--text); font-weight: 600; transition: background 0.2s; }
-    .nav-row a:hover { background: var(--accent); color: #001; }
-
+    /* Table */
     .container { max-width: 95%; margin: 20px auto; }
-    .search-box { margin-bottom: 15px; }
-    .search-box input { width: 100%; padding: 10px; border-radius: 8px; border: none; background: #1f2430; color: var(--text); }
+    .search-box { margin: 10px 0; }
+    .search-box input { width: 100%; padding: 8px; border-radius: 6px; border: none; }
 
-    table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
-    th, td { padding: 12px 10px; text-align: center; }
-    th { background: #1f2430; color: var(--accent); font-size: 14px; }
-    tr:nth-child(even) { background: #1c202b; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: center; }
+    th { background: #1f2430; color: var(--accent); }
+    tr:nth-child(even) { background: #171a21; }
 
-    .status { display: inline-block; padding: 6px 12px; border-radius: 6px; font-weight: bold; color: #000; }
-    .status.waiting { background: var(--wait); }
-    .status.completed { background: var(--ok); }
-    .status.cancelled { background: var(--bad); color: #fff; }
+    .status-box { color: #fff; padding: 5px 8px; border-radius: 6px; font-weight: bold; display: inline-block; min-width: 80px; }
+    .status-WAITING { background: var(--pending); }
+    .status-SUCCESS { background: var(--ok); }
+    .status-FAILED { background: var(--bad); }
 
-    .pagination { margin-top: 15px; display: flex; justify-content: center; align-items: center; gap: 10px; }
-    .pagination button { background: var(--accent); border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-    .pagination span { color: var(--muted); }
+    .pagination { display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
+    .pagination button { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; background: var(--accent); color: #001; font-weight: bold; }
   </style>
 </head>
 <body>
 
+<!-- Header -->
 <header>
   <div class="top-row">
     <div class="site-info">
-      <img src="https://sarkar-telecom.github.io/Topup/logo.png" alt="Logo" class="site-logo">
-      <span class="site-name">SARKAR TELECOM</span>
+      <img src="https://sarkar-telecom.github.io/Topup/logo.png" alt="Logo" class="site-logo" style="height:40px;border-radius:8px;">
+      <span class="site-name" style="font-size:20px;font-weight:800;color:var(--accent);">SARKAR TELECOM</span>
     </div>
     <div class="user-info" id="userInfo"></div>
   </div>
-  <div class="nav-row">
+  <div class="nav-row" style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
     <a href="dashboard.html">Dashboard</a>
     <a href="order.html">Order</a>
     <a href="order-history.html">Order History</a>
@@ -77,6 +59,7 @@
   <div class="search-box">
     <input type="text" id="searchInput" placeholder="🔍 Search orders...">
   </div>
+
   <table>
     <thead>
       <tr>
@@ -87,21 +70,22 @@
         <th>Time</th>
       </tr>
     </thead>
-    <tbody id="orderTableBody"></tbody>
+    <tbody id="orderTable"></tbody>
   </table>
+
   <div class="pagination">
-    <button id="prevPage">⬅ Prev</button>
-    <span id="pageInfo"></span>
-    <button id="nextPage">Next ➡</button>
+    <button id="prevBtn">⬅ Prev</button>
+    <button id="nextBtn">Next ➡</button>
   </div>
 </div>
 
+<!-- Firebase -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { getFirestore, collection, query, where, orderBy, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFirestore, collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  // ✅ Firebase Config
+  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
     authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -116,121 +100,87 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  const userInfo = document.getElementById("userInfo");
+  const orderTable = document.getElementById("orderTable");
+  const searchInput = document.getElementById("searchInput");
   let orders = [];
-  const rowsPerPage = 10;
   let currentPage = 1;
+  const rowsPerPage = 5;
 
-  // ✅ User Info (Header)
+  function renderTable(data) {
+    orderTable.innerHTML = "";
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const paginated = data.slice(start, end);
+
+    paginated.forEach((order, index) => {
+      const row = `<tr>
+        <td>${start + index + 1}</td>
+        <td>${order.profileId}</td>
+        <td>${order.amount}</td>
+        <td><span class="status-box status-${order.status}">${order.status}</span></td>
+        <td>${order.time}</td>
+      </tr>`;
+      orderTable.innerHTML += row;
+    });
+  }
+
+  function filterOrders() {
+    const searchValue = searchInput.value.toLowerCase();
+    const filtered = orders.filter(order =>
+      order.profileId.toLowerCase().includes(searchValue) ||
+      order.amount.toString().includes(searchValue) ||
+      order.status.toLowerCase().includes(searchValue)
+    );
+    renderTable(filtered);
+  }
+
+  searchInput.addEventListener("input", filterOrders);
+  document.getElementById("prevBtn").addEventListener("click", () => {
+    if (currentPage > 1) { currentPage--; renderTable(orders); }
+  });
+  document.getElementById("nextBtn").addEventListener("click", () => {
+    if (currentPage * rowsPerPage < orders.length) { currentPage++; renderTable(orders); }
+  });
+
+  // Auth check
   onAuthStateChanged(auth, async (user) => {
     if (user) {
-      let balance = 0;
-      let avatarUrl = user.photoURL || "https://via.placeholder.com/40";
-      try {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        if (snap.exists()) {
-          const data = snap.data();
-          balance = data.balance || 0;
-          if (data.avatar) avatarUrl = data.avatar;
-        }
-      } catch {}
-      userInfo.innerHTML = `
-        <img src="${avatarUrl}" class="user-avatar" alt="User">
+      const email = user.email;
+      // ✅ Load orders filtered by email
+      const q = query(
+        collection(db, "orders"),
+        where("email", "==", email),
+        orderBy("createdAt", "desc")
+      );
+
+      const snap = await getDocs(q);
+      orders = [];
+      snap.forEach(doc => {
+        const data = doc.data();
+        orders.push({
+          profileId: data.profileId || "-",
+          amount: data.amount || 0,
+          status: data.status || "WAITING",
+          time: data.createdAt?.toDate().toLocaleString() || "-"
+        });
+      });
+
+      renderTable(orders);
+
+      // Show user info
+      document.getElementById("userInfo").innerHTML = `
         <div class="user-box">${user.email}</div>
-        <div class="user-box balance">💎 ${balance}</div>
-        <button class="btn logout" id="logoutBtn">Logout</button>
+        <button id="logoutBtn" class="btn logout" style="background:red;color:white;padding:6px 12px;border:none;border-radius:6px;">Logout</button>
       `;
       document.getElementById("logoutBtn").addEventListener("click", async () => {
         await signOut(auth);
         window.location.href = "login.html";
       });
-      loadOrders(user.uid);
+
     } else {
       window.location.href = "login.html";
     }
   });
-
-  // ✅ Load Orders
-  async function loadOrders(uid) {
-    const q = query(
-      collection(db, "orders"),
-      where("userId", "==", uid),
-      orderBy("createdAt", "desc")
-    );
-    const querySnap = await getDocs(q);
-    orders = [];
-    querySnap.forEach((doc) => {
-      const data = doc.data();
-      orders.push({
-        profileId: data.profileId || "N/A",
-        amount: data.amount || 0,
-        status: data.status || "WAITING",
-        time: data.createdAt?.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) || "N/A"
-      });
-    });
-    renderTable();
-  }
-
-  // ✅ Render Table
-  function renderTable() {
-    const tbody = document.getElementById("orderTableBody");
-    tbody.innerHTML = "";
-    const start = (currentPage - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    const paginated = orders.slice(start, end);
-    paginated.forEach((order, index) => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${orders.length - (start + index)}</td>
-        <td>${order.profileId}</td>
-        <td>${order.amount}</td>
-        <td><span class="status ${order.status.toLowerCase()}">${getStatusSymbol(order.status)}</span></td>
-        <td>${order.time}</td>
-      `;
-      tbody.appendChild(row);
-    });
-    document.getElementById("pageInfo").innerText = `Page ${currentPage} of ${Math.ceil(orders.length / rowsPerPage)}`;
-  }
-
-  // ✅ Status Symbol
-  function getStatusSymbol(status) {
-    if (status === "WAITING") return "⏳";
-    if (status === "COMPLETED") return "✅";
-    if (status === "CANCELLED") return "🚫";
-    return status;
-  }
-
-  // ✅ Search
-  document.getElementById("searchInput").addEventListener("input", (e) => {
-    const search = e.target.value.toLowerCase();
-    const filtered = orders.filter(o =>
-      o.profileId.toLowerCase().includes(search) ||
-      o.amount.toString().includes(search) ||
-      o.status.toLowerCase().includes(search)
-    );
-    const tbody = document.getElementById("orderTableBody");
-    tbody.innerHTML = "";
-    filtered.forEach((order, index) => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${filtered.length - index}</td>
-        <td>${order.profileId}</td>
-        <td>${order.amount}</td>
-        <td><span class="status ${order.status.toLowerCase()}">${getStatusSymbol(order.status)}</span></td>
-        <td>${order.time}</td>
-      `;
-      tbody.appendChild(row);
-    });
-  });
-
-  // ✅ Pagination
-  document.getElementById("prevPage").addEventListener("click", () => {
-    if (currentPage > 1) { currentPage--; renderTable(); }
-  });
-  document.getElementById("nextPage").addEventListener("click", () => {
-    if (currentPage * rowsPerPage < orders.length) { currentPage++; renderTable(); }
-  });
 </script>
-
 </body>
 </html>
