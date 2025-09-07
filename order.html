@@ -2,159 +2,198 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Diamond Order</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Place Order</title>
   <style>
     body {
-      background: #121212;
-      color: #fff;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: white;
       margin: 0;
       padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    header {
-      margin-bottom: 20px;
+
+    #header {
+      width: 100%;
     }
+
     .order-container {
+      margin-top: 20px;
       background: #1e1e1e;
-      padding: 25px;
-      border-radius: 15px;
-      width: 360px;
-      margin: 20px auto;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0px 4px 8px rgba(0,0,0,0.5);
     }
-    .order-container h2 {
+
+    h2 {
       text-align: center;
-      margin-bottom: 20px;
-      font-size: 22px;
-      color: #4CAF50;
+      margin-bottom: 15px;
     }
+
     input {
       width: 100%;
-      padding: 12px;
-      border: none;
+      padding: 10px;
+      margin-bottom: 15px;
       border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 16px;
-      background: #2a2a2a;
-      color: #fff;
+      border: none;
+      outline: none;
     }
-    .amounts {
+
+    .amount-buttons {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
+      gap: 10px;
+      margin-bottom: 15px;
     }
+
     .amount-btn {
-      padding: 15px;
-      text-align: center;
-      border-radius: 10px;
-      background: #2a2a2a;
+      padding: 12px;
+      background: #2e2e2e;
+      border: none;
+      border-radius: 8px;
+      color: white;
       cursor: pointer;
-      transition: 0.3s;
       font-size: 16px;
+      transition: 0.3s;
     }
+
     .amount-btn:hover {
-      background: #333;
+      background: #444;
     }
-    .amount-btn.active {
-      background: #4CAF50;
-      color: #fff;
+
+    .amount-btn.selected {
+      background: #00c853;
+      color: black;
       font-weight: bold;
     }
-    button {
+
+    button.confirm {
       width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 10px;
-      background: #4CAF50;
+      padding: 12px;
+      background: #2962ff;
       color: white;
-      font-size: 18px;
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
+      font-size: 16px;
       transition: 0.3s;
     }
-    button:hover {
-      background: #43a047;
+
+    button.confirm:hover {
+      background: #0039cb;
+    }
+
+    .error {
+      color: #ff5252;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .success {
+      color: #00c853;
+      text-align: center;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <!-- Header load হবে GitHub থেকে -->
-  <header id="site-header"></header>
 
-  <div class="order-container">
-    <h2>Diamond Order</h2>
-    <input type="text" id="userId" placeholder="Enter Profile ID / Phone Number" required>
+  <!-- Header Load -->
+  <div id="header"></div>
 
-    <div class="amounts">
-      <div class="amount-btn" data-value="10">10</div>
-      <div class="amount-btn" data-value="50">50</div>
-      <div class="amount-btn" data-value="100">100</div>
-      <div class="amount-btn" data-value="200">200</div>
-      <div class="amount-btn" data-value="500">500</div>
-      <div class="amount-btn" data-value="1000">1000</div>
-      <div class="amount-btn" data-value="2000">2000</div>
-      <div class="amount-btn" data-value="5000">5000</div>
-      <div class="amount-btn" data-value="10000">10000</div>
-      <div class="amount-btn" data-value="20000">20000</div>
-    </div>
+  <!-- Order Form -->
+  <div class="order-container" id="orderBox" style="display:none;">
+    <h2>Place Your Order</h2>
+    <input type="text" id="profileId" placeholder="Enter Profile ID or Mobile Number" required>
 
-    <button onclick="submitOrder()">Confirm</button>
+    <div class="amount-buttons" id="amountButtons"></div>
+
+    <button class="confirm" onclick="submitOrder()">Confirm Order</button>
+    <p id="message"></p>
   </div>
 
   <script>
-    // === আপনার Apps Script Web App URL ===
-    const scriptURL = "https://script.google.com/macros/s/AKfycbx_issV79GwlsTJmVkWbsenpJIoufqX_M8FV8DPM7nt3K22LS45WhGIkF0Ce9XeF_bd_A/exec";
-    const SECRET = "12345"; // আপনার টোকেন
-
-    // === GitHub header.html লোড করা ===
-    fetch("https://sarkar-telecom.github.io/header.html")
+    // === Load Header from GitHub ===
+    fetch("https://sarkar-telecom.github.io/Topup/header.html")
       .then(res => res.text())
       .then(data => {
-        document.getElementById("site-header").innerHTML = data;
-      })
-      .catch(err => console.error("Header load failed:", err));
-
-    let selectedAmount = null;
-    const amountButtons = document.querySelectorAll(".amount-btn");
-
-    amountButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        amountButtons.forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        selectedAmount = btn.getAttribute("data-value");
+        document.getElementById("header").innerHTML = data;
       });
+
+    // === Amount Buttons ===
+    const amounts = [10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
+    const amountButtonsContainer = document.getElementById("amountButtons");
+    let selectedAmount = null;
+
+    amounts.forEach(amount => {
+      const btn = document.createElement("button");
+      btn.textContent = amount;
+      btn.className = "amount-btn";
+      btn.onclick = () => selectAmount(btn, amount);
+      amountButtonsContainer.appendChild(btn);
     });
 
-    async function submitOrder() {
-      const userId = document.getElementById("userId").value;
+    function selectAmount(button, amount) {
+      document.querySelectorAll(".amount-btn").forEach(btn => btn.classList.remove("selected"));
+      button.classList.add("selected");
+      selectedAmount = amount;
+    }
 
-      if (!userId || !selectedAmount) {
-        alert("⚠️ Please enter ID/Number and select amount!");
+    // === Check Login ===
+    const user = localStorage.getItem("user");
+    if (!user) {
+      window.location.href = "login.html"; // redirect if not logged in
+    } else {
+      document.getElementById("orderBox").style.display = "block";
+    }
+
+    // === Submit Order ===
+    function submitOrder() {
+      const profileId = document.getElementById("profileId").value.trim();
+      const msg = document.getElementById("message");
+
+      if (!profileId || !selectedAmount) {
+        msg.textContent = "Please enter Profile ID and select an amount.";
+        msg.className = "error";
         return;
       }
 
-      const data = {
-        token: SECRET,
-        name: userId,
-        product: "Diamond",
-        amount: selectedAmount
-      };
+      msg.textContent = "Placing order...";
+      msg.className = "";
 
-      try {
-        let res = await fetch(scriptURL, {
-          method: "POST",
-          body: JSON.stringify(data)
-        });
-        let result = await res.json();
-        if (result.ok) {
-          alert("✅ Order saved successfully!");
+      fetch("https://script.google.com/macros/s/AKfycbx_issV79GwlsTJmVkWbsenpJIoufqX_M8FV8DPM7nt3K22LS45WhGIkF0Ce9XeF_bd_A/exec", {
+        method: "POST",
+        body: new URLSearchParams({
+          profileId: profileId,
+          amount: selectedAmount,
+          status: "WAITING",
+          time: new Date().toLocaleString()
+        })
+      })
+      .then(res => res.text())
+      .then(data => {
+        if (data.includes("Success")) {
+          msg.textContent = "✅ Order Placed Successfully!";
+          msg.className = "success";
+          setTimeout(() => {
+            window.location.href = "order-history.html"; // redirect after success
+          }, 1200);
         } else {
-          alert("❌ Error: " + result.error);
+          msg.textContent = "❌ Failed to place order.";
+          msg.className = "error";
         }
-      } catch (err) {
-        alert("⚠️ Network Error!");
-      }
+      })
+      .catch(err => {
+        msg.textContent = "❌ Error: " + err;
+        msg.className = "error";
+      });
     }
   </script>
+
 </body>
 </html>
