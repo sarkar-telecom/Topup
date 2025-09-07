@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Order History (Realtime)</title>
+  <title>Realtime Order History</title>
   <style>
     body{font-family:sans-serif;background:#0f1115;color:#e7eaf0;margin:0}
     header{padding:12px;background:#171a21;color:#06b6d4;font-size:20px;font-weight:bold}
@@ -38,7 +38,7 @@
   <script type="module">
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import { getFirestore, collection, query, where, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getFirestore, collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
@@ -54,8 +54,8 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const orderTable = document.getElementById("orderTable");
-    const emptyBox = document.getElementById("emptyBox");
+    const orderTable=document.getElementById("orderTable");
+    const emptyBox=document.getElementById("emptyBox");
 
     function formatTime(ts){
       if(!ts) return "-";
@@ -64,19 +64,16 @@
     }
 
     function renderOrders(docs){
-      orderTable.innerHTML = "";
-      if(!docs.length){
-        emptyBox.style.display="block";
-        return;
-      }
+      orderTable.innerHTML="";
+      if(!docs.length){ emptyBox.style.display="block"; return; }
       emptyBox.style.display="none";
-      docs.forEach((doc, idx)=>{
-        const o = doc.data();
-        let cls="waiting",txt="⏳ Waiting";
-        if(o.status==="COMPLETED"){cls="completed";txt="✅ Completed";}
-        else if(o.status==="CANCELLED"){cls="cancelled";txt="🚫 Cancelled";}
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
+      docs.forEach((doc,idx)=>{
+        const o=doc.data();
+        let cls="waiting",txt="⏳";
+        if(o.status==="COMPLETED"){cls="completed";txt="✅";}
+        else if(o.status==="CANCELLED"){cls="cancelled";txt="🚫";}
+        const tr=document.createElement("tr");
+        tr.innerHTML=`
           <td>${docs.length-idx}</td>
           <td>${o.profileId||"-"}</td>
           <td>${o.amount||"-"}</td>
