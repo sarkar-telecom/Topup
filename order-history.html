@@ -5,34 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Order History - Sarkar Telecom</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#0f1115; color:#e7eaf0; margin:0; padding:0; text-align:center; }
-    header {
-      background:#171a21; padding:12px; color:#06b6d4;
-      font-size:18px; font-weight:bold; box-shadow:0 2px 6px rgba(0,0,0,0.4);
-    }
+    body { font-family: Arial, sans-serif; background:#0f1115; color:#e7eaf0; margin:0; text-align:center; }
+    header { background:#171a21; padding:12px; color:#06b6d4; font-size:18px; font-weight:bold; box-shadow:0 2px 6px rgba(0,0,0,0.4); }
     .top-bar { display:flex; flex-direction:column; align-items:center; gap:10px; margin:15px 0; }
-    .user-info { margin-bottom:10px; }
-    .nav-btn {
-      background:#22c55e; border:none; color:#001; padding:8px 14px; border-radius:6px;
-      cursor:pointer; font-size:14px; font-weight:bold; margin:2px;
-    }
-    .nav-btn.logout { background:#ef4444; color:#fff; }
-    .nav-btn:hover { opacity:0.9; }
-    .search-box input { padding:8px; width:220px; border-radius:6px; border:1px solid #333; background:#171a21; color:#e7eaf0; }
+    .user-info { margin-bottom:6px; }
+    .nav-btn { background:#22c55e; border:none; color:#001; padding:8px 14px; border-radius:6px; cursor:pointer; font-size:14px; font-weight:bold; margin:2px; }
+    .nav-btn.logout{ background:#ef4444; color:#fff; }
+    .nav-btn:hover{ opacity:.92; }
+    .search-box input{ padding:8px; width:240px; border-radius:6px; border:1px solid #333; background:#171a21; color:#e7eaf0; }
     table { width:95%; margin:auto; border-collapse:collapse; background:#171a21; font-size:14px; }
-    th, td { border:1px solid #333; padding:6px; text-align:center; }
-    th { background:#06b6d4; color:#001; font-size:13px; }
-    td { font-size:13px; }
-    .status-box { padding:4px 8px; border-radius:6px; color:#fff; font-size:13px; font-weight:bold; }
-    .waiting { background:#eab308; }
-    .completed { background:#22c55e; }
-    .cancelled { background:#ef4444; }
-    .pagination { margin:15px; }
-    .pagination button {
-      background:#06b6d4; border:none; color:#001; padding:6px 14px; margin:3px;
-      border-radius:6px; cursor:pointer; font-size:14px;
-    }
-    .pagination button:disabled { background:#333; color:#777; cursor:not-allowed; }
+    th,td{ border:1px solid #333; padding:6px; text-align:center; }
+    th{ background:#06b6d4; color:#001; font-size:13px; }
+    td{ font-size:13px; }
+    .status-box{ padding:4px 8px; border-radius:6px; color:#fff; font-size:13px; font-weight:bold; display:inline-block; }
+    .waiting{ background:#eab308; }
+    .completed{ background:#22c55e; }
+    .cancelled{ background:#ef4444; }
+    .pagination{ margin:15px 0; }
+    .pagination button{ background:#06b6d4; border:none; color:#001; padding:6px 14px; margin:3px; border-radius:6px; cursor:pointer; font-size:14px; }
+    .pagination button:disabled{ background:#333; color:#777; cursor:not-allowed; }
   </style>
 </head>
 <body>
@@ -45,9 +36,9 @@
       <button class="nav-btn" onclick="window.location.href='order.html'">➕ New Order</button>
     </div>
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="🔍 Search by Number / Amount / Status">
+      <input id="searchInput" type="text" placeholder="🔍 Search by Number / Amount / Status">
       <button class="nav-btn" onclick="applySearch()">Search</button>
-      <button class="nav-btn" style="background:#444; color:#fff;" onclick="clearSearch()">Reset</button>
+      <button class="nav-btn" style="background:#444;color:#fff" onclick="clearSearch()">Reset</button>
     </div>
   </div>
 
@@ -69,10 +60,11 @@
     <button id="nextBtn">Next ➡</button>
   </div>
 
+  <!-- Firebase Auth (compat for shorter code) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script>
-    // ✅ Firebase config
+    // ✅ Your Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAyhjOsIXNAkBglpRllt0OZIOJYpdB_9-8",
       authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -85,8 +77,10 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
+    // 🟢 Apps Script endpoint (doGet)
     const API_URL = "https://script.google.com/macros/s/AKfycbx_sBNjUxFX931jcDyEw2IVzrVpZCmzSVwVCboJx7DVaKN8YBI6E6z0pYoCwF-vhHvc1Q/exec";
 
+    // DOM
     const userEmailSpan = document.getElementById("userEmail");
     const authBtn = document.getElementById("authBtn");
     const orderTable = document.getElementById("orderTable");
@@ -94,15 +88,17 @@
     const prevBtn = document.getElementById("prevBtn");
     const nextBtn = document.getElementById("nextBtn");
 
+    // State
     let currentUser = null;
-    let orders = [];
-    let filteredOrders = [];
+    let orders = [];          // all rows for this user
+    let filteredOrders = [];  // search results
+    let searchTerm = "";      // 🔑 flag to know search is active
     let currentPage = 1;
     const rowsPerPage = 10;
 
     // 🔐 Auth state
     auth.onAuthStateChanged(user => {
-      if(user){
+      if (user){
         currentUser = user;
         userEmailSpan.textContent = "👤 " + (user.displayName || user.email);
         authBtn.textContent = "Logout";
@@ -114,87 +110,116 @@
         authBtn.textContent = "Login";
         authBtn.className = "nav-btn";
         orderTable.innerHTML = "<tr><td colspan='5'>⚠️ Please login to view your orders</td></tr>";
+        prevBtn.disabled = nextBtn.disabled = true;
       }
     });
 
-    authBtn.addEventListener("click", ()=>{
-      if(currentUser){ auth.signOut(); }
-      else{ window.location.href = "login.html"; }
+    authBtn.addEventListener("click", () => {
+      if (currentUser){ auth.signOut(); }
+      else { window.location.href = "login.html"; }
     });
 
-    // 📦 Load Orders from Sheet
+    // 📥 Load rows from Sheet
     async function loadOrders(){
       try{
         const res = await fetch(API_URL);
         const data = await res.json();
-        if(!data.ok){ throw new Error("Failed to fetch"); }
-
+        if(!data.ok) throw new Error("Failed to fetch");
         const rows = data.rows.slice(1).reverse(); // skip header
-        // filter only current user's orders
+        // filter only current user's orders (Email = column E = index 4)
         orders = rows.filter(r => r[4] && currentUser && r[4].toLowerCase() === currentUser.email.toLowerCase());
-        filteredOrders=[];
-        currentPage=1;
+        filteredOrders = [];
+        searchTerm = "";
+        currentPage = 1;
         renderTable();
       }catch(err){
-        orderTable.innerHTML=`<tr><td colspan='5'>❌ ${err.message}</td></tr>`;
+        orderTable.innerHTML = `<tr><td colspan="5">❌ ${err.message}</td></tr>`;
+        prevBtn.disabled = nextBtn.disabled = true;
       }
     }
 
-    // 🖊️ Render Table
+    // ⏰ Format time to hh:mm AM/PM safely
+    function fmtTime(raw){
+      if(!raw) return "-";
+      const d = new Date(raw);
+      if(!isNaN(d)) return d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+      return raw; // already formatted text in sheet
+    }
+
+    // 🎨 Status class
+    function getStatusClass(status){
+      const s = (status||"").toLowerCase();
+      if (s.includes("cancel")) return "cancelled";
+      if (s.includes("complete") || s.includes("done")) return "completed";
+      return "waiting";
+    }
+
+    // 🖨️ Render table
     function renderTable(){
-      orderTable.innerHTML="";
-      const activeOrders=filteredOrders.length?filteredOrders:orders;
-      const start=(currentPage-1)*rowsPerPage;
-      const end=start+rowsPerPage;
-      const pageOrders=activeOrders.slice(start,end);
+      orderTable.innerHTML = "";
+      const active = searchTerm ? filteredOrders : orders;  // ✅ key fix
+      if (active.length === 0){
+        orderTable.innerHTML = `<tr><td colspan="5">${searchTerm ? "🔍 No results" : "No orders yet"}</td></tr>`;
+        prevBtn.disabled = nextBtn.disabled = true;
+        return;
+      }
 
-      pageOrders.forEach((r,i)=>{
-        const [time, number, amount, status, email]=r;
-        let sClass="waiting";
-        if(status && status.toLowerCase().includes("complete")) sClass="completed";
-        else if(status && status.toLowerCase().includes("cancel")) sClass="cancelled";
+      const start = (currentPage - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+      const page = active.slice(start, end);
 
-        // Time format hh:mm AM/PM
-        let timeStr="-";
-        if(time){ 
-          const d=new Date(time);
-          if(!isNaN(d)) timeStr=d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
-          else timeStr=time;
-        }
-
-        const tr=document.createElement("tr");
-        tr.innerHTML=`
-          <td>${activeOrders.length-(start+i)}</td>
-          <td>${number||"-"}</td>
-          <td>${amount||"-"}</td>
-          <td><span class="status-box ${sClass}">${status||"-"}</span></td>
-          <td>${timeStr}</td>
+      page.forEach((r, i) => {
+        const [time, number, amount, status] = r;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${active.length - (start + i)}</td>
+          <td>${number || "-"}</td>
+          <td>${amount || "-"}</td>
+          <td><span class="status-box ${getStatusClass(status)}">${status || "-"}</span></td>
+          <td>${fmtTime(time)}</td>
         `;
         orderTable.appendChild(tr);
       });
 
-      prevBtn.disabled=currentPage===1;
-      nextBtn.disabled=end>=activeOrders.length;
+      prevBtn.disabled = currentPage === 1;
+      nextBtn.disabled = end >= active.length;
     }
 
-    // 🔍 Search
+    // 🔍 Search handlers
     function applySearch(){
-      const term=searchInput.value.toLowerCase();
-      if(term){
-        filteredOrders=orders.filter(o=>
-          (o[1] && o[1].toLowerCase().includes(term)) ||
-          (o[2] && String(o[2]).toLowerCase().includes(term)) ||
-          (o[3] && o[3].toLowerCase().includes(term))
+      searchTerm = searchInput.value.trim().toLowerCase();
+      if (searchTerm){
+        filteredOrders = orders.filter(o =>
+          (o[1] && String(o[1]).toLowerCase().includes(searchTerm)) || // Number
+          (o[2] && String(o[2]).toLowerCase().includes(searchTerm)) || // Amount
+          (o[3] && String(o[3]).toLowerCase().includes(searchTerm))    // Status
         );
-      }else{ filteredOrders=[]; }
-      currentPage=1; renderTable();
+      }else{
+        filteredOrders = [];
+      }
+      currentPage = 1;
+      renderTable();
     }
-    function clearSearch(){ searchInput.value=""; filteredOrders=[]; currentPage=1; renderTable(); }
-    searchInput.addEventListener("keypress",(e)=>{ if(e.key==="Enter") applySearch(); });
 
-    prevBtn.addEventListener("click",()=>{ if(currentPage>1){ currentPage--; renderTable(); } });
-    nextBtn.addEventListener("click",()=>{ const active=filteredOrders.length?filteredOrders:orders;
-      if((currentPage*rowsPerPage)<active.length){ currentPage++; renderTable(); } });
+    function clearSearch(){
+      searchInput.value = "";
+      searchTerm = "";
+      filteredOrders = [];
+      currentPage = 1;
+      renderTable();
+    }
+
+    // Enter চাপলেও সার্চ হবে
+    searchInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") applySearch();
+    });
+
+    // Pagination
+    prevBtn.addEventListener("click", () => { if (currentPage > 1){ currentPage--; renderTable(); } });
+    nextBtn.addEventListener("click", () => {
+      const active = searchTerm ? filteredOrders : orders;
+      if ((currentPage * rowsPerPage) < active.length){ currentPage++; renderTable(); }
+    });
   </script>
 </body>
 </html>
