@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Order History (Pagination)</title>
+  <title>Pagination Order History</title>
   <style>
     body{font-family:sans-serif;background:#0f1115;color:#e7eaf0;margin:0}
     header{padding:12px;background:#171a21;color:#06b6d4;font-size:20px;font-weight:bold}
@@ -78,18 +78,15 @@
 
     function render(){
       orderTable.innerHTML="";
-      if(!orders.length){
-        emptyBox.style.display="block";
-        return;
-      }
+      if(!orders.length){emptyBox.style.display="block";return;}
       emptyBox.style.display="none";
       const start=(currentPage-1)*rowsPerPage;
       const end=start+rowsPerPage;
       const page=orders.slice(start,end);
       page.forEach((o,idx)=>{
-        let cls="waiting",txt="⏳ Waiting";
-        if(o.status==="COMPLETED"){cls="completed";txt="✅ Completed";}
-        else if(o.status==="CANCELLED"){cls="cancelled";txt="🚫 Cancelled";}
+        let cls="waiting",txt="⏳";
+        if(o.status==="COMPLETED"){cls="completed";txt="✅";}
+        else if(o.status==="CANCELLED"){cls="cancelled";txt="🚫";}
         const tr=document.createElement("tr");
         tr.innerHTML=`
           <td>${orders.length-(start+idx)}</td>
