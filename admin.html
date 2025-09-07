@@ -22,7 +22,6 @@
     .cancelled { background:#ef4444; }
 
     .btn { padding:4px 8px; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:bold; margin:2px; }
-    .btn-wait { background:#eab308; color:#001; }
     .btn-done { background:#22c55e; color:#fff; }
     .btn-cancel { background:#ef4444; color:#fff; }
   </style>
@@ -43,7 +42,6 @@
   <thead>
     <tr>
       <th>SL</th>
-      <th>Email</th>
       <th>Number</th>
       <th>Amount</th>
       <th>Status</th>
@@ -71,8 +69,11 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
-  // Apps Script API (আপনার শিট এর লিংক)
+  // Google Sheet → JSON
   const API_URL = "https://script.google.com/macros/s/AKfycbx_sBNjUxFX931jcDyEw2IVzrVpZCmzSVwVCboJx7DVaKN8YBI6E6z0pYoCwF-vhHvc1Q/exec";
+
+  // Google Form link (Status Update)
+  const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScLsqajnZepD3HBTwnXwdjGQaItAVtnnGPRkD3TBsU3lPLzuQ/formResponse";
 
   const orderTable = document.getElementById("orderTable");
   const authBtn = document.getElementById("authBtn");
@@ -81,7 +82,6 @@
   let currentUser = null;
   const ADMIN_EMAIL = "samrat.khulnas@gmail.com";
 
-  // Helper Functions
   const normalize = (v) => (v ?? "").toString().trim().toLowerCase();
   const statusClassOf = (s) => {
     const t = normalize(s);
@@ -89,6 +89,7 @@
     if (t.includes("complete")) return "completed";
     return "waiting";
   };
+
   const formatTime = (t) => {
     if (!t) return "-";
     const d = new Date(t);
@@ -96,12 +97,12 @@
   };
 
   async function loadOrders() {
-    orderTable.innerHTML = "<tr><td colspan='7'>⏳ Loading...</td></tr>";
+    orderTable.innerHTML = "<tr><td colspan='6'>⏳ Loading...</td></tr>";
     try {
       const res = await fetch(API_URL);
       const data = await res.json();
       if (!data.ok) {
-        orderTable.innerHTML = "<tr><td colspan='7'>❌ Failed to load orders!</td></tr>";
+        orderTable.innerHTML = "<tr><td colspan='6'>❌ Failed to load orders!</td></tr>";
         return;
       }
       const rows = data.rows.slice(1).reverse();
@@ -111,32 +112,33 @@
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${idx + 1}</td>
-          <td>${email || "-"}</td>
           <td>${number || "-"}</td>
           <td>${amount || "-"}</td>
           <td><span class="status-box ${statusClassOf(status)}">${status}</span></td>
           <td>${formatTime(time)}</td>
           <td>
-            <button class="btn btn-wait" onclick="updateStatus('${time}','Waiting')">Wait</button>
-            <button class="btn btn-done" onclick="updateStatus('${time}','Completed')">Done</button>
-            <button class="btn btn-cancel" onclick="updateStatus('${time}','Cancelled')">Cancel</button>
+            <button class="btn btn-done" onclick="submitStatus('${number}','${amount}','${email}','Completed')">✔ Done</button>
+            <button class="btn btn-cancel" onclick="submitStatus('${number}','${amount}','${email}','Cancelled')">✖ Cancel</button>
           </td>
         `;
         orderTable.appendChild(tr);
       });
     } catch (e) {
-      orderTable.innerHTML = `<tr><td colspan='7'>❌ Error: ${e.message}</td></tr>`;
+      orderTable.innerHTML = `<tr><td colspan='6'>❌ Error: ${e.message}</td></tr>`;
     }
   }
 
-  // 🔄 Status Update
-  window.updateStatus = async (time, newStatus) => {
-    try {
-      await fetch(API_URL + "?action=update&time=" + encodeURIComponent(time) + "&status=" + encodeURIComponent(newStatus));
-      loadOrders(); // reload after update
-    } catch (e) {
-      alert("Update failed: " + e.message);
-    }
+  // ✅ নতুন Status সাবমিট (Form POST করে)
+  window.submitStatus = (number, amount, email, status) => {
+    const formData = new FormData();
+    formData.append("entry.1172671786", number);
+    formData.append("entry.1509335158", amount);
+    formData.append("entry.588493421", status);
+    formData.append("entry.198105099", email);
+
+    fetch(FORM_URL, { method: "POST", body: formData, mode: "no-cors" })
+      .then(() => alert("✅ Status updated: " + status))
+      .catch(() => alert("❌ Failed to update!"));
   };
 
   // 🔐 Auth
@@ -152,7 +154,7 @@
     if (user) {
       if (normalize(user.email) !== normalize(ADMIN_EMAIL)) {
         userInfo.textContent = "⛔ Access denied!";
-        orderTable.innerHTML = "<tr><td colspan='7'>You are not authorized.</td></tr>";
+        orderTable.innerHTML = "<tr><td colspan='6'>You are not authorized.</td></tr>";
         return;
       }
       currentUser = user;
@@ -163,7 +165,7 @@
       currentUser = null;
       userInfo.textContent = "Not logged in";
       authBtn.textContent = "Login";
-      orderTable.innerHTML = "<tr><td colspan='7'>🔑 Please log in as Admin.</td></tr>";
+      orderTable.innerHTML = "<tr><td colspan='6'>🔑 Please log in as Admin.</td></tr>";
     }
   });
 </script>
