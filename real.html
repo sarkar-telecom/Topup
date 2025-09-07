@@ -1,99 +1,35 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Realtime Order History</title>
-  <style>
-    body{font-family:sans-serif;background:#0f1115;color:#e7eaf0;margin:0}
-    header{padding:12px;background:#171a21;color:#06b6d4;font-size:20px;font-weight:bold}
-    table{width:95%;margin:20px auto;border-collapse:collapse;background:#171a21}
-    th,td{border:1px solid #2b3340;padding:8px;text-align:center}
-    th{background:#06b6d4;color:#001}
-    .status{padding:4px 8px;border-radius:6px;color:#fff;font-weight:bold}
-    .waiting{background:#eab308}
-    .completed{background:#22c55e}
-    .cancelled{background:#ef4444}
-    .empty{text-align:center;margin:20px;color:#9aa3b2}
-  </style>
-</head>
-<body>
-  <header>Realtime Order History</header>
+<script type="module">
+  import { getFirestore, collection, query, where, orderBy, limit, startAfter, getDocs } 
+    from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  <table>
-    <thead>
-      <tr>
-        <th>SL</th>
-        <th>Profile ID</th>
-        <th>Amount</th>
-        <th>Status</th>
-        <th>Time</th>
-      </tr>
-    </thead>
-    <tbody id="orderTable"></tbody>
-  </table>
+  const db=getFirestore();
 
-  <div class="empty" id="emptyBox" style="display:none;">No orders found.</div>
+  let lastDoc=null;
+  let firstDoc=null;
 
-  <script type="module">
-    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import { getFirestore, collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  async function loadOrders(uid){
+    const q=query(
+      collection(db,"orders"),
+      where("userId","==",uid),
+      orderBy("createdAt","desc"),
+      limit(10)
+    );
+    const snap=await getDocs(q);
+    firstDoc=snap.docs[0];
+    lastDoc=snap.docs[snap.docs.length-1];
+    renderOrders(snap.docs);
+  }
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
-      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
-      projectId: "diamond-recharge-f7f59",
-      storageBucket: "diamond-recharge-f7f59.appspot.com",
-      messagingSenderId: "657717928489",
-      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
-      measurementId: "G-TDK78BQ8SQ"
-    };
-
-    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    const orderTable=document.getElementById("orderTable");
-    const emptyBox=document.getElementById("emptyBox");
-
-    function formatTime(ts){
-      if(!ts) return "-";
-      const d = ts.toDate ? ts.toDate() : new Date(ts);
-      return d.toLocaleString();
-    }
-
-    function renderOrders(docs){
-      orderTable.innerHTML="";
-      if(!docs.length){ emptyBox.style.display="block"; return; }
-      emptyBox.style.display="none";
-      docs.forEach((doc,idx)=>{
-        const o=doc.data();
-        let cls="waiting",txt="⏳";
-        if(o.status==="COMPLETED"){cls="completed";txt="✅";}
-        else if(o.status==="CANCELLED"){cls="cancelled";txt="🚫";}
-        const tr=document.createElement("tr");
-        tr.innerHTML=`
-          <td>${docs.length-idx}</td>
-          <td>${o.profileId||"-"}</td>
-          <td>${o.amount||"-"}</td>
-          <td><span class="status ${cls}">${txt}</span></td>
-          <td>${formatTime(o.createdAt)}</td>
-        `;
-        orderTable.appendChild(tr);
-      });
-    }
-
-    onAuthStateChanged(auth,(user)=>{
-      if(!user){
-        orderTable.innerHTML="";
-        emptyBox.style.display="block";
-        emptyBox.textContent="Please login to see your orders.";
-        return;
-      }
-      const q=query(collection(db,"orders"),where("userId","==",user.uid),orderBy("createdAt","desc"));
-      onSnapshot(q,(snap)=>renderOrders(snap.docs));
-    });
-  </script>
-</body>
-</html>
+  async function nextPage(uid){
+    const q=query(
+      collection(db,"orders"),
+      where("userId","==",uid),
+      orderBy("createdAt","desc"),
+      startAfter(lastDoc),
+      limit(10)
+    );
+    const snap=await getDocs(q);
+    lastDoc=snap.docs[snap.docs.length-1];
+    renderOrders(snap.docs);
+  }
+</script>
