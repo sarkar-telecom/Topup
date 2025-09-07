@@ -41,11 +41,8 @@
       .nav-row { justify-content: center; }
     }
 
-    main { padding: 20px; display: flex; flex-direction: column; gap: 20px; align-items: center; }
-    .card { background:#171a21; padding:20px; border-radius:12px; max-width:420px; width:100%; box-shadow:0 6px 16px rgba(0,0,0,.25); text-align:center; }
-    .card h2 { margin-bottom: 12px; color: var(--accent); }
-    .info-line { margin: 6px 0; font-size: 15px; }
-    .info-line b { color: var(--muted); }
+    main { padding: 20px; }
+    .card { background:#171a21; padding:20px; border-radius:12px; max-width:400px; margin:20px auto; box-shadow:0 6px 16px rgba(0,0,0,.25); text-align:center; }
   </style>
 </head>
 <body>
@@ -60,7 +57,7 @@
     <div class="user-info" id="userInfo"></div>
   </div>
 
-  <div class="nav-row" id="navLinks">
+  <div class="nav-row">
     <a href="dashboard.html">Dashboard</a>
     <a href="order.html">Order</a>
     <a href="order-history.html">Order History</a>
@@ -74,11 +71,8 @@
   <h1>Welcome to Dashboard</h1>
   <div class="card">
     <h2>User Info</h2>
-    <p class="info-line"><b>Name:</b> <span id="nameBox">Loading...</span></p>
-    <p class="info-line"><b>Email:</b> <span id="emailBox">Loading...</span></p>
-    <p class="info-line"><b>Phone:</b> <span id="phoneBox">Loading...</span></p>
-    <p class="info-line"><b>Role:</b> <span id="roleBox">Loading...</span></p>
-    <p class="info-line"><b>Balance:</b> 💎 <span id="balanceBox">0</span></p>
+    <p><b>Email:</b> <span id="emailBox">Loading...</span></p>
+    <p><b>Balance:</b> 💎 <span id="balanceBox">0</span></p>
   </div>
 </main>
 
@@ -104,43 +98,32 @@
 
   const userInfo = document.getElementById("userInfo");
   const emailBox = document.getElementById("emailBox");
-  const nameBox = document.getElementById("nameBox");
-  const phoneBox = document.getElementById("phoneBox");
-  const roleBox = document.getElementById("roleBox");
   const balanceBox = document.getElementById("balanceBox");
-  const navLinks = document.getElementById("navLinks");
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       let balance = 0;
       let avatarUrl = user.photoURL || "https://via.placeholder.com/40";
-      let role = "user";
-      let name = user.displayName || "N/A";
-      let phone = "N/A";
+      let emailShow = user.email;
 
       try {
         const snap = await getDoc(doc(db, "users", user.uid));
         if (snap.exists()) {
           const data = snap.data();
-          balance = data.balance || 0;
-          role = data.role || "user";
-          name = data.name || name;
-          phone = data.phone || phone;
+          balance = data.balance ?? 0;
+          emailShow = data.email || user.email;
           if (data.avatar) avatarUrl = data.avatar;
-
-          emailBox.textContent = data.email || user.email;
-          nameBox.textContent = name;
-          phoneBox.textContent = phone;
-          roleBox.textContent = role;
-          balanceBox.textContent = balance;
         }
       } catch (e) {
         console.error("Firestore error", e);
       }
 
+      emailBox.textContent = emailShow;
+      balanceBox.textContent = balance;
+
       userInfo.innerHTML = `
         <img src="${avatarUrl}" class="user-avatar" alt="User" onerror="this.src='https://via.placeholder.com/40'">
-        <div class="user-box">${user.email}</div>
+        <div class="user-box">${emailShow}</div>
         <div class="user-box balance">💎 ${balance}</div>
         <button class="btn logout" id="logoutBtn">Logout</button>
       `;
@@ -150,20 +133,9 @@
         window.location.href = "login.html";
       });
 
-      // if admin, show admin link
-      if (role === "admin") {
-        const adminLink = document.createElement("a");
-        adminLink.href = "admin.html";
-        adminLink.textContent = "Admin Panel";
-        navLinks.appendChild(adminLink);
-      }
-
     } else {
       userInfo.innerHTML = `<button class="btn login" onclick="window.location.href='login.html'">Login</button>`;
       emailBox.textContent = "Not logged in";
-      nameBox.textContent = "-";
-      phoneBox.textContent = "-";
-      roleBox.textContent = "-";
       balanceBox.textContent = "0";
     }
   });
