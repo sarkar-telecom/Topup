@@ -36,7 +36,7 @@
   </div>
 </header>
 
-<h2>📋 All Orders</h2>
+<h2>📋 All Orders (Latest Status Only)</h2>
 
 <table>
   <thead>
@@ -105,9 +105,22 @@
         orderTable.innerHTML = "<tr><td colspan='6'>❌ Failed to load orders!</td></tr>";
         return;
       }
-      const rows = data.rows.slice(1).reverse();
+
+      const rows = data.rows.slice(1); // drop header
+      const latestMap = new Map();
+
+      // প্রতিটি (number+amount+email) এর সর্বশেষ Row রাখবো
+      rows.forEach(r => {
+        const [time, number, amount, status, email] = r;
+        const key = `${normalize(number)}|${normalize(amount)}|${normalize(email)}`;
+        latestMap.set(key, r);
+      });
+
+      // সর্বশেষগুলা নিয়ে উল্টা ক্রমে দেখানো
+      const latestOrders = Array.from(latestMap.values()).reverse();
+
       orderTable.innerHTML = "";
-      rows.forEach((r, idx) => {
+      latestOrders.forEach((r, idx) => {
         const [time, number, amount, status, email] = r;
         const tr = document.createElement("tr");
         tr.innerHTML = `
@@ -137,7 +150,7 @@
     formData.append("entry.198105099", email);
 
     fetch(FORM_URL, { method: "POST", body: formData, mode: "no-cors" })
-      .then(() => alert("✅ Status updated: " + status))
+      .then(() => { alert("✅ Status updated: " + status); loadOrders(); })
       .catch(() => alert("❌ Failed to update!"));
   };
 
