@@ -71,7 +71,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-    // 🔹 Firebase Config (order.html এর মতোই)
+    // 🔹 Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
       authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -84,7 +84,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // 🔹 শুধুমাত্র এই ইমেইলগুলো অ্যাডমিন
+    // 🔹 শুধুমাত্র এই ইমেইল অ্যাডমিন
     const ADMIN_EMAILS = ["samrat.khulnas@gmail.com"];
 
     let currentUser=null;
@@ -92,7 +92,6 @@
     const authBtn=document.getElementById("authBtn");
     const orderTable=document.getElementById("orderTable");
 
-    // Pagination
     let page=0, perPage=10, orders=[], filteredOrders=[];
 
     onAuthStateChanged(auth,(user)=>{
@@ -104,7 +103,7 @@
         authBtn.onclick=()=>signOut(auth);
 
         if(ADMIN_EMAILS.includes(user.email)){
-          loadOrders(); // ✅ Admin হলে অর্ডার লোড করবো
+          loadOrders(); // ✅ শুধু অ্যাডমিন হলে ডেটা লোড হবে
         }else{
           orderTable.innerHTML="<tr><td colspan='6'>⛔ Access denied. Not an admin.</td></tr>";
         }
@@ -118,15 +117,14 @@
       }
     });
 
-    // 🔹 Google Sheet থেকে ডেটা লোড
+    // 🔹 Google Sheet থেকে ডেটা ফেচ
     async function loadOrders(){
       try{
-        const sheetId="1FAIpQLScLsqajnZepD3HBTwnXwdjGQaItAVtnnGPRkD3TBsU3lPLzuQ"; // আপনার Google Form Sheet ID
+        const sheetId="1FAIpQLScLsqajnZepD3HBTwnXwdjGQaItAVtnnGPRkD3TBsU3lPLzuQ";
         const url=`https://opensheet.elk.sh/${sheetId}/responses`;
         const res=await fetch(url);
         const data=await res.json();
-        
-        // Google Form Response অনুযায়ী ফিল্ড এডজাস্ট করুন
+
         orders=data.map((row,i)=>({
           number: row["Number"] || row["entry.1172671786"] || "",
           amount: row["Amount"] || row["entry.1509335158"] || "",
@@ -134,7 +132,7 @@
           email: row["Email"] || row["entry.198105099"] || "",
           time: row["Timestamp"] || ""
         }));
-        
+
         filteredOrders=orders;
         page=0;
         renderTable();
@@ -156,7 +154,7 @@
           <td>${start+i+1}</td>
           <td>${o.number}</td>
           <td>${o.amount}</td>
-          <td style="color:${o.status==='Cancel'?'red':o.status==='Done'?'lime':'orange'}">${o.status}</td>
+          <td style="color:${o.status.toLowerCase()==='cancel'?'red':o.status.toLowerCase()==='complete'?'lime':'orange'}">${o.status}</td>
           <td>${o.email}</td>
           <td>${o.time}</td>
         </tr>
