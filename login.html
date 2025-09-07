@@ -9,38 +9,47 @@
 </head>
 <body>
   <h2>Login</h2>
-  <input type="email" id="email" placeholder="Email"><br>
-  <input type="password" id="password" placeholder="Password"><br>
+  <input type="email" id="email" placeholder="Email"><br><br>
+  <input type="password" id="password" placeholder="Password"><br><br>
   <button onclick="login()">Login</button>
   <p id="msg"></p>
 
   <script>
+    // 🔑 Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAyhjOsIXNAkBglpRllt0OZIOJYpdB_9-8",
       authDomain: "diamond-recharge-f7f59.firebaseapp.com",
       projectId: "diamond-recharge-f7f59",
-      storageBucket: "diamond-recharge-f7f59.firebasestorage.app",
+      storageBucket: "diamond-recharge-f7f59.appspot.com", // ✅ FIXED
       messagingSenderId: "657717928489",
       appId: "1:657717928489:web:70431ebc9afb7002d4b238",
       measurementId: "G-TDK78BQ8SQ"
     };
 
+    // ✅ Initialize
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
-    // ✅ Always persist login in local storage
-    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    // ✅ Always persist login
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+      .catch(err => console.error("Persistence error:", err));
 
+    // ✅ Login Function
     function login() {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
+
+      if (!email || !password) {
+        document.getElementById("msg").innerText = "⚠️ Please enter email and password.";
+        return;
+      }
 
       auth.signInWithEmailAndPassword(email, password)
         .then(() => {
           document.getElementById("msg").innerText = "✅ Login successful!";
           setTimeout(() => {
-            window.location.href = "order.html"; // redirect after login
-          }, 1000);
+            window.location.href = "order.html"; // redirect
+          }, 1200);
         })
         .catch(err => {
           document.getElementById("msg").innerText = "❌ " + err.message;
