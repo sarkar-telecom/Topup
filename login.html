@@ -37,10 +37,10 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { 
-      getAuth, signInWithEmailAndPassword, 
-      sendPasswordResetEmail, setPersistence, 
-      browserLocalPersistence, browserSessionPersistence 
+    import {
+      getAuth, signInWithEmailAndPassword,
+      sendPasswordResetEmail, setPersistence,
+      browserLocalPersistence, browserSessionPersistence
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
     const firebaseConfig = {
@@ -62,10 +62,8 @@
     const loginBtn = document.getElementById("loginBtn");
     const regBtn = document.getElementById("regBtn");
 
-    // Show password
-    showPassEl.addEventListener("change",()=>{
-      passEl.type = showPassEl.checked ? "text" : "password";
-    });
+    // Show/Hide password
+    showPassEl.addEventListener("change",()=>{ passEl.type = showPassEl.checked ? "text" : "password"; });
 
     // Load remembered creds
     window.onload = () => {
@@ -80,6 +78,9 @@
       if(code === "auth/user-not-found") return "No account found with this email.";
       if(code === "auth/wrong-password") return "Wrong password.";
       if(code === "auth/invalid-email") return "Invalid email.";
+      if(code === "auth/invalid-continue-uri") return "Invalid redirect URL. Add your domain to Authorized domains.";
+      if(code === "auth/unauthorized-continue-uri") return "This redirect URL is not allowed. Add it to Authorized domains.";
+      if(code === "auth/operation-not-allowed") return "Email/Password sign-in is disabled in Firebase Console.";
       return e.message || "Something went wrong.";
     }
 
@@ -126,18 +127,22 @@
       }
     };
 
-    // REGISTER → redirect to register.html
-    window.goRegister = () => {
-      window.location.href = "register.html";
-    };
+    // REGISTER → go to register page
+    window.goRegister = () => { window.location.href = "register.html"; };
 
-    // FORGOT PASSWORD
+    // FORGOT PASSWORD (with continueUrl back to your login page)
     window.forgotPass = async () => {
       const email = emailEl.value.trim();
       if(!email){ msgEl.textContent="⚠️ Enter your email first!"; return; }
+
+      const actionCodeSettings = {
+        url: "https://sarkar-telecom.github.io/Topup/login.html", // redirect after reset
+        handleCodeInApp: false
+      };
+
       try{
-        await sendPasswordResetEmail(auth, email);
-        msgEl.textContent = "📩 Password reset email sent!";
+        await sendPasswordResetEmail(auth, email, actionCodeSettings);
+        msgEl.textContent = "📩 Password reset email sent! Please check inbox/spam.";
       }catch(e){
         msgEl.textContent = "❌ " + friendly(e);
       }
