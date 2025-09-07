@@ -126,23 +126,26 @@
     const authBtn = document.getElementById("authBtn");
     const userInfo = document.getElementById("userInfo");
 
-    let orders = [];
-    let filteredOrders = [];
+    let allOrders = [];      // সব অর্ডার (শিট থেকে আসবে)
+    let userOrders = [];     // শুধু লগিন ইউজারের অর্ডার
+    let filteredOrders = []; // সার্চ ফিল্টারড
     let currentPage = 1;
     const rowsPerPage = 10;
     let currentUser = null;
 
     function renderTable() {
       orderTable.innerHTML = "";
-      const activeOrders = filteredOrders.length ? filteredOrders : orders;
+      const activeOrders = filteredOrders.length ? filteredOrders : userOrders;
       const start = (currentPage - 1) * rowsPerPage;
       const end = start + rowsPerPage;
       const paginated = activeOrders.slice(start, end);
 
+      if (paginated.length === 0) {
+        orderTable.innerHTML = `<tr><td colspan="5">⚠ No orders found.</td></tr>`;
+      }
+
       paginated.forEach((row, index) => {
         const [time, number, amount, status, email] = row;
-
-        if (!currentUser || email !== currentUser.email) return;
 
         let statusClass = "waiting";
         if (status && status.toLowerCase() === "complete") statusClass = "completed";
@@ -171,9 +174,12 @@
           orderTable.innerHTML = "<tr><td colspan='5'>❌ Failed to load orders!</td></tr>";
           return;
         }
-        orders = data.rows.slice(1).reverse(); // remove header row
-        filteredOrders = [];
-        renderTable();
+        allOrders = data.rows.slice(1).reverse(); // header বাদ
+        if (currentUser) {
+          userOrders = allOrders.filter(r => r[4] === currentUser.email);
+          filteredOrders = [];
+          renderTable();
+        }
       } catch (err) {
         orderTable.innerHTML = `<tr><td colspan='5'>❌ Error: ${err.message}</td></tr>`;
       }
@@ -182,10 +188,10 @@
     function applySearch() {
       const term = searchInput.value.toLowerCase();
       if (term) {
-        filteredOrders = orders.filter(o =>
-          (o[1] && o[1].toLowerCase().includes(term)) || // number
-          (o[2] && String(o[2]).toLowerCase().includes(term)) || // amount
-          (o[3] && o[3].toLowerCase().includes(term))           // status
+        filteredOrders = userOrders.filter(o =>
+          (o[1] && o[1].toLowerCase().includes(term)) || // Number
+          (o[2] && String(o[2]).toLowerCase().includes(term)) || // Amount
+          (o[3] && o[3].toLowerCase().includes(term))    // Status
         );
       } else {
         filteredOrders = [];
@@ -197,7 +203,7 @@
     searchInput.addEventListener("keyup", e => { if (e.key === "Enter") applySearch(); });
     prevBtn.addEventListener("click", () => { if (currentPage > 1) { currentPage--; renderTable(); } });
     nextBtn.addEventListener("click", () => { 
-      const activeOrders = filteredOrders.length ? filteredOrders : orders;
+      const activeOrders = filteredOrders.length ? filteredOrders : userOrders;
       if ((currentPage * rowsPerPage) < activeOrders.length) { currentPage++; renderTable(); }
     });
 
