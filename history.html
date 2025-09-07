@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order History - Sarkar Telecom</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card: #171a21;
+      --text: #e7eaf0;
+      --muted: #9aa3b2;
+      --accent: #06b6d4;
+      --ok: #22c55e;
+      --bad: #ef4444;
+      --wait: #eab308;
+    }
+    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); text-align: center; }
+
+    header { background: var(--card); border-bottom: 1px solid #202635; padding: 10px; }
+    .top-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    .site-info { display: flex; align-items: center; gap: 10px; }
+    .site-logo { height: 40px; border-radius: 8px; }
+    .site-name { font-size: 20px; font-weight: 800; color: var(--accent); }
+    .user-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: #2b3347; object-fit: cover; }
+    .user-box { background: #1f2430; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .balance { color: var(--ok); font-weight: bold; }
+    .btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
+    .btn.logout { background: var(--bad); color: #fff; }
+    .btn.login { background: var(--accent); color: #001; }
+    .nav-row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .nav-row a { background: #1f2430; padding: 8px 14px; border-radius: 8px; text-decoration: none; color: var(--text); font-weight: 600; transition: background 0.2s; }
+    .nav-row a:hover { background: var(--accent); color: #001; }
+
+    h2 { color: var(--accent); margin: 15px 0; }
+
+    /* Table style */
+    table { width: 95%; margin: auto; border-collapse: collapse; background: var(--card); font-size: 14px; }
+    th, td { border: 1px solid #333; padding: 6px; text-align: center; }
+    th { background: var(--accent); color: #001; font-size: 13px; }
+    td { font-size: 13px; }
+    .status-box { display:inline-block; width:28px; height:28px; line-height:28px; border-radius:6px; color:#fff; font-size:16px; }
+    .waiting { background: var(--wait); }
+    .completed { background: var(--ok); }
+    .cancelled { background: var(--bad); }
+
+    /* Card view for mobile */
+    .card { display: none; background: var(--card); border-radius: 8px; padding: 10px; margin: 10px auto; width: 90%; text-align: left; }
+    .card p { margin: 4px 0; font-size: 14px; }
+    .card .status-box { margin-right: 6px; }
+
+    @media (max-width: 700px) {
+      table { display: none; }
+      .card { display: block; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="top-row">
+    <div class="site-info">
+      <img src="https://sarkar-telecom.github.io/Topup/logo.png" alt="Logo" class="site-logo">
+      <span class="site-name">SARKAR TELECOM</span>
+    </div>
+    <div class="user-info" id="userInfo"></div>
+  </div>
+  <div class="nav-row">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="order.html">Order</a>
+    <a href="order-history.html">Order History</a>
+    <a href="profile.html">Profile</a>
+  </div>
+</header>
+
+<h2>📜 Order History</h2>
+
+<!-- Table View -->
+<table>
+  <thead>
+    <tr>
+      <th>SL</th>
+      <th>Profile ID</th>
+      <th>Amount</th>
+      <th>Status</th>
+      <th>Time</th>
+    </tr>
+  </thead>
+  <tbody id="orderTable"></tbody>
+</table>
+
+<!-- Card View -->
+<div id="cardContainer"></div>
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, where } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+    projectId: "diamond-recharge-f7f59",
+    storageBucket: "diamond-recharge-f7f59.appspot.com",
+    messagingSenderId: "657717928489",
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238",
+    measurementId: "G-TDK78BQ8SQ"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const userInfo = document.getElementById("userInfo");
+  const orderTable = document.getElementById("orderTable");
+  const cardContainer = document.getElementById("cardContainer");
+
+  // 🔐 User State
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      let balance = 0;
+      let avatarUrl = user.photoURL || "https://via.placeholder.com/40";
+
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (snap.exists()) {
+          const data = snap.data();
+          balance = data.balance || 0;
+          if (data.avatar) avatarUrl = data.avatar;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+
+      userInfo.innerHTML = `
+        <img src="${avatarUrl}" class="user-avatar" alt="User">
+        <div class="user-box">${user.email}</div>
+        <div class="user-box balance">💎 ${balance}</div>
+        <button class="btn logout" id="logoutBtn">Logout</button>
+      `;
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
+        await signOut(auth);
+        window.location.href = "login.html";
+      });
+
+      loadOrders(user.phoneNumber || user.email);
+
+    } else {
+      userInfo.innerHTML = `<button class="btn login" onclick="window.location.href='login.html'">Login</button>`;
+    }
+  });
+
+  function renderOrders(orders) {
+    orderTable.innerHTML = "";
+    cardContainer.innerHTML = "";
+
+    orders.forEach((data, i) => {
+      let statusClass = "waiting", statusSymbol = "⏳";
+      if (data.status === "COMPLETED") { statusClass = "completed"; statusSymbol = "✅"; }
+      else if (data.status === "CANCELLED") { statusClass = "cancelled"; statusSymbol = "🚫"; }
+
+      const timeStr = data.createdAt?.toDate
+        ? data.createdAt.toDate().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})
+        : "-";
+
+      // Table Row
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${orders.length - i}</td>
+        <td>${data.profileId || "-"}</td>
+        <td>${data.amount || "-"}</td>
+        <td><span class="status-box ${statusClass}">${statusSymbol}</span></td>
+        <td>${timeStr}</td>
+      `;
+      orderTable.appendChild(tr);
+
+      // Card View
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <p><b>SL:</b> ${orders.length - i}</p>
+        <p><b>Profile ID:</b> ${data.profileId || "-"}</p>
+        <p><b>Amount:</b> ${data.amount || "-"}</p>
+        <p><b>Status:</b> <span class="status-box ${statusClass}">${statusSymbol}</span></p>
+        <p><b>Time:</b> ${timeStr}</p>
+      `;
+      cardContainer.appendChild(card);
+    });
+  }
+
+  function loadOrders(userKey) {
+    const q = query(collection(db, "orders"), where("profileId", "==", userKey), orderBy("createdAt", "desc"));
+    onSnapshot(q, (snapshot) => {
+      const orders = snapshot.docs.map(doc => doc.data());
+      renderOrders(orders);
+    });
+  }
+</script>
+</body>
+</html>
