@@ -1,108 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard - Sarkar Telecom</title>
   <style>
-    :root {
-      --bg: #0f1115;
-      --card: #171a21;
-      --text: #e7eaf0;
-      --muted: #9aa3b2;
-      --accent: #06b6d4;
-      --ok: #10b981;
-      --bad: #ef4444;
+    :root{
+      --bg:#0f1115; --card:#171a21; --text:#e7eaf0; --muted:#9aa3b2;
+      --accent:#06b6d4; --ok:#22c55e; --bad:#ef4444;
     }
-    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); text-align: center; }
+    body { background:var(--bg); color:var(--text); font-family:Arial,sans-serif; margin:0; text-align:center; }
+    header { background:var(--card); display:flex; justify-content:space-between; align-items:center;
+             padding:12px 16px; color:var(--accent); font-weight:800; }
+    .user-info { font-size:14px; color:var(--text); }
+    .auth-btn { background:#06b6d4; border:none; color:#001; padding:6px 10px; border-radius:6px;
+                font-size:13px; font-weight:bold; cursor:pointer; }
+    .auth-btn.logout { background:#ef4444; color:#fff; }
 
-    h1 { margin-top: 20px; color: var(--accent); }
+    .container { max-width:520px; margin:20px auto; background:var(--card); border-radius:10px; padding:18px; text-align:center; }
+    h2 { margin:8px 0 14px; color:var(--accent); }
 
-    .card {
-      background: var(--card);
-      padding: 20px;
-      border-radius: 12px;
-      max-width: 400px;
-      margin: 30px auto;
-      box-shadow: 0 6px 16px rgba(0,0,0,.25);
+    .nav-btns { margin-top:16px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+    .nav-btns button {
+      padding:10px 14px; border:none; border-radius:8px; cursor:pointer;
+      background:#1f2430; border:1px solid #2b3347; color:var(--text); font-weight:700;
     }
-    .user-avatar { width: 60px; height: 60px; border-radius: 50%; margin-bottom: 10px; object-fit: cover; background: #2b3347; }
-    .btn { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; margin-top: 12px; }
-    .btn.logout { background: var(--bad); color: #fff; }
-    .btn.login { background: var(--accent); color: #001; }
+    .nav-btns button:hover { background:var(--accent); color:#001; }
+
+    .info-box { margin:12px 0; font-size:15px; }
+    .balance { color:var(--ok); font-weight:bold; }
   </style>
 </head>
 <body>
+  <header>
+    <span>💎 Sarkar Telecom – Dashboard</span>
+    <div>
+      <span class="user-info" id="userInfo">🔄 Checking...</span>
+      <button id="authBtn" class="auth-btn">Login</button>
+    </div>
+  </header>
 
-  <h1>📊 Dashboard</h1>
+  <div class="container">
+    <h2>📊 User Dashboard</h2>
+    <div class="info-box"><b>Email:</b> <span id="emailBox">-</span></div>
+    <div class="info-box"><b>Name:</b> <span id="nameBox">-</span></div>
+    <div class="info-box"><b>Balance:</b> 💎 <span id="balanceBox">0</span></div>
 
-  <div class="card">
-    <img src="https://via.placeholder.com/60" id="avatarBox" class="user-avatar" alt="User">
-    <h2 id="emailBox">Loading...</h2>
-    <p><b>Balance:</b> 💎 <span id="balanceBox">0</span></p>
-    <div id="authBtnBox"></div>
+    <div class="nav-btns">
+      <button onclick="window.location.href='order.html'">📝 Place Order</button>
+      <button onclick="window.location.href='order-history.html'">📜 Order History</button>
+    </div>
   </div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
-    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
-    projectId: "diamond-recharge-f7f59",
-    storageBucket: "diamond-recharge-f7f59.appspot.com",
-    messagingSenderId: "657717928489",
-    appId: "1:657717928489:web:70431ebc9afb7002d4b238",
-    measurementId: "G-TDK78BQ8SQ"
-  };
+    // 🔹 Same Firebase config as your order.html
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  const emailBox = document.getElementById("emailBox");
-  const balanceBox = document.getElementById("balanceBox");
-  const avatarBox = document.getElementById("avatarBox");
-  const authBtnBox = document.getElementById("authBtnBox");
+    let currentUser=null;
+    const userInfo=document.getElementById("userInfo");
+    const authBtn=document.getElementById("authBtn");
+    const emailBox=document.getElementById("emailBox");
+    const nameBox=document.getElementById("nameBox");
+    const balanceBox=document.getElementById("balanceBox");
 
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      let balance = 0;
-      let avatarUrl = user.photoURL || "https://via.placeholder.com/60";
-      let emailShow = user.email;
+    onAuthStateChanged(auth, async (user)=>{
+      if(user){
+        currentUser=user;
+        userInfo.textContent="👤 "+(user.displayName || user.email);
+        authBtn.textContent="Logout";
+        authBtn.classList.add("logout");
+        authBtn.onclick=()=>signOut(auth);
 
-      try {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        if (snap.exists()) {
-          const data = snap.data();
-          balance = data.balance ?? 0;
-          emailShow = data.email || user.email;
-          if (data.avatar) avatarUrl = data.avatar;
+        emailBox.textContent=user.email;
+        nameBox.textContent=user.displayName || "N/A";
+
+        // Firestore balance check
+        try {
+          const snap=await getDoc(doc(db,"users",user.uid));
+          if(snap.exists()){
+            const data=snap.data();
+            balanceBox.textContent=data.balance ?? 0;
+          } else {
+            balanceBox.textContent="0";
+          }
+        } catch(e){
+          console.error("Firestore error", e);
         }
-      } catch (e) {
-        console.error("Firestore error", e);
+      } else {
+        currentUser=null;
+        userInfo.textContent="❌ Not logged in";
+        authBtn.textContent="Login";
+        authBtn.classList.remove("logout");
+        authBtn.onclick=()=>window.location.href="login.html";
+
+        emailBox.textContent="-";
+        nameBox.textContent="-";
+        balanceBox.textContent="0";
       }
-
-      emailBox.textContent = emailShow;
-      balanceBox.textContent = balance;
-      avatarBox.src = avatarUrl;
-
-      authBtnBox.innerHTML = `<button class="btn logout" id="logoutBtn">Logout</button>`;
-      document.getElementById("logoutBtn").addEventListener("click", async () => {
-        await signOut(auth);
-        window.location.href = "login.html";
-      });
-
-    } else {
-      emailBox.textContent = "Not logged in";
-      balanceBox.textContent = "0";
-      avatarBox.src = "https://via.placeholder.com/60";
-      authBtnBox.innerHTML = `<button class="btn login" onclick="window.location.href='login.html'">Login</button>`;
-    }
-  });
-</script>
-
+    });
+  </script>
 </body>
 </html>
