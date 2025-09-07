@@ -3,82 +3,195 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Order History</title>
+  <title>Order History - Sarkar Telecom</title>
   <style>
-    body{font-family:Arial,sans-serif;background:#0f1115;color:#e7eaf0;padding:20px;text-align:center;margin:0;}
-    header{background:#171a21;padding:12px 20px;text-align:center;color:#06b6d4;font-size:18px;font-weight:bold;margin-bottom:15px;}
-    h2{color:#06b6d4;margin-bottom:10px;}
-    table{width:95%;margin:auto;border-collapse:collapse;background:#171a21;font-size:14px;}
-    th,td{border:1px solid #333;padding:6px;text-align:center;}
-    th{background:#06b6d4;color:#001;}
-    .status-box{padding:4px 8px;border-radius:6px;color:#fff;font-size:13px;font-weight:bold;}
-    .waiting{background:#eab308;} .completed{background:#22c55e;} .cancelled{background:#ef4444;}
+    :root {
+      --bg:#0f1115; --card:#171a21; --text:#e7eaf0; --muted:#9aa3b2;
+      --accent:#06b6d4; --ok:#22c55e; --bad:#ef4444; --wait:#eab308;
+    }
+    body { background:var(--bg); color:var(--text); font-family:Arial,sans-serif; margin:0; }
+    header { background:var(--card); display:flex; justify-content:space-between; align-items:center; padding:12px 16px; color:var(--accent); font-weight:800; }
+    .user-info { font-size:14px; color:var(--text); margin-right:8px; }
+    .auth-btn { background:#06b6d4; border:none; color:#001; padding:6px 10px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer; }
+    .auth-btn.logout { background:#ef4444; color:#fff; }
+    h2 { color:var(--accent); margin:15px 0; text-align:center; }
+
+    .top-bar { display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:15px; }
+    .search-box input {
+      padding:8px 12px; width:80%; max-width:320px; border-radius:6px; border:1px solid #333;
+      background:#171a21; color:#e7eaf0; text-align:center;
+    }
+    .nav-btn {
+      background:#22c55e; border:none; color:#001; padding:8px 14px; border-radius:6px; cursor:pointer;
+      font-size:14px; font-weight:bold;
+    }
+    .nav-btn:hover { background:#16a34a; }
+
+    table { width:95%; margin:auto; border-collapse:collapse; background:#171a21; font-size:14px; }
+    th, td { border:1px solid #333; padding:6px; text-align:center; }
+    th { background:#06b6d4; color:#001; font-size:13px; }
+    td { font-size:13px; }
+    .status-box { padding:4px 8px; border-radius:6px; color:#fff; font-size:13px; font-weight:bold; }
+    .waiting { background:var(--wait); }
+    .completed { background:var(--ok); }
+    .cancelled { background:var(--bad); }
+
+    .pagination { margin:15px; text-align:center; }
+    .pagination button {
+      background:#06b6d4; border:none; color:#001; padding:6px 14px; margin:3px; border-radius:6px;
+      cursor:pointer; font-size:14px;
+    }
+    .pagination button:disabled { background:#333; color:#777; cursor:not-allowed; }
   </style>
 </head>
 <body>
-  <header>💎 Sarkar Telecom - Order History</header>
-  <h2>📜 My Orders</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>SL</th><th>Number</th><th>Amount</th><th>Status</th><th>Time</th>
-      </tr>
-    </thead>
-    <tbody id="orderTable"></tbody>
-  </table>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+<header>
+  <span>💎 Sarkar Telecom – Order History</span>
+  <div>
+    <span class="user-info" id="userInfo">🔄 Checking...</span>
+    <button id="authBtn" class="auth-btn">Login</button>
+  </div>
+</header>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
-      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
-      projectId: "diamond-recharge-f7f59",
-      storageBucket: "diamond-recharge-f7f59.appspot.com",
-      messagingSenderId: "657717928489",
-      appId: "1:657717928489:web:70431ebc9afb7002d4b238"
-    };
+<h2>📜 Order History</h2>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+<div class="top-bar">
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="🔍 Search by Number / Amount / Status">
+  </div>
+  <button class="nav-btn" onclick="window.location.href='order.html'">➕ Place New Order</button>
+</div>
 
-    const API_URL = "https://script.google.com/macros/s/AKfycbx_sBNjUxFX931jcDyEw2IVzrVpZCmzSVwVCboJx7DVaKN8YBI6E6z0pYoCwF-vhHvc1Q/exec";
+<table>
+  <thead>
+    <tr>
+      <th>SL</th>
+      <th>Number</th>
+      <th>Amount</th>
+      <th>Status</th>
+      <th>Time</th>
+    </tr>
+  </thead>
+  <tbody id="orderTable"></tbody>
+</table>
 
-    const table = document.getElementById("orderTable");
+<div class="pagination">
+  <button id="prevBtn">⬅ Prev</button>
+  <button id="nextBtn">Next ➡</button>
+</div>
 
-    onAuthStateChanged(auth, async (user)=>{
-      if(!user){
-        alert("⚠️ Please login first!");
-        window.location.href="login.html";
-        return;
-      }
-      const myEmail = user.email;
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-      try{
-        const res = await fetch(API_URL);
-        const data = await res.json();
-        if(!data.ok){ table.innerHTML="<tr><td colspan='5'>❌ Failed to load!</td></tr>"; return;}
+  const firebaseConfig = {
+    apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+    projectId: "diamond-recharge-f7f59",
+    storageBucket: "diamond-recharge-f7f59.appspot.com",
+    messagingSenderId: "657717928489",
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+  };
 
-        const rows = data.rows.slice(1).reverse().filter(r=>r[4]===myEmail);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
 
-        if(rows.length===0){ table.innerHTML="<tr><td colspan='5'>No orders found</td></tr>"; return;}
+  const API_URL = "https://script.google.com/macros/s/AKfycbx_sBNjUxFX931jcDyEw2IVzrVpZCmzSVwVCboJx7DVaKN8YBI6E6z0pYoCwF-vhHvc1Q/exec";
 
-        rows.forEach((r,i)=>{
-          const [time, number, amount, status, email] = r;
-          let cls="waiting";
-          if(status.toLowerCase()==="complete")cls="completed";
-          else if(status.toLowerCase().startsWith("cancel"))cls="cancelled";
+  const userInfo=document.getElementById("userInfo");
+  const authBtn=document.getElementById("authBtn");
+  const orderTable=document.getElementById("orderTable");
+  const searchInput=document.getElementById("searchInput");
+  const prevBtn=document.getElementById("prevBtn");
+  const nextBtn=document.getElementById("nextBtn");
 
-          const tr=document.createElement("tr");
-          tr.innerHTML=`<td>${i+1}</td><td>${number}</td><td>${amount}</td>
-                        <td><span class="status-box ${cls}">${status}</span></td><td>${time}</td>`;
-          table.appendChild(tr);
-        });
-      }catch(err){
-        table.innerHTML=`<tr><td colspan='5'>Error: ${err.message}</td></tr>`;
-      }
+  let currentUser=null;
+  let orders=[],filteredOrders=[];
+  let currentPage=1;
+  const rowsPerPage=10;
+
+  onAuthStateChanged(auth,(user)=>{
+    if(user){
+      currentUser=user;
+      userInfo.textContent="👤 "+(user.displayName||user.email);
+      authBtn.textContent="Logout";
+      authBtn.classList.add("logout");
+      authBtn.onclick=()=>signOut(auth);
+      loadOrders();
+    }else{
+      currentUser=null;
+      userInfo.textContent="❌ Not logged in";
+      authBtn.textContent="Login";
+      authBtn.classList.remove("logout");
+      authBtn.onclick=()=>window.location.href="login.html";
+      orderTable.innerHTML="<tr><td colspan='5'>⚠ Please login to see your orders</td></tr>";
+    }
+  });
+
+  function renderTable(){
+    orderTable.innerHTML="";
+    const activeOrders=filteredOrders.length?filteredOrders:orders;
+    const start=(currentPage-1)*rowsPerPage;
+    const end=start+rowsPerPage;
+    const paginated=activeOrders.slice(start,end);
+
+    paginated.forEach((row,i)=>{
+      const [time,number,amount,status,email]=row;
+      let statusClass="waiting";
+      if(status&&status.toLowerCase()==="complete")statusClass="completed";
+      else if(status&&status.toLowerCase()==="cancel")statusClass="cancelled";
+
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td>${activeOrders.length-(start+i)}</td>
+        <td>${number||"-"}</td>
+        <td>${amount||"-"}</td>
+        <td><span class="status-box ${statusClass}">${status||"-"}</span></td>
+        <td>${time?new Date(time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"-"}</td>
+      `;
+      orderTable.appendChild(tr);
     });
-  </script>
+
+    prevBtn.disabled=currentPage===1;
+    nextBtn.disabled=end>=activeOrders.length;
+  }
+
+  async function loadOrders(){
+    try{
+      const res=await fetch(API_URL);
+      const data=await res.json();
+      if(!data.ok)return;
+
+      // শুধুমাত্র লগিন করা ইউজারের অর্ডার দেখাবে
+      orders=data.rows.slice(1).filter(r=>r[4]===currentUser.email).reverse();
+      filteredOrders=[];
+      currentPage=1;
+      renderTable();
+    }catch(err){
+      orderTable.innerHTML=`<tr><td colspan='5'>❌ Error: ${err.message}</td></tr>`;
+    }
+  }
+
+  // Search filter
+  searchInput.addEventListener("input",()=>{
+    const term=searchInput.value.toLowerCase();
+    if(term){
+      filteredOrders=orders.filter(o=>
+        (o[1]&&o[1].toLowerCase().includes(term)) ||
+        (o[2]&&String(o[2]).toLowerCase().includes(term)) ||
+        (o[3]&&o[3].toLowerCase().includes(term))
+      );
+    }else filteredOrders=[];
+    currentPage=1;
+    renderTable();
+  });
+
+  prevBtn.addEventListener("click",()=>{ if(currentPage>1){currentPage--;renderTable();}});
+  nextBtn.addEventListener("click",()=>{
+    const activeOrders=filteredOrders.length?filteredOrders:orders;
+    if((currentPage*rowsPerPage)<activeOrders.length){currentPage++;renderTable();}
+  });
+</script>
 </body>
 </html>
