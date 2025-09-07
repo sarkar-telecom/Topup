@@ -1,91 +1,94 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Place Order</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Place Order - Sarkar Telecom</title>
+  <style>
+    body { background:#0f1115; color:#fff; font-family:Arial, sans-serif; text-align:center; }
+    .container { max-width:500px; margin:auto; padding:20px; background:#171a21; border-radius:8px; }
+    h2 { color:#06b6d4; }
+    input, button { padding:10px; margin:6px; font-size:16px; border-radius:6px; border:none; }
+    input { width:90%; }
+    button { background:#06b6d4; color:#000; cursor:pointer; font-weight:bold; }
+    button:hover { opacity:0.9; }
+    #diamonds button { margin:4px; background:#1f2430; color:#fff; border:1px solid #333; }
+    #diamonds button.active { background:#06b6d4; color:#000; }
+    #message { margin-top:10px; font-weight:bold; }
+  </style>
 </head>
-<body style="background:#000; color:#fff; text-align:center; padding:20px;">
+<body>
+  <div class="container">
+    <h2>💎 Place New Order</h2>
+    <input type="text" id="number" placeholder="Enter Game ID / Number">
 
-  <div id="header"></div>
+    <div id="diamonds">
+      <button onclick="selectAmount(10)">10</button>
+      <button onclick="selectAmount(50)">50</button>
+      <button onclick="selectAmount(100)">100</button>
+      <button onclick="selectAmount(200)">200</button>
+      <button onclick="selectAmount(500)">500</button>
+      <button onclick="selectAmount(1000)">1000</button>
+      <button onclick="selectAmount(2000)">2000</button>
+      <button onclick="selectAmount(5000)">5000</button>
+      <button onclick="selectAmount(10000)">10000</button>
+      <button onclick="selectAmount(20000)">20000</button>
+    </div>
 
-  <h2>Place New Order</h2>
-  <input type="text" id="number" placeholder="Enter Game ID / Number"><br><br>
-  
-  <div id="diamonds">
-    <button onclick="selectAmount(10)">10</button>
-    <button onclick="selectAmount(50)">50</button>
-    <button onclick="selectAmount(100)">100</button>
-    <button onclick="selectAmount(200)">200</button>
-    <button onclick="selectAmount(500)">500</button>
-    <button onclick="selectAmount(1000)">1000</button>
-    <button onclick="selectAmount(2000)">2000</button>
-    <button onclick="selectAmount(5000)">5000</button>
-    <button onclick="selectAmount(10000)">10000</button>
-    <button onclick="selectAmount(20000)">20000</button>
+    <p>Selected: <span id="selected">None</span></p>
+    <button onclick="submitOrder()">✅ Confirm Order</button>
+    <p id="message"></p>
   </div>
 
-  <p>Selected: <span id="selected">None</span></p>
-  <button onclick="submitOrder()">✅ Confirm Order</button>
-  <p id="message"></p>
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbypLjvDmPyBh68pwoeXuR7lFyc8qb8rimTLl1KYTKPoZ0lmfkvs-Xz6X3f-sNTLR91wqQ/exec"; // আপনার doPost URL
+  const SECRET = "12345"; // আপনার সিক্রেট
 
-  <script>
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyAyhjOsIXNAkBglpRllt0OZIOJYpdB_9-8",
-      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
-      projectId: "diamond-recharge-f7f59",
-      storageBucket: "diamond-recharge-f7f59.firebasestorage.app",
-      messagingSenderId: "657717928489",
-      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
-      measurementId: "G-TDK78BQ8SQ"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+  let selectedAmount = null;
 
-    // Auth check
-    auth.onAuthStateChanged(user => {
-      if (!user) window.location.href="login.html";
-    });
+  function selectAmount(amount) {
+    selectedAmount = amount;
+    document.querySelectorAll("#diamonds button").forEach(btn => btn.classList.remove("active"));
+    event.target.classList.add("active");
+    document.getElementById("selected").innerText = amount;
+  }
 
-    // Load header
-    fetch("header.html").then(r=>r.text()).then(h=>document.getElementById("header").innerHTML=h);
-
-    let selectedAmount=null;
-    function selectAmount(a){ selectedAmount=a; document.getElementById("selected").innerText=a; }
-
-    async function submitOrder(){
-      const user=auth.currentUser;
-      if(!user){document.getElementById("message").innerText="⚠️ Please login!"; return;}
-      const number=document.getElementById("number").value;
-      if(!number||!selectedAmount){document.getElementById("message").innerText="⚠️ Enter number & select amount"; return;}
-
-      document.getElementById("message").innerText="⏳ Submitting...";
-      try{
-        const res=await fetch("https://script.google.com/macros/s/AKfycbypLjvDmPyBh68pwoeXuR7lFyc8qb8rimTLl1KYTKPoZ0lmfkvs-Xz6X3f-sNTLR91wqQ/exec",{
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({
-            token:"12345",
-            name:user.email,
-            product:"Diamond",
-            amount:selectedAmount,
-            number:number,
-            status:"new"
-          })
-        });
-        const data=await res.json();
-        if(data.ok){
-          document.getElementById("message").innerText="✅ Order submitted!";
-          setTimeout(()=>window.location.href="order-history.html",1500);
-        }else{
-          document.getElementById("message").innerText="❌ "+data.error;
-        }
-      }catch(err){
-        document.getElementById("message").innerText="❌ Network error: "+err;
-      }
+  async function submitOrder() {
+    const number = document.getElementById("number").value;
+    if (!number || !selectedAmount) {
+      document.getElementById("message").innerText = "⚠️ Enter number & select amount!";
+      return;
     }
-  </script>
+
+    document.getElementById("message").innerText = "⏳ Submitting...";
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: SECRET,
+          name: number,          // 👈 এখানে নাম বা Game ID যাবে
+          number: number,
+          amount: selectedAmount,
+          product: "Diamond",
+          status: "new"
+        })
+      });
+
+      const data = await res.json();
+      if (data.ok) {
+        document.getElementById("message").innerText = "✅ Order submitted!";
+        setTimeout(() => {
+          window.location.href = "order-history.html"; // redirect
+        }, 1500);
+      } else {
+        document.getElementById("message").innerText = "❌ Error: " + data.error;
+      }
+    } catch (err) {
+      document.getElementById("message").innerText = "❌ Network error: " + err;
+    }
+  }
+</script>
 </body>
 </html>
