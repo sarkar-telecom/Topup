@@ -99,6 +99,14 @@
     let currentPage = 1;
     const rowsPerPage = 10;
 
+    // ✅ টাইম ফরম্যাট করার ফাংশন
+    function formatTime(ts) {
+      if (!ts) return "-";
+      let date = new Date(ts);
+      if (isNaN(date)) return ts; 
+      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
+    }
+
     function renderTable() {
       orderTable.innerHTML = "";
       const activeOrders = filteredOrders.length ? filteredOrders : orders;
@@ -119,7 +127,7 @@
           <td>${number || "-"}</td>
           <td>${amount || "-"}</td>
           <td><span class="status-box ${statusClass}">${status || "-"}</span></td>
-          <td>${time || "-"}</td>
+          <td>${formatTime(time) || "-"}</td>
         `;
         orderTable.appendChild(tr);
       });
