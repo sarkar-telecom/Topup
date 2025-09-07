@@ -6,15 +6,14 @@
   <title>Login - Sarkar Telecom</title>
   <style>
     body{font-family:Arial,sans-serif;background:#0f1115;color:#e7eaf0;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
-    .card{background:#171a21;padding:20px;border-radius:10px;width:320px;text-align:center;}
-    h2{color:#06b6d4;margin-bottom:15px;}
+    .card{background:#171a21;padding:22px;border-radius:12px;width:320px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.5);}
+    h2{color:#06b6d4;margin-bottom:18px;}
     input{width:90%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #333;background:#0f1115;color:#e7eaf0;}
     button{background:#06b6d4;color:#001;border:none;padding:10px 14px;margin-top:10px;width:100%;border-radius:6px;font-weight:bold;cursor:pointer;}
     button:hover{background:#0ea5e9;}
     .msg{margin-top:10px;font-size:14px;}
-    .options{margin-top:12px;text-align:left;font-size:13px;color:#9aa3b2;}
-    .options label{cursor:pointer;}
-    .link-btn{background:none;border:none;color:#06b6d4;cursor:pointer;text-decoration:underline;font-size:13px;margin-top:6px;}
+    .extra-btn{background:#1f2937;color:#e7eaf0;border:none;padding:8px;margin-top:8px;width:100%;border-radius:6px;cursor:pointer;font-size:14px;}
+    .extra-btn:hover{background:#374151;}
   </style>
 </head>
 <body>
@@ -22,15 +21,14 @@
     <h2>🔐 Login</h2>
     <input type="email" id="email" placeholder="Email">
     <input type="password" id="password" placeholder="Password">
-    
-    <div class="options">
-      <label><input type="checkbox" id="remember"> Remember me</label><br>
-      <label><input type="checkbox" id="showPass"> Show password</label>
-    </div>
 
     <button onclick="login()">Login</button>
     <button onclick="signup()">Register</button>
-    <button class="link-btn" onclick="forgotPass()">Forgot Password?</button>
+    <button class="extra-btn" onclick="forgotPass()">Forgot Password?</button>
+    <button class="extra-btn" onclick="toggleRemember()">Remember Me</button>
+    <label style="font-size:13px;display:block;margin-top:8px;">
+      <input type="checkbox" id="showPass"> Show password
+    </label>
 
     <p class="msg" id="msg"></p>
   </div>
@@ -54,24 +52,39 @@
     const msgEl=document.getElementById("msg");
     const emailEl=document.getElementById("email");
     const passEl=document.getElementById("password");
-    const rememberEl=document.getElementById("remember");
     const showPassEl=document.getElementById("showPass");
-
-    // 🔹 Load saved credentials if "remember me" was used
-    window.onload=()=>{
-      const savedEmail=localStorage.getItem("email");
-      const savedPass=localStorage.getItem("password");
-      if(savedEmail && savedPass){
-        emailEl.value=savedEmail;
-        passEl.value=savedPass;
-        rememberEl.checked=true;
-      }
-    };
 
     // 🔹 Show password toggle
     showPassEl.addEventListener("change",()=>{
       passEl.type=showPassEl.checked?"text":"password";
     });
+
+    // 🔹 Remember Me toggle
+    function toggleRemember(){
+      if(localStorage.getItem("remembered")){
+        localStorage.removeItem("email");
+        localStorage.removeItem("password");
+        localStorage.removeItem("remembered");
+        msgEl.textContent="ℹ️ Remember me disabled.";
+      }else{
+        const email=emailEl.value.trim();
+        const pass=passEl.value.trim();
+        if(!email || !pass){ msgEl.textContent="⚠️ Enter email & password first!"; return; }
+        localStorage.setItem("email",email);
+        localStorage.setItem("password",pass);
+        localStorage.setItem("remembered","true");
+        msgEl.textContent="✅ Credentials saved!";
+      }
+    }
+    window.toggleRemember=toggleRemember;
+
+    // Load remembered credentials
+    window.onload=()=>{
+      if(localStorage.getItem("remembered")){
+        emailEl.value=localStorage.getItem("email")||"";
+        passEl.value=localStorage.getItem("password")||"";
+      }
+    };
 
     // 🔹 Login
     window.login=()=>{
@@ -79,14 +92,7 @@
       const pass=passEl.value.trim();
       signInWithEmailAndPassword(auth,email,pass).then(()=>{
         msgEl.textContent="✅ Login success!";
-        if(rememberEl.checked){
-          localStorage.setItem("email",email);
-          localStorage.setItem("password",pass);
-        }else{
-          localStorage.removeItem("email");
-          localStorage.removeItem("password");
-        }
-        window.location.href="dashboard.html"; // redirect after login
+        window.location.href="dashboard.html"; // redirect
       }).catch(e=>msgEl.textContent="❌ "+e.message);
     };
 
