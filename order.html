@@ -5,195 +5,126 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Place Order</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #121212;
-      color: white;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    :root{
+      --bg:#0f1115;--card:#171a21;--text:#e7eaf0;--muted:#9aa3b2;
+      --accent:#06b6d4;--ok:#10b981;--bad:#ef4444;
     }
-
-    #header {
-      width: 100%;
-    }
-
-    .order-container {
-      margin-top: 20px;
-      background: #1e1e1e;
-      padding: 20px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0px 4px 8px rgba(0,0,0,0.5);
-    }
-
-    h2 {
-      text-align: center;
-      margin-bottom: 15px;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border-radius: 8px;
-      border: none;
-      outline: none;
-    }
-
-    .amount-buttons {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-
-    .amount-btn {
-      padding: 12px;
-      background: #2e2e2e;
-      border: none;
-      border-radius: 8px;
-      color: white;
-      cursor: pointer;
-      font-size: 16px;
-      transition: 0.3s;
-    }
-
-    .amount-btn:hover {
-      background: #444;
-    }
-
-    .amount-btn.selected {
-      background: #00c853;
-      color: black;
-      font-weight: bold;
-    }
-
-    button.confirm {
-      width: 100%;
-      padding: 12px;
-      background: #2962ff;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-      transition: 0.3s;
-    }
-
-    button.confirm:hover {
-      background: #0039cb;
-    }
-
-    .error {
-      color: #ff5252;
-      text-align: center;
-      margin-top: 10px;
-    }
-
-    .success {
-      color: #00c853;
-      text-align: center;
-      margin-top: 10px;
-    }
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    main{padding:16px;max-width:600px;margin:auto}
+    h2{text-align:center;margin-bottom:16px}
+    .input-box{width:100%;padding:10px;border:1px solid #333;border-radius:8px;background:#171a21;color:var(--text);margin-bottom:16px}
+    .amounts{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:20px}
+    .amount-btn{background:#1f2430;padding:12px 18px;border-radius:8px;font-weight:600;cursor:pointer;border:none;color:var(--text);transition:.2s}
+    .amount-btn.active{background:var(--accent);color:#001}
+    .btn{width:100%;padding:12px;font-size:16px;font-weight:700;border:none;border-radius:8px;cursor:pointer;background:var(--accent);color:#001}
+    .btn:disabled{background:#333;color:#777;cursor:not-allowed}
+    .msg{text-align:center;margin-top:12px;font-size:14px}
   </style>
 </head>
 <body>
-
-  <!-- Header Load -->
+  <!-- Header load from GitHub -->
   <div id="header"></div>
-
-  <!-- Order Form -->
-  <div class="order-container" id="orderBox" style="display:none;">
-    <h2>Place Your Order</h2>
-    <input type="text" id="profileId" placeholder="Enter Profile ID or Mobile Number" required>
-
-    <div class="amount-buttons" id="amountButtons"></div>
-
-    <button class="confirm" onclick="submitOrder()">Confirm Order</button>
-    <p id="message"></p>
-  </div>
-
   <script>
-    // === Load Header from GitHub ===
     fetch("https://sarkar-telecom.github.io/Topup/header.html")
-      .then(res => res.text())
-      .then(data => {
-        document.getElementById("header").innerHTML = data;
-      });
+      .then(res=>res.text())
+      .then(html=>document.getElementById("header").innerHTML=html);
+  </script>
 
-    // === Amount Buttons ===
-    const amounts = [10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
-    const amountButtonsContainer = document.getElementById("amountButtons");
+  <main id="orderBox" style="display:none;">
+    <h2>Place New Order</h2>
+    <input id="profileInput" type="text" class="input-box" placeholder="Profile ID or +8801XXXXXXXXX">
+    
+    <div class="amounts">
+      <button class="amount-btn">10</button>
+      <button class="amount-btn">50</button>
+      <button class="amount-btn">100</button>
+      <button class="amount-btn">200</button>
+      <button class="amount-btn">500</button>
+      <button class="amount-btn">1000</button>
+      <button class="amount-btn">2000</button>
+      <button class="amount-btn">5000</button>
+      <button class="amount-btn">10000</button>
+      <button class="amount-btn">20000</button>
+    </div>
+
+    <button id="confirmBtn" class="btn" disabled>✅ Confirm Order</button>
+    <div id="msg" class="msg"></div>
+  </main>
+
+  <!-- Firebase + Order Logic -->
+  <script type="module">
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    // 🔹 আপনার Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+    };
+
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const orderBox   = document.getElementById("orderBox");
+    const profileInp = document.getElementById("profileInput");
+    const confirmBtn = document.getElementById("confirmBtn");
+    const msg        = document.getElementById("msg");
+
     let selectedAmount = null;
 
-    amounts.forEach(amount => {
-      const btn = document.createElement("button");
-      btn.textContent = amount;
-      btn.className = "amount-btn";
-      btn.onclick = () => selectAmount(btn, amount);
-      amountButtonsContainer.appendChild(btn);
+    // 🔹 Amount select
+    document.querySelectorAll(".amount-btn").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        document.querySelectorAll(".amount-btn").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        selectedAmount = btn.textContent;
+        confirmBtn.disabled = false;
+      });
     });
 
-    function selectAmount(button, amount) {
-      document.querySelectorAll(".amount-btn").forEach(btn => btn.classList.remove("selected"));
-      button.classList.add("selected");
-      selectedAmount = amount;
-    }
+    // 🔹 Firebase Auth check
+    onAuthStateChanged(auth, (user)=>{
+      if(!user){
+        window.location.href = "login.html"; // লগিন না থাকলে পাঠানো হবে
+      } else {
+        orderBox.style.display = "block"; // লগিন থাকলে অর্ডার ফর্ম দেখাবে
+      }
+    });
 
-    // === Check Login ===
-    const user = localStorage.getItem("user");
-    if (!user) {
-      window.location.href = "login.html"; // redirect if not logged in
-    } else {
-      document.getElementById("orderBox").style.display = "block";
-    }
-
-    // === Submit Order ===
-    function submitOrder() {
-      const profileId = document.getElementById("profileId").value.trim();
-      const msg = document.getElementById("message");
-
-      if (!profileId || !selectedAmount) {
-        msg.textContent = "Please enter Profile ID and select an amount.";
-        msg.className = "error";
+    // 🔹 Order submit
+    confirmBtn.addEventListener("click", async ()=>{
+      const profileId = profileInp.value.trim();
+      if(!profileId || !selectedAmount){
+        msg.textContent = "⚠️ Please enter Profile ID and select amount!";
         return;
       }
 
-      msg.textContent = "Placing order...";
-      msg.className = "";
+      confirmBtn.disabled = true;
+      msg.textContent = "⏳ Placing order...";
 
-      fetch("https://script.google.com/macros/s/AKfycbx_issV79GwlsTJmVkWbsenpJIoufqX_M8FV8DPM7nt3K22LS45WhGIkF0Ce9XeF_bd_A/exec", {
-        method: "POST",
-        body: new URLSearchParams({
-          profileId: profileId,
-          amount: selectedAmount,
-          status: "WAITING",
-          time: new Date().toLocaleString()
-        })
-      })
-      .then(res => res.text())
-      .then(data => {
-        if (data.includes("Success")) {
-          msg.textContent = "✅ Order Placed Successfully!";
-          msg.className = "success";
-          setTimeout(() => {
-            window.location.href = "order-history.html"; // redirect after success
-          }, 1200);
+      try{
+        const res = await fetch("https://script.google.com/macros/s/AKfycbx_issV79GwlsTJmVkWbsenpJIoufqX_M8FV8DPM7nt3K22LS45WhGIkF0Ce9XeF_bd_A/exec", {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ profileId, amount:selectedAmount, status:"Waiting" })
+        });
+        const data = await res.json();
+
+        if(data.result==="success"){
+          msg.textContent = "✅ Order placed successfully!";
+          setTimeout(()=>window.location.href="order-history.html", 1000);
         } else {
-          msg.textContent = "❌ Failed to place order.";
-          msg.className = "error";
+          msg.textContent = "❌ Failed to place order!";
         }
-      })
-      .catch(err => {
-        msg.textContent = "❌ Error: " + err;
-        msg.className = "error";
-      });
-    }
+      }catch(err){
+        msg.textContent = "❌ Error: "+err.message;
+      }
+      confirmBtn.disabled = false;
+    });
   </script>
-
 </body>
 </html>
