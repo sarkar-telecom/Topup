@@ -94,7 +94,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut, updatePassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
@@ -119,10 +119,9 @@
   let currentUser;
   let avatarImg;
 
-  // ✅ Safe Auth Check
+  // ✅ Auth listener
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
-      // give 500ms buffer before redirect
       setTimeout(() => {
         if (!auth.currentUser) {
           window.location.href = "login.html";
@@ -132,57 +131,45 @@
     }
 
     currentUser = user;
-    let balance = 0;
-    let avatarUrl = user.photoURL || "https://via.placeholder.com/40";
+    const userRef = doc(db, "users", user.uid);
 
-    try {
-      const userRef = doc(db, "users", user.uid);
-      const snap = await getDoc(userRef);
+    // ✅ Firestore realtime snapshot
+    onSnapshot(userRef, (snap) => {
+      if (!snap.exists()) return;
+      const data = snap.data();
 
-      if (snap.exists()) {
-        const data = snap.data();
-        document.getElementById("name").value = data.name || "";
-        document.getElementById("email").value = data.email || user.email;
-        document.getElementById("phone").value = data.phone || "";
-        document.getElementById("avatar").value = data.avatar || "";
-        balance = data.balance || 0;
-        if (data.avatar) avatarUrl = data.avatar;
-      } else {
-        await setDoc(userRef, {
-          name: user.displayName || "",
-          email: user.email,
-          phone: "",
-          avatar: user.photoURL || "",
-          balance: 0
-        });
-      }
-    } catch (e) {
-      console.error("Firestore error", e);
-    }
+      document.getElementById("name").value = data.name || "";
+      document.getElementById("email").value = data.email || user.email;
+      document.getElementById("phone").value = data.phone || "";
+      document.getElementById("avatar").value = data.avatar || "";
 
-    userInfo.innerHTML = `
-      <img id="headerAvatar" src="${avatarUrl}" class="user-avatar" alt="User" 
-           onerror="this.src='https://via.placeholder.com/40'">
-      <div class="user-box">${user.email}</div>
-      <div class="user-box balance">💎 ${balance}</div>
-      <button class="btn logout" id="logoutBtn">Logout</button>
-    `;
-    avatarImg = document.getElementById("headerAvatar");
+      let avatarUrl = data.avatar || user.photoURL || "https://via.placeholder.com/40";
+      let balance = data.balance || 0;
 
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
-      await signOut(auth);
-      window.location.href = "login.html";
+      userInfo.innerHTML = `
+        <img id="headerAvatar" src="${avatarUrl}" class="user-avatar" alt="User"
+             onerror="this.src='https://via.placeholder.com/40'">
+        <div class="user-box">${user.email}</div>
+        <div class="user-box balance">💎 ${balance}</div>
+        <button class="btn logout" id="logoutBtn">Logout</button>
+      `;
+      avatarImg = document.getElementById("headerAvatar");
+
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
+        await signOut(auth);
+        window.location.href = "login.html";
+      });
     });
   });
 
-  // Live Avatar Preview
+  // 🔹 Avatar live preview
   avatarInput.addEventListener("input", () => {
     if (avatarImg) {
       avatarImg.src = avatarInput.value || "https://via.placeholder.com/40";
     }
   });
 
-  // Update Profile
+  // 🔹 Update Profile
   updateBtn.addEventListener("click", async () => {
     errorBox.textContent = "";
     successBox.textContent = "";
