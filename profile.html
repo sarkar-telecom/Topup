@@ -28,7 +28,6 @@
 
     .btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
     .btn.logout { background: var(--bad); color: #fff; }
-    .btn.login { background: var(--accent); color: #001; }
 
     .nav-row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
     .nav-row a { background: #1f2430; padding: 8px 14px; border-radius: 8px; text-decoration: none; color: var(--text); font-weight: 600; transition: background 0.2s; }
@@ -62,14 +61,13 @@
 </head>
 <body>
 
-<!-- 🔹 Header -->
 <header>
   <div class="top-row">
     <div class="site-info">
       <img src="https://sarkar-telecom.github.io/Topup/logo.png" alt="Logo" class="site-logo">
       <span class="site-name">SARKAR TELECOM</span>
     </div>
-    <div class="user-info" id="userInfo"></div>
+    <div class="user-info" id="userInfo">🔄 Checking...</div>
   </div>
   <div class="nav-row">
     <a href="dashboard.html">Dashboard</a>
@@ -79,7 +77,6 @@
   </div>
 </header>
 
-<!-- 🔹 Profile Update Card -->
 <main>
   <div class="card">
     <h2>Update Profile</h2>
@@ -94,7 +91,6 @@
   </div>
 </main>
 
-<!-- 🔹 Firebase Scripts -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut, updatePassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
@@ -121,68 +117,72 @@
   const avatarInput = document.getElementById("avatar");
 
   let currentUser;
-  let avatarImg; // reference to avatar <img> in header
+  let avatarImg;
 
-  // 🔹 Load User Data
+  // ✅ Safe Auth Check
   onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      currentUser = user;
-
-      let balance = 0;
-      let avatarUrl = user.photoURL || "https://via.placeholder.com/40";
-
-      try {
-        const userRef = doc(db, "users", user.uid);
-        const snap = await getDoc(userRef);
-
-        if (snap.exists()) {
-          const data = snap.data();
-          document.getElementById("name").value = data.name || "";
-          document.getElementById("email").value = data.email || user.email;
-          document.getElementById("phone").value = data.phone || "";
-          document.getElementById("avatar").value = data.avatar || "";
-          balance = data.balance || 0;
-          if (data.avatar) avatarUrl = data.avatar;
-        } else {
-          await setDoc(userRef, {
-            name: user.displayName || "",
-            email: user.email,
-            phone: "",
-            avatar: user.photoURL || "",
-            balance: 0
-          });
+    if (!user) {
+      // give 500ms buffer before redirect
+      setTimeout(() => {
+        if (!auth.currentUser) {
+          window.location.href = "login.html";
         }
-      } catch (e) {
-        console.error("Firestore error", e);
-      }
-
-      userInfo.innerHTML = `
-        <img id="headerAvatar" src="${avatarUrl}" class="user-avatar" alt="User" 
-             onerror="this.src='https://via.placeholder.com/40'">
-        <div class="user-box">${user.email}</div>
-        <div class="user-box balance">💎 ${balance}</div>
-        <button class="btn logout" id="logoutBtn">Logout</button>
-      `;
-      avatarImg = document.getElementById("headerAvatar");
-
-      document.getElementById("logoutBtn").addEventListener("click", async () => {
-        await signOut(auth);
-        window.location.href = "login.html";
-      });
-
-    } else {
-      window.location.href = "login.html";
+      }, 500);
+      return;
     }
+
+    currentUser = user;
+    let balance = 0;
+    let avatarUrl = user.photoURL || "https://via.placeholder.com/40";
+
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const snap = await getDoc(userRef);
+
+      if (snap.exists()) {
+        const data = snap.data();
+        document.getElementById("name").value = data.name || "";
+        document.getElementById("email").value = data.email || user.email;
+        document.getElementById("phone").value = data.phone || "";
+        document.getElementById("avatar").value = data.avatar || "";
+        balance = data.balance || 0;
+        if (data.avatar) avatarUrl = data.avatar;
+      } else {
+        await setDoc(userRef, {
+          name: user.displayName || "",
+          email: user.email,
+          phone: "",
+          avatar: user.photoURL || "",
+          balance: 0
+        });
+      }
+    } catch (e) {
+      console.error("Firestore error", e);
+    }
+
+    userInfo.innerHTML = `
+      <img id="headerAvatar" src="${avatarUrl}" class="user-avatar" alt="User" 
+           onerror="this.src='https://via.placeholder.com/40'">
+      <div class="user-box">${user.email}</div>
+      <div class="user-box balance">💎 ${balance}</div>
+      <button class="btn logout" id="logoutBtn">Logout</button>
+    `;
+    avatarImg = document.getElementById("headerAvatar");
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "login.html";
+    });
   });
 
-  // 🔹 Live Avatar Preview
+  // Live Avatar Preview
   avatarInput.addEventListener("input", () => {
     if (avatarImg) {
       avatarImg.src = avatarInput.value || "https://via.placeholder.com/40";
     }
   });
 
-  // 🔹 Update Profile
+  // Update Profile
   updateBtn.addEventListener("click", async () => {
     errorBox.textContent = "";
     successBox.textContent = "";
@@ -197,11 +197,7 @@
     try {
       const userRef = doc(db, "users", currentUser.uid);
 
-      await updateDoc(userRef, {
-        name: name,
-        phone: phone,
-        avatar: avatar
-      });
+      await updateDoc(userRef, { name, phone, avatar });
 
       await updateProfile(currentUser, {
         displayName: name,
@@ -218,6 +214,5 @@
     }
   });
 </script>
-
 </body>
 </html>
