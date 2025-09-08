@@ -118,8 +118,10 @@
   const updateBtn = document.getElementById("updateBtn");
   const errorBox = document.getElementById("errorBox");
   const successBox = document.getElementById("successBox");
+  const avatarInput = document.getElementById("avatar");
 
   let currentUser;
+  let avatarImg; // reference to avatar <img> in header
 
   // 🔹 Load User Data
   onAuthStateChanged(auth, async (user) => {
@@ -142,7 +144,6 @@
           balance = data.balance || 0;
           if (data.avatar) avatarUrl = data.avatar;
         } else {
-          // 🔹 যদি ডকুমেন্ট না থাকে, নতুন বানিয়ে দিই
           await setDoc(userRef, {
             name: user.displayName || "",
             email: user.email,
@@ -156,20 +157,28 @@
       }
 
       userInfo.innerHTML = `
-        <img src="${avatarUrl}" class="user-avatar" alt="User" 
+        <img id="headerAvatar" src="${avatarUrl}" class="user-avatar" alt="User" 
              onerror="this.src='https://via.placeholder.com/40'">
         <div class="user-box">${user.email}</div>
         <div class="user-box balance">💎 ${balance}</div>
         <button class="btn logout" id="logoutBtn">Logout</button>
       `;
+      avatarImg = document.getElementById("headerAvatar");
+
       document.getElementById("logoutBtn").addEventListener("click", async () => {
         await signOut(auth);
         window.location.href = "login.html";
       });
 
     } else {
-      // 🔹 কেবলমাত্র লগড ইন না থাকলে লগিনে পাঠাবে
       window.location.href = "login.html";
+    }
+  });
+
+  // 🔹 Live Avatar Preview
+  avatarInput.addEventListener("input", () => {
+    if (avatarImg) {
+      avatarImg.src = avatarInput.value || "https://via.placeholder.com/40";
     }
   });
 
@@ -182,26 +191,23 @@
 
     const name = document.getElementById("name").value.trim();
     const phone = document.getElementById("phone").value.trim();
-    const avatar = document.getElementById("avatar").value.trim();
+    const avatar = avatarInput.value.trim();
     const password = document.getElementById("password").value.trim();
 
     try {
       const userRef = doc(db, "users", currentUser.uid);
 
-      // Update Firestore
       await updateDoc(userRef, {
         name: name,
         phone: phone,
         avatar: avatar
       });
 
-      // Update Auth profile
       await updateProfile(currentUser, {
         displayName: name,
         photoURL: avatar || currentUser.photoURL
       });
 
-      // Update password (optional)
       if (password) {
         await updatePassword(currentUser, password);
       }
