@@ -98,7 +98,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut, updatePassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
@@ -130,7 +130,9 @@
       let avatarUrl = user.photoURL || "https://via.placeholder.com/40";
 
       try {
-        const snap = await getDoc(doc(db, "users", user.uid));
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+
         if (snap.exists()) {
           const data = snap.data();
           document.getElementById("name").value = data.name || "";
@@ -139,13 +141,23 @@
           document.getElementById("avatar").value = data.avatar || "";
           balance = data.balance || 0;
           if (data.avatar) avatarUrl = data.avatar;
+        } else {
+          // 🔹 যদি ডকুমেন্ট না থাকে, নতুন বানিয়ে দিই
+          await setDoc(userRef, {
+            name: user.displayName || "",
+            email: user.email,
+            phone: "",
+            avatar: user.photoURL || "",
+            balance: 0
+          });
         }
       } catch (e) {
         console.error("Firestore error", e);
       }
 
       userInfo.innerHTML = `
-        <img src="${avatarUrl}" class="user-avatar" alt="User" onerror="this.src='https://via.placeholder.com/40'">
+        <img src="${avatarUrl}" class="user-avatar" alt="User" 
+             onerror="this.src='https://via.placeholder.com/40'">
         <div class="user-box">${user.email}</div>
         <div class="user-box balance">💎 ${balance}</div>
         <button class="btn logout" id="logoutBtn">Logout</button>
@@ -156,6 +168,7 @@
       });
 
     } else {
+      // 🔹 কেবলমাত্র লগড ইন না থাকলে লগিনে পাঠাবে
       window.location.href = "login.html";
     }
   });
@@ -173,8 +186,10 @@
     const password = document.getElementById("password").value.trim();
 
     try {
+      const userRef = doc(db, "users", currentUser.uid);
+
       // Update Firestore
-      await updateDoc(doc(db, "users", currentUser.uid), {
+      await updateDoc(userRef, {
         name: name,
         phone: phone,
         avatar: avatar
