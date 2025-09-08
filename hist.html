@@ -33,25 +33,26 @@
     .pagination button { background:#06b6d4; border:none; color:#001; padding:6px 14px; margin:3px; border-radius:6px; cursor:pointer; font-size:14px; }
     .pagination button:disabled { background:#333; color:#777; cursor:not-allowed; }
 
-    /* ✅ Toast popup */
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
+    /* ✅ Toast */
+    #toast {
+      visibility: hidden;
+      min-width: 220px;
+      margin-left: -110px;
       background: #22c55e;
       color: #fff;
-      padding: 10px 16px;
+      text-align: center;
       border-radius: 6px;
+      padding: 12px;
+      position: fixed;
+      z-index: 1;
+      left: 50%;
+      bottom: 30px;
+      font-size: 15px;
       font-weight: bold;
-      opacity: 0;
-      transition: opacity 0.4s, transform 0.4s;
-      transform: translateY(20px);
-      z-index: 9999;
     }
-    .toast.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+    @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+    @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
   </style>
 </head>
 <body>
@@ -93,15 +94,14 @@
   <button id="nextBtn">Next ➡</button>
 </div>
 
-<!-- ✅ Toast -->
-<div id="toast" class="toast"></div>
+<div id="toast"></div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
   import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  // Firebase config
+  // ✅ Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
     authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -116,8 +116,10 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
+  // ✅ FinalData sheet (Orders+Status merged)
   const FINALDATA_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=1098128992&single=true&output=csv";
 
+  // DOM
   const orderTable = document.getElementById("orderTable");
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
@@ -128,17 +130,14 @@
   const userInfo = document.getElementById("userInfo");
   const toast = document.getElementById("toast");
 
-  let allOrders = [], viewOrders = [], currentPage = 1;
+  // State
+  let allOrders = [];
+  let viewOrders = [];
+  let currentPage = 1;
   const rowsPerPage = 10;
   let currentUser = null;
 
-  function showToast(msg, color="#22c55e") {
-    toast.textContent = msg;
-    toast.style.background = color;
-    toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), 3000);
-  }
-
+  // CSV parser
   function parseCSV(text) {
     text = text.replace(/\r/g,'');
     const lines = text.split('\n').filter(l => l.trim().length>0);
@@ -173,7 +172,7 @@
     return "waiting";
   };
 
-  // ✅ Time formatting (Bangladesh UTC+6, only HH:MM AM/PM)
+  // ✅ Bangladesh Time fix
   function formatTimeCell(t) {
     if (!t) return "-";
     let d;
@@ -184,11 +183,22 @@
       d = new Date(t);
     }
     if (isNaN(d)) return t;
-    const bdTime = new Date(d.getTime() + (6 * 60 * 60 * 1000));
-    return bdTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+    return d.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "Asia/Dhaka"
+    });
   }
 
-  // ✅ Refund
+  // ✅ Toast function
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.className = "show";
+    setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+  }
+
+  // ✅ Refund function
   async function refundIfNeeded(user, orders) {
     const userRef = doc(db, "users", user.uid);
     const snap = await getDoc(userRef);
@@ -208,7 +218,7 @@
           balance: (data.balance || 0) + refundAmount,
           refundedOrders: arrayUnion(time)
         });
-        showToast(`💰 Refunded ${refundAmount} balance!`);
+        showToast(`💰 Refunded ${refundAmount} TK for cancelled order`);
       }
     }
   }
@@ -266,17 +276,19 @@
     }
   }
 
+  // Events
   prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderTable(); } };
   nextBtn.onclick = () => { if ((currentPage * rowsPerPage) < viewOrders.length) { currentPage++; renderTable(); } };
   searchBtn.onclick = applySearch;
   searchInput.onkeydown = (e) => { if (e.key === "Enter") applySearch(); };
   clearBtn.onclick = () => { searchInput.value = ""; applySearch(); };
 
+  // 🔐 Auth button toggle
   authBtn.onclick = async () => {
     if (currentUser) {
       await signOut(auth);
     } else {
-      window.location.href = "login.html";
+      window.location.href = "https://sarkar-telecom.github.io/Topup/login.html";
     }
   };
 
