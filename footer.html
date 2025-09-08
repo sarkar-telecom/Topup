@@ -7,7 +7,7 @@
   <style>
     footer {
       background:#171a21;
-      padding:20px 10px;
+      padding:16px 10px;
       margin-top:30px;
       text-align:center;
     }
@@ -28,11 +28,28 @@
       transform:scale(1.05);
     }
     .copyright {
-      margin-top:12px;
-      font-size:14px;
+      margin-top:10px;
+      font-size:13px;
       color:#9aa3b2;
     }
-    /* WhatsApp floating button */
+    /* User info box */
+    .user-box {
+      margin-top:12px;
+      padding:10px;
+      border-radius:10px;
+      background:#0f1115;
+      display:inline-block;
+      text-align:left;
+      font-size:14px;
+      color:#e7eaf0;
+      min-width:220px;
+    }
+    .user-box img {
+      width:40px; height:40px;
+      border-radius:50%;
+      vertical-align:middle;
+      margin-right:10px;
+    }
     .whatsapp-btn {
       position:fixed;
       bottom:80px;
@@ -54,7 +71,7 @@
 </head>
 <body>
   <footer>
-    <!-- Navigation Buttons -->
+    <!-- Navigation -->
     <div>
       <a href="index.html" class="footer-btn">🏠 Home</a>
       <a href="dashboard.html" class="footer-btn">📊 Dashboard</a>
@@ -70,6 +87,11 @@
       <a href="support.html" class="footer-btn">💬 Support</a>
     </div>
 
+    <!-- User Info -->
+    <div class="user-box" id="userBox">
+      🔄 Checking login...
+    </div>
+
     <!-- WhatsApp Floating Button -->
     <a href="https://wa.me/8801715118684?text=Hello%20I%20need%20support" target="_blank" class="whatsapp-btn">
       💬 WhatsApp
@@ -80,5 +102,61 @@
       © SARKAR TELECOM 2025-2026
     </div>
   </footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const userBox = document.getElementById("userBox");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        userBox.innerHTML = "❌ Not logged in";
+        return;
+      }
+
+      try {
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+        let balance = 0, number = "N/A";
+        if (snap.exists()) {
+          const data = snap.data();
+          balance = data.balance || 0;
+          number = data.number || "N/A";
+        }
+
+        const name = user.displayName || "No Name";
+        const email = user.email || "Unknown";
+        const avatar = user.photoURL || "https://i.ibb.co/3T1VYwF/user.png";
+
+        userBox.innerHTML = `
+          <div>
+            <img src="${avatar}" alt="Avatar">
+            <strong>${name}</strong><br>
+            📧 ${email}<br>
+            📱 ${number}<br>
+            💰 Balance: ${balance}
+          </div>
+        `;
+      } catch (e) {
+        console.error("Error loading user data", e);
+        userBox.innerHTML = "⚠️ Error loading user info";
+      }
+    });
+  </script>
 </body>
 </html>
