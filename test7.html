@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -62,18 +62,30 @@
 </div>
 
 <script type="module">
+  // Firebase imports
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
+  // ----------------------------
+  // Firebase config (আপনার প্রোজেক্টের)
+  // ----------------------------
   const firebaseConfig = {
-    apiKey: "...", authDomain: "...", projectId: "...",
-    storageBucket: "...", messagingSenderId: "...", appId: "..."
+    apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+    projectId: "diamond-recharge-f7f59",
+    storageBucket: "diamond-recharge-f7f59.appspot.com",
+    messagingSenderId: "657717928489",
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238"
   };
+
+  // FinalData CSV (আপনি আগে দিয়েছিলেন)
+  const FINALDATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=1098128992&single=true&output=csv";
+
+  // init firebase
   initializeApp(firebaseConfig);
   const auth = getAuth();
 
-  const FINALDATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=1098128992&single=true&output=csv";
-
+  // DOM
   const adminEmailBox = document.getElementById("adminEmail");
   const logoutBtn = document.getElementById("logoutBtn");
   const orderTable = document.getElementById("orderTable");
@@ -83,96 +95,178 @@
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
 
+  // state
   let allOrders = [], viewOrders = [], currentPage = 1;
   const rowsPerPage = 10;
 
-  async function fetchCSV(url) {
-    const res = await fetch(url, {cache:'no-store'});
-    if (!res.ok) throw new Error(res.statusText);
-    const text = await res.text();
-    return text.trim().split("\n").map(r => r.split(","));
+  // ensure persistence so user stays logged in between sessions (local)
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+  } catch (e) {
+    console.warn("Could not set persistence:", e);
+    // fallback: proceed without throwing
   }
 
+  // CSV fetch helper
+  async function fetchCSV(url) {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(res.status + " " + res.statusText);
+    const text = await res.text();
+    // robust CSV parse: split lines, then join cells that were quoted with commas
+    // simple approach (your CSV is plain): split by newline then by comma
+    const rows = text.trim().split("\n").map(r => {
+      // remove possible carriage returns and trim
+      return r.replace(/\r/g, "").split(",").map(c => c.trim());
+    });
+    return rows;
+  }
+
+  // load orders from FINALDATA_URL
   async function loadOrders() {
     orderTable.innerHTML = '<tr><td colspan="6">⏳ Loading...</td></tr>';
     try {
       const rows = await fetchCSV(FINALDATA_URL);
+      // header row assumed present; map columns carefully:
+      // FinalData expected columns: Timestamp, Number, Amount, Email, Status
+      const header = rows[0] || [];
+      const idxTimestamp = header.findIndex(h => /time|timestamp/i.test(h)) || 0;
+      const idxNumber = header.findIndex(h => /number/i.test(h));
+      const idxAmount = header.findIndex(h => /amount/i.test(h));
+      const idxEmail = header.findIndex(h => /email/i.test(h));
+      const idxStatus = header.findIndex(h => /status/i.test(h));
+
+      // fallback indices if not found
+      const tIdx = idxTimestamp >= 0 ? idxTimestamp : 0;
+      const nIdx = idxNumber >= 0 ? idxNumber : 1;
+      const aIdx = idxAmount >= 0 ? idxAmount : 2;
+      const eIdx = idxEmail >= 0 ? idxEmail : 3;
+      const sIdx = idxStatus >= 0 ? idxStatus : 4;
+
+      // slice rows (skip header) and reverse so latest on top
       allOrders = rows.slice(1).reverse().map(r => {
-        const [time, number, amount, email, status] = r;
-        return { time, number, amount, status, email };
+        return {
+          time: (r[tIdx] || "").trim(),
+          number: (r[nIdx] || "").trim(),
+          amount: (r[aIdx] || "").trim(),
+          email: (r[eIdx] || "").trim(),
+          status: (r[sIdx] || "").trim()
+        };
       });
+
       viewOrders = [...allOrders];
+      currentPage = 1;
       renderTable();
-    } catch (e) {
-      orderTable.innerHTML = `<tr><td colspan="6">❌ Error: ${e.message}</td></tr>`;
+    } catch (err) {
+      orderTable.innerHTML = `<tr><td colspan="6">❌ Error loading data: ${err.message}</td></tr>`;
+      console.error(err);
     }
   }
 
+  // class for status cell
   function statusClass(s) {
-    const t = (s||"").toLowerCase();
+    const t = (s || "").toLowerCase();
     if (t.includes("complete")) return "completed";
     if (t.includes("cancel")) return "cancelled";
     return "waiting";
   }
 
+  // render table with serial numbers descending (latest top)
   function renderTable() {
     orderTable.innerHTML = "";
     const total = viewOrders.length;
     const start = (currentPage - 1) * rowsPerPage;
     const slice = viewOrders.slice(start, start + rowsPerPage);
-    if(!slice.length) {
+
+    if (!slice.length) {
       orderTable.innerHTML = "<tr><td colspan='6'>No orders found.</td></tr>";
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
       return;
     }
+
     slice.forEach((r, i) => {
+      // SL such that the top (latest) has largest number: total - (start + i)
       const sl = total - (start + i);
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${sl}</td>
-        <td>${r.number||"-"}</td>
-        <td>${r.amount||"-"}</td>
-        <td><span class="status-box ${statusClass(r.status)}">${r.status||"-"}</span></td>
-        <td>${r.time||"-"}</td>
-        <td>${r.email||"-"}</td>
+        <td style="vertical-align:middle">${sl}</td>
+        <td style="vertical-align:middle">${escapeHtml(r.number) || "-"}</td>
+        <td style="vertical-align:middle">${escapeHtml(r.amount) || "-"}</td>
+        <td style="vertical-align:middle"><span class="status-box ${statusClass(r.status)}">${escapeHtml(r.status) || "-"}</span></td>
+        <td style="vertical-align:middle">${escapeHtml(r.time) || "-"}</td>
+        <td style="vertical-align:middle">${escapeHtml(r.email) || "-"}</td>
       `;
       orderTable.appendChild(tr);
     });
+
     prevBtn.disabled = currentPage === 1;
     nextBtn.disabled = (start + rowsPerPage) >= total;
   }
 
+  // search & filter
   function applySearch() {
     const term = (searchInput.value || "").toLowerCase().trim();
     viewOrders = term
       ? allOrders.filter(o =>
-          (o.number||"").toLowerCase().includes(term) ||
-          (o.amount||"").toLowerCase().includes(term) ||
-          (o.status||"").toLowerCase().includes(term) ||
-          (o.email||"").toLowerCase().includes(term)
+          (o.number || "").toLowerCase().includes(term) ||
+          (o.amount || "").toLowerCase().includes(term) ||
+          (o.status || "").toLowerCase().includes(term) ||
+          (o.email || "").toLowerCase().includes(term)
         )
       : [...allOrders];
     currentPage = 1;
     renderTable();
   }
 
-  prevBtn.onclick = () => { if(currentPage>1){currentPage--; renderTable();} };
-  nextBtn.onclick = () => { if((currentPage*rowsPerPage)<viewOrders.length){currentPage++; renderTable();} };
-  searchBtn.onclick = applySearch;
-  searchInput.onkeydown = e => { if(e.key==="Enter") applySearch(); };
-  clearBtn.onclick = () => { searchInput.value=""; applySearch(); };
+  // helpers
+  function escapeHtml(s) {
+    if (!s) return s;
+    return s.replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); });
+  }
 
-  onAuthStateChanged(auth, user => {
-    if (!user) return window.location.href = "login.html";
-    if (user.email !== "samrat.khulnas@gmail.com") {
-      adminEmailBox.textContent = user.email;
-      orderTable.innerHTML = '<tr><td colspan="6">❌ Access denied. Not an admin.</td></tr>';
+  // events
+  prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderTable(); } };
+  nextBtn.onclick = () => { if ((currentPage * rowsPerPage) < viewOrders.length) { currentPage++; renderTable(); } };
+  searchBtn.onclick = applySearch;
+  searchInput.onkeydown = (e) => { if (e.key === "Enter") applySearch(); };
+  clearBtn.onclick = () => { searchInput.value = ""; applySearch(); };
+
+  // Auth state: allow only admin email
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      // not logged in -> go to login page
+      window.location.href = "login.html";
       return;
     }
+
+    // admin email check (only this email can access)
+    const ADMIN_EMAIL = "samrat.khulnas@gmail.com";
+    adminEmailBox.textContent = user.email;
+    if (user.email !== ADMIN_EMAIL) {
+      orderTable.innerHTML = "<tr><td colspan='6'>❌ Access denied. Not an admin.</td></tr>";
+      return;
+    }
+
     adminEmailBox.textContent = user.email + " (Admin)";
+    // load data initially and then refresh periodically to keep updated
     loadOrders();
+    // optional: auto refresh every 8s to reflect latest FinalData
+    if (window._admin_autoRefresh) clearInterval(window._admin_autoRefresh);
+    window._admin_autoRefresh = setInterval(() => {
+      loadOrders();
+    }, 8000);
   });
 
-  logoutBtn.onclick = () => signOut(auth);
+  // logout
+  logoutBtn.onclick = async () => {
+    try {
+      await signOut(auth);
+      window.location.href = "login.html";
+    } catch (e) {
+      console.error("Sign out failed:", e);
+      alert("Logout failed: " + e.message);
+    }
+  };
 </script>
 </body>
 </html>
