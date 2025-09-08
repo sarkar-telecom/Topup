@@ -32,31 +32,6 @@
     .pagination { margin-top:15px; }
     .pagination button { background:#06b6d4; border:none; color:#001; padding:6px 14px; margin:3px; border-radius:6px; cursor:pointer; font-size:14px; }
     .pagination button:disabled { background:#333; color:#777; cursor:not-allowed; }
-
-    /* ✅ Toast Style */
-    #toast {
-      visibility: hidden;
-      min-width: 250px;
-      background: #22c55e;
-      color: #fff;
-      text-align: center;
-      border-radius: 8px;
-      padding: 14px;
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      font-weight: bold;
-      font-size: 15px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    }
-    #toast.show {
-      visibility: visible;
-      animation: fadein 0.5s, fadeout 0.5s 2.5s;
-    }
-    @keyframes fadein { from { bottom:10px; opacity:0; } to { bottom:30px; opacity:1; } }
-    @keyframes fadeout { from { bottom:30px; opacity:1; } to { bottom:10px; opacity:0; } }
   </style>
 </head>
 <body>
@@ -98,9 +73,6 @@
   <button id="nextBtn">Next ➡</button>
 </div>
 
-<!-- ✅ Toast Container -->
-<div id="toast"></div>
-
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
@@ -133,7 +105,6 @@
   const clearBtn = document.getElementById("clearBtn");
   const authBtn = document.getElementById("authBtn");
   const userInfo = document.getElementById("userInfo");
-  const toast = document.getElementById("toast");
 
   // State
   let allOrders = [];
@@ -141,13 +112,6 @@
   let currentPage = 1;
   const rowsPerPage = 10;
   let currentUser = null;
-
-  // Toast function
-  function showToast(msg) {
-    toast.textContent = msg;
-    toast.className = "show";
-    setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
-  }
 
   // CSV parser
   function parseCSV(text) {
@@ -188,18 +152,25 @@
   const formatTimeCell = (t) => {
     if (!t) return "-";
     let d;
+
     if (!isNaN(t)) {
       const millis = (Number(t) - 25569) * 86400 * 1000;
       d = new Date(millis);
     } else {
       d = new Date(t);
     }
+
     if (isNaN(d)) return t;
-    // Force BD Time (UTC+6)
-    return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Dhaka" });
+
+    return d.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "Asia/Dhaka"
+    });
   };
 
-  // ✅ Refund function (with toast)
+  // ✅ Refund function
   async function refundIfNeeded(user, orders) {
     const userRef = doc(db, "users", user.uid);
     const snap = await getDoc(userRef);
@@ -219,7 +190,7 @@
           balance: (data.balance || 0) + refundAmount,
           refundedOrders: arrayUnion(time)
         });
-        showToast(`💰 ৳${refundAmount} refunded for order ${number}`);
+        console.log(`✅ Refunded ${refundAmount} for order ${time}`);
       }
     }
   }
@@ -289,7 +260,7 @@
     if (currentUser) {
       await signOut(auth);
     } else {
-      window.location.href = "login.html";
+      window.location.href = "https://sarkar-telecom.github.io/Topup/login.html";
     }
   };
 
