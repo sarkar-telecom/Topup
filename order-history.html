@@ -25,7 +25,7 @@
     th { background:#06b6d4; color:#001; }
 
     .status-box { padding:4px 8px; border-radius:6px; color:#fff; font-size:13px; font-weight:bold; }
-    .waiting { background:#eab308; }
+    .waiting { background:#eab308; color:#000; }
     .completed { background:#22c55e; }
     .cancelled { background:#ef4444; }
 
@@ -91,8 +91,8 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
-  // ✅ Apps Script doGet URL
-  const API_URL = "https://script.google.com/macros/s/AKfycbx_sBNjUxFX931jcDyEw2IVzrVpZCmzSVwVCboJx7DVaKN8YBI6E6z0pYoCwF-vhHvc1Q/exec";
+  // ✅ FinalData sheet (Orders+Status merged)
+  const FINALDATA_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=1098128992&single=true&output=csv";
 
   // DOM
   const orderTable = document.getElementById("orderTable");
@@ -111,6 +111,33 @@
   const rowsPerPage = 10;
   let currentUser = null;
 
+  // CSV parser
+  function parseCSV(text) {
+    text = text.replace(/\r/g,'');
+    const lines = text.split('\n').filter(l => l.trim().length>0);
+    return lines.map(line => {
+      const row = [];
+      let cur = '', inQ = false;
+      for (let i=0; i<line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+          else inQ = !inQ;
+        } else if (ch === ',' && !inQ) {
+          row.push(cur); cur = '';
+        } else cur += ch;
+      }
+      row.push(cur);
+      return row;
+    });
+  }
+
+  async function fetchCSV(url) {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error("CSV fetch failed: " + res.status);
+    return parseCSV(await res.text());
+  }
+
   const normalize = (v) => (v ?? "").toString().trim().toLowerCase();
   const statusClassOf = (s) => {
     const t = normalize(s);
@@ -118,8 +145,15 @@
     if (t.includes("complete")) return "completed";
     return "waiting";
   };
+
+  // ✅ Time formatting fix
   const formatTimeCell = (t) => {
     if (!t) return "-";
+    if (!isNaN(t)) {
+      const millis = (Number(t) - 25569) * 86400 * 1000;
+      const d = new Date(millis);
+      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
+    }
     const d = new Date(t);
     return isNaN(d) ? t : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
   };
@@ -134,7 +168,7 @@
       orderTable.innerHTML = "<tr><td colspan='5'>No orders found.</td></tr>";
     } else {
       pageSlice.forEach((row, idx) => {
-        const [time, number, amount, status] = row;
+        const [time, number, amount, email, status] = row;
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${viewOrders.length - (start + idx)}</td>
@@ -153,7 +187,11 @@
   function applySearch() {
     const term = normalize(searchInput.value);
     viewOrders = term
-      ? allOrders.filter(r => normalize(r[1]).includes(term) || normalize(r[2]).includes(term) || normalize(r[3]).includes(term))
+      ? allOrders.filter(r =>
+          normalize(r[1]).includes(term) ||
+          normalize(r[2]).includes(term) ||
+          normalize(r[4]).includes(term)
+        )
       : [...allOrders];
     currentPage = 1;
     renderTable();
@@ -162,13 +200,8 @@
   async function loadOrdersFor(userEmail) {
     orderTable.innerHTML = "<tr><td colspan='5'>⏳ Loading...</td></tr>";
     try {
-      const res = await fetch(API_URL);
-      const data = await res.json();
-      if (!data.ok) {
-        orderTable.innerHTML = "<tr><td colspan='5'>❌ Failed to load orders!</td></tr>";
-        return;
-      }
-      allOrders = data.rows.slice(1).reverse().filter(r => normalize(r[4]) === normalize(userEmail));
+      const rows = await fetchCSV(FINALDATA_CSV);
+      allOrders = rows.slice(1).reverse().filter(r => normalize(r[3]) === normalize(userEmail));
       viewOrders = [...allOrders];
       currentPage = 1;
       renderTable();
