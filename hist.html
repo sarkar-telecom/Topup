@@ -35,24 +35,15 @@
 
     /* ✅ Toast */
     #toast {
-      visibility: hidden;
-      min-width: 220px;
-      margin-left: -110px;
-      background: #22c55e;
-      color: #fff;
-      text-align: center;
-      border-radius: 6px;
-      padding: 12px;
-      position: fixed;
-      z-index: 1;
-      left: 50%;
-      bottom: 30px;
-      font-size: 15px;
-      font-weight: bold;
+      visibility:hidden; min-width:220px;
+      margin-left:-110px; background:#333; color:#fff;
+      text-align:center; border-radius:6px; padding:12px;
+      position:fixed; z-index:1000; left:50%; bottom:30px;
+      font-size:15px;
     }
-    #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-    @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
-    @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+    #toast.show { visibility:visible; animation:fadein 0.5s, fadeout 0.5s 2.5s; }
+    @keyframes fadein { from{bottom:10px;opacity:0;} to{bottom:30px;opacity:1;} }
+    @keyframes fadeout { from{bottom:30px;opacity:1;} to{bottom:10px;opacity:0;} }
   </style>
 </head>
 <body>
@@ -94,6 +85,7 @@
   <button id="nextBtn">Next ➡</button>
 </div>
 
+<!-- ✅ Toast -->
 <div id="toast"></div>
 
 <script type="module">
@@ -172,7 +164,7 @@
     return "waiting";
   };
 
-  // ✅ Bangladesh Time fix
+  // ✅ Time formatting fix (BD time UTC+6)
   function formatTimeCell(t) {
     if (!t) return "-";
     let d;
@@ -183,15 +175,18 @@
       d = new Date(t);
     }
     if (isNaN(d)) return t;
-    return d.toLocaleTimeString("en-US", {
+
+    // Bangladesh time = UTC + 6h
+    const bdTime = new Date(d.getTime() + (6 * 60 * 60 * 1000));
+
+    return bdTime.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
-      hour12: true,
-      timeZone: "Asia/Dhaka"
+      hour12: true
     });
   }
 
-  // ✅ Toast function
+  // ✅ Toast
   function showToast(msg) {
     toast.textContent = msg;
     toast.className = "show";
@@ -218,7 +213,7 @@
           balance: (data.balance || 0) + refundAmount,
           refundedOrders: arrayUnion(time)
         });
-        showToast(`💰 Refunded ${refundAmount} TK for cancelled order`);
+        showToast(`💰 Refunded ${refundAmount} balance`);
       }
     }
   }
