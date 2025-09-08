@@ -148,21 +148,17 @@
     return "waiting";
   };
 
-  // ✅ Time formatting fix (BD Time UTC+6)
+  // ✅ Time formatting fix (BD Time UTC+6, only hh:mm AM/PM)
   const formatTimeCell = (t) => {
     if (!t) return "-";
 
     if (!isNaN(t)) {
       const millis = (Number(t) - 25569) * 86400 * 1000;
       const d = new Date(millis);
-      return d.toLocaleString("en-BD", {
+      return d.toLocaleTimeString("en-BD", {
         timeZone: "Asia/Dhaka",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
-        second: "2-digit",
         hour12: true
       });
     }
@@ -170,14 +166,10 @@
     const d = new Date(t);
     return isNaN(d)
       ? t
-      : d.toLocaleString("en-BD", {
+      : d.toLocaleTimeString("en-BD", {
           timeZone: "Asia/Dhaka",
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
           hour: "2-digit",
           minute: "2-digit",
-          second: "2-digit",
           hour12: true
         });
   };
