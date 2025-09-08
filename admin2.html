@@ -9,9 +9,9 @@
     header{background:#171a21;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;color:#06b6d4;font-weight:700}
     .btn{padding:8px 12px;border-radius:6px;border:none;cursor:pointer;font-weight:700}
     .btn-logout{background:#ef4444;color:#fff}
-    .nav-links{display:flex;gap:10px}
-    .nav-links a{background:#06b6d4;color:#001;text-decoration:none;padding:8px 14px;border-radius:6px;font-weight:700}
-    .nav-links a:hover{background:#0ea5e9}
+    .nav-buttons{margin-right:20px;}
+    .nav-buttons a{background:#06b6d4;color:#001;text-decoration:none;padding:6px 12px;margin:0 4px;border-radius:6px;font-weight:700}
+    .nav-buttons a:hover{background:#0ea5e9}
     .top-bar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px}
     .search-box input{padding:10px;border-radius:6px;border:1px solid #2b3347;background:#171a21;color:#e7eaf0;width:260px}
     .btn-accent{background:#06b6d4;color:#001}
@@ -33,11 +33,14 @@
 <body>
 <header>
   <div>💎 Sarkar Telecom - Admin Panel</div>
-  <div class="nav-links">
+  
+  <!-- ✅ নতুন বাটনগুলো -->
+  <div class="nav-buttons">
     <a href="dashboard.html">Dashboard</a>
     <a href="orders.html">Orders</a>
     <a href="order-history.html">Order History</a>
   </div>
+  
   <div>
     <span id="adminEmail">Checking...</span>
     <button id="logoutBtn" class="btn btn-logout">Logout</button>
