@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin Panel - Sarkar Telecom</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#0f1115;color:#e7eaf0;margin:0;text-align:center}
+    header{background:#171a21;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;color:#06b6d4;font-weight:700}
+    .btn{padding:8px 12px;border-radius:6px;border:none;cursor:pointer;font-weight:700}
+    .btn-logout{background:#ef4444;color:#fff}
+    .nav-buttons{margin-right:20px;}
+    .nav-buttons a{background:#06b6d4;color:#001;text-decoration:none;padding:6px 12px;margin:0 4px;border-radius:6px;font-weight:700}
+    .nav-buttons a:hover{background:#0ea5e9}
+    .top-bar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px}
+    .search-box input{padding:10px;border-radius:6px;border:1px solid #2b3347;background:#171a21;color:#e7eaf0;width:260px}
+    .btn-accent{background:#06b6d4;color:#001}
+    .btn-danger{background:#ef4444;color:#fff}
+    table{width:95%;margin:12px auto;border-collapse:collapse;background:#171a21}
+    th,td{border:1px solid #242836;padding:10px;text-align:left;color:#e7eaf0}
+    th{background:#06b6d4;color:#001}
+    .status-box{display:inline-block;padding:6px 8px;border-radius:8px;font-weight:700}
+    .waiting{background:#eab308;color:#000}
+    .completed{background:#22c55e;color:#001}
+    .cancelled{background:#ef4444;color:#fff}
+    .complete-btn{background:#22c55e;color:#001;border:none;padding:6px 8px;border-radius:6px;cursor:pointer}
+    .cancel-btn{background:#ef4444;color:#fff;border:none;padding:6px 8px;border-radius:6px;cursor:pointer}
+    .pagination{margin:12px}
+    .pagination button{background:#06b6d4;border:none;color:#001;padding:8px 12px;border-radius:6px}
+    @media(max-width:700px){ th,td{font-size:13px;padding:8px} .search-box input{width:200px} }
+  </style>
+</head>
+<body>
+<header>
+  <div>💎 Sarkar Telecom - Admin Panel</div>
+  
+  <!-- ✅ নতুন বাটনগুলো -->
+  <div class="nav-buttons">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="orders.html">Orders</a>
+    <a href="order-history.html">Order History</a>
+  </div>
+  
+  <div>
+    <span id="adminEmail">Checking...</span>
+    <button id="logoutBtn" class="btn btn-logout">Logout</button>
+  </div>
+</header>
+
+<h2 style="color:#06b6d4;margin-top:14px">📋 All Orders</h2>
+
+<div class="top-bar">
+  <div class="search-box"><input id="searchInput" placeholder="🔍 Search Number / Amount / Status / Email"></div>
+  <button id="searchBtn" class="btn btn-accent">Search</button>
+  <button id="clearBtn" class="btn btn-danger">Clear</button>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:70px">SL</th>
+      <th>Number</th>
+      <th>Amount</th>
+      <th>Status</th>
+      <th>Time</th>
+      <th>Update</th>
+    </tr>
+  </thead>
+  <tbody id="orderTable"><tr><td colspan="6">Loading...</td></tr></tbody>
+</table>
+
+<div class="pagination"><button id="prevBtn">⬅ Prev</button> <button id="nextBtn">Next ➡</button></div>
+
+<!-- Hidden form for status update (your status form) -->
+<iframe name="hidden_iframe" style="display:none"></iframe>
+<form id="statusForm" action="https://docs.google.com/forms/d/e/1FAIpQLScHu8QJ-vZEJlpXDgP0H6G81PhtjRX5N8ElNjsYMmxdFvfcXA/formResponse"
+      method="POST" target="hidden_iframe" style="display:none;">
+  <input name="entry.1659785972" id="statusField"/>
+  <input name="entry.948913982" id="timeField"/>
+</form>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+    projectId: "diamond-recharge-f7f59",
+    storageBucket: "diamond-recharge-f7f59.appspot.com",
+    messagingSenderId: "657717928489",
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+  };
+
+  const ORDERS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=798765937&single=true&output=csv";
+  const STATUS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=117579495&single=true&output=csv";
+  const ADMIN_EMAIL = "samrat.khulnas@gmail.com";
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  const adminEmailBox = document.getElementById('adminEmail');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const orderTable = document.getElementById('orderTable');
+  const searchInput = document.getElementById('searchInput');
+  const searchBtn = document.getElementById('searchBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  let allOrders = [], viewOrders = [], currentPage = 1;
+  const rowsPerPage = 10;
+
+  function parseCSV(text){
+    text = text.replace(/\r/g,'');
+    const lines = text.split('\n').filter(l => l.trim().length>0);
+    const rows = [];
+    for(const line of lines){
+      const row = [];
+      let cur = '', inQ = false;
+      for(let i=0;i<line.length;i++){
+        const ch = line[i];
+        if(ch === '"'){
+          if(inQ && line[i+1] === '"'){ cur += '"'; i++; }
+          else inQ = !inQ;
+        } else if(ch === ',' && !inQ){
+          row.push(cur);
+          cur = '';
+        } else cur += ch;
+      }
+      row.push(cur);
+      rows.push(row);
+    }
+    return rows;
+  }
+
+  async function fetchCSV(url){
+    const res = await fetch(url, {cache: 'no-store'});
+    if(!res.ok) throw new Error('CSV fetch failed: ' + res.status);
+    const txt = await res.text();
+    return parseCSV(txt);
+  }
+
+  async function loadAndMerge(){
+    orderTable.innerHTML = '<tr><td colspan="6">⏳ Loading...</td></tr>';
+    try{
+      const [ordersRows, statusRows] = await Promise.all([fetchCSV(ORDERS_CSV), fetchCSV(STATUS_CSV)]);
+      if(ordersRows.length <= 1) { orderTable.innerHTML = '<tr><td colspan="6">No orders found.</td></tr>'; return; }
+
+      const statuses = statusRows.slice(1).map(r => ({
+        rawTimestamp: (r[0]||'').trim(),
+        status: (r[1]||'').trim(),
+        timeField: (r[2]||'').trim()
+      }));
+
+      const statusByTime = {};
+      const statusByNumber = {};
+      for(const s of statuses){
+        if(s.timeField) statusByTime[s.timeField] = s.status;
+        if(s.timeField && !isNaN(s.timeField.replace(/\D/g,'')) && s.timeField.length>0){
+          statusByNumber[s.timeField] = s.status;
+        }
+      }
+
+      const ords = ordersRows.slice(1).map(r => ({
+        time: (r[0]||'').trim(),
+        number: (r[1]||'').trim(),
+        amount: (r[2]||'').trim(),
+        status: (r[3]||'').trim(),
+        email: (r[4]||'').trim()
+      }));
+
+      const merged = ords.map(o => {
+        let s = '';
+        if(o.time && statusByTime[o.time]) s = statusByTime[o.time];
+        if(!s && o.number && statusByNumber[o.number]) s = statusByNumber[o.number];
+        if(!s && o.number){
+          for(let i = statuses.length -1; i >=0; i--){
+            const t = statuses[i].timeField || '';
+            if(t === o.time || t === o.number || t.includes(o.number) || o.number.includes(t)){
+              s = statuses[i].status; break;
+            }
+          }
+        }
+        if(!s) s = o.status || '';
+        return {...o, status: s};
+      });
+
+      merged.sort((a,b) => {
+        const da = Date.parse(a.time);
+        const db = Date.parse(b.time);
+        if(!isNaN(da) && !isNaN(db)) return db - da;
+        if(!isNaN(da) && isNaN(db)) return -1;
+        if(isNaN(da) && !isNaN(db)) return 1;
+        return 0;
+      });
+
+      allOrders = merged;
+      viewOrders = [...allOrders];
+      currentPage = 1;
+      renderTable();
+    } catch(err){
+      console.error(err);
+      orderTable.innerHTML = `<tr><td colspan="6">❌ Load error: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function statusClass(s){
+    const t = (s||'').toLowerCase();
+    if(t.includes('complete')) return 'completed';
+    if(t.includes('cancel')) return 'cancelled';
+    return 'waiting';
+  }
+
+  function renderTable(){
+    orderTable.innerHTML = '';
+    const total = viewOrders.length;
+    const start = (currentPage -1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const slice = viewOrders.slice(start, end);
+    if(slice.length === 0){
+      orderTable.innerHTML = '<tr><td colspan="6">No orders found.</td></tr>';
+      return;
+    }
+
+    slice.forEach((r, idx) => {
+      const sl = total - (start + idx);
+      const cls = statusClass(r.status);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="vertical-align:middle">${sl}</td>
+        <td style="vertical-align:middle">${escapeHtml(r.number)}</td>
+        <td style="vertical-align:middle">${escapeHtml(r.amount)}</td>
+        <td style="vertical-align:middle"><span class="status-box ${cls}">${escapeHtml(r.status || '-')}</span></td>
+        <td style="vertical-align:middle">${escapeHtml(r.time)}</td>
+        <td style="vertical-align:middle">
+          <button class="complete-btn" data-time="${escapeAttribute(r.time)}">✔</button>
+          <button class="cancel-btn" data-time="${escapeAttribute(r.time)}">✖</button>
+        </td>
+      `;
+      orderTable.appendChild(tr);
+    });
+
+    document.querySelectorAll('.complete-btn').forEach(b=>{
+      b.onclick = () => updateStatus('COMPLETE', b.dataset.time);
+    });
+    document.querySelectorAll('.cancel-btn').forEach(b=>{
+      b.onclick = () => updateStatus('CANCEL', b.dataset.time);
+    });
+
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = end >= total;
+  }
+
+  function escapeAttribute(s){
+    if(!s) return '';
+    return s.replace(/"/g,'&quot;').replace(/'/g,"&#39;");
+  }
+
+  function applySearch(){
+    const term = (searchInput.value || '').toLowerCase().trim();
+    if(!term){ viewOrders = [...allOrders]; currentPage = 1; renderTable(); return; }
+    viewOrders = allOrders.filter(o =>
+      (o.number||'').toLowerCase().includes(term) ||
+      (o.amount||'').toLowerCase().includes(term) ||
+      (o.status||'').toLowerCase().includes(term) ||
+      (o.email||'').toLowerCase().includes(term)
+    );
+    currentPage = 1; renderTable();
+  }
+
+  function updateStatus(status, time){
+    if(!time){ alert('Missing reference time — cannot update'); return; }
+    document.getElementById('statusField').value = status;
+    document.getElementById('timeField').value = time;
+    try {
+      document.getElementById('statusForm').submit();
+      alert('✅ Status submitted: ' + status + '\n(শিটে আপডেট হতে কিছু সেকেন্ড লাগতে পারে)');
+      setTimeout(()=>loadAndMerge(), 2200);
+    } catch(e){
+      console.error(e); alert('Failed to submit status: ' + e.message);
+    }
+  }
+
+  prevBtn.onclick = ()=>{ if(currentPage > 1){ currentPage--; renderTable(); } };
+  nextBtn.onclick = ()=>{ if((currentPage * rowsPerPage) < viewOrders.length){ currentPage++; renderTable(); } };
+  searchBtn.onclick = applySearch;
+  searchInput.addEventListener('keydown', e => { if(e.key === 'Enter') applySearch(); });
+  clearBtn.onclick = ()=>{ searchInput.value=''; viewOrders = [...allOrders]; currentPage = 1; renderTable(); };
+
+  onAuthStateChanged(auth, user => {
+    if(!user) {
+      window.location.href = 'login.html';
+      return;
+    }
+    const email = user.email || '';
+    adminEmailBox.textContent = email + (email === ADMIN_EMAIL ? ' (Admin)' : '');
+    if(email !== ADMIN_EMAIL){
+      orderTable.innerHTML = '<tr><td colspan="6">❌ Access denied. Not an admin.</td></tr>';
+      return;
+    }
+    loadAndMerge();
+  });
+
+  logoutBtn.onclick = ()=> signOut(auth);
+</script>
+</body>
+</html>
