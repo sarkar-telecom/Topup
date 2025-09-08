@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -24,7 +24,7 @@
     .cancel-btn{background:#ef4444;color:#fff;border:none;padding:6px 8px;border-radius:6px;cursor:pointer}
     .pagination{margin:12px}
     .pagination button{background:#06b6d4;border:none;color:#001;padding:8px 12px;border-radius:6px}
-    @media(max-width:700px){ th,td{font-size:13px;padding:8px} .search-box input{width:200px}}
+    @media(max-width:700px){ th,td{font-size:13px;padding:8px} .search-box input{width:200px} }
   </style>
 </head>
 <body>
@@ -60,9 +60,10 @@
 
 <div class="pagination"><button id="prevBtn">⬅ Prev</button> <button id="nextBtn">Next ➡</button></div>
 
-<!-- Hidden form for status update -->
+<!-- Hidden form for status update (your status form) -->
 <iframe name="hidden_iframe" style="display:none"></iframe>
-<form id="statusForm" action="https://docs.google.com/forms/d/e/1FAIpQLScHu8QJ-vZEJlpXDgP0H6G81PhtjRX5N8ElNjsYMmxdFvfcXA/formResponse" method="POST" target="hidden_iframe" style="display:none">
+<form id="statusForm" action="https://docs.google.com/forms/d/e/1FAIpQLScHu8QJ-vZEJlpXDgP0H6G81PhtjRX5N8ElNjsYMmxdFvfcXA/formResponse"
+      method="POST" target="hidden_iframe" style="display:none;">
   <input name="entry.1659785972" id="statusField"/>
   <input name="entry.948913982" id="timeField"/>
 </form>
@@ -71,6 +72,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
+  // ---------- CONFIG: change only if you need ----------
   const firebaseConfig = {
     apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
     authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -79,10 +81,16 @@
     messagingSenderId: "657717928489",
     appId: "1:657717928489:web:70431ebc9afb7002d4b238"
   };
-  const ORDERS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=1098128992&single=true&output=csv";
+
+  // Published CSV links (Orders and Status sheets)
+  const ORDERS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=798765937&single=true&output=csv";
+  const STATUS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=117579495&single=true&output=csv";
+  const ADMIN_EMAIL = "samrat.khulnas@gmail.com"; // only this email allowed
+
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
+  // DOM
   const adminEmailBox = document.getElementById('adminEmail');
   const logoutBtn = document.getElementById('logoutBtn');
   const orderTable = document.getElementById('orderTable');
@@ -95,116 +103,229 @@
   let allOrders = [], viewOrders = [], currentPage = 1;
   const rowsPerPage = 10;
 
-  // CSV parser
-  function parseCSV(text) {
-    const rows = []; const lines = text.replace(/\r/g,'').split('\n').filter(r=>r);
-    for (const line of lines) {
-      const row=[]; let cur='', inQ=false;
-      for (let i=0;i<line.length;i++){
-        const ch=line[i];
+  // Robust CSV parser (handles quoted commas)
+  function parseCSV(text){
+    text = text.replace(/\r/g,'');
+    const lines = text.split('\n').filter(l => l.trim().length>0);
+    const rows = [];
+    for(const line of lines){
+      const row = [];
+      let cur = '', inQ = false;
+      for(let i=0;i<line.length;i++){
+        const ch = line[i];
         if(ch === '"'){
-          if(inQ && line[i+1]==='"'){ cur+='"'; i++; }
-          else inQ=!inQ;
-        } else if (ch === ',' && !inQ){
-          row.push(cur); cur='';
+          if(inQ && line[i+1] === '"'){ cur += '"'; i++; }
+          else inQ = !inQ;
+        } else if(ch === ',' && !inQ){
+          row.push(cur);
+          cur = '';
         } else cur += ch;
       }
-      row.push(cur); rows.push(row);
+      row.push(cur);
+      rows.push(row);
     }
     return rows;
   }
 
-  async function loadOrders(){
-    orderTable.innerHTML = '<tr><td colspan="6">⏳ Loading...</td></tr>';
-    try {
-      const res = await fetch(ORDERS_CSV, {cache:'no-store'}); if(!res.ok) throw new Error(res.status);
-      const rows = parseCSV(await res.text());
-      if(rows.length <=1){ orderTable.innerHTML = '<tr><td colspan="6">No data</td></tr>'; return; }
+  async function fetchCSV(url){
+    const res = await fetch(url, {cache: 'no-store'});
+    if(!res.ok) throw new Error('CSV fetch failed: ' + res.status);
+    const txt = await res.text();
+    return parseCSV(txt);
+  }
 
-      const data = rows.slice(1).map(r=>({
-        time: r[0].trim(), number: r[1].trim(), amount: r[2].trim(),
-        status: r[3].trim(), email: r[4]?.trim()||''
+  // Merge Orders + Status with fallbacks
+  async function loadAndMerge(){
+    orderTable.innerHTML = '<tr><td colspan="6">⏳ Loading...</td></tr>';
+    try{
+      const [ordersRows, statusRows] = await Promise.all([fetchCSV(ORDERS_CSV), fetchCSV(STATUS_CSV)]);
+      if(ordersRows.length <= 1) { orderTable.innerHTML = '<tr><td colspan="6">No orders found.</td></tr>'; return; }
+
+      // Build status lists (keep order, last occurrence is latest)
+      const statuses = statusRows.slice(1).map(r => ({
+        rawTimestamp: (r[0]||'').trim(),
+        status: (r[1]||'').trim(),
+        timeField: (r[2]||'').trim()
       }));
-      // sort by Timestamp descending
-      data.sort((a,b)=>Date.parse(b.time)-Date.parse(a.time));
-      allOrders = data; viewOrders = [...allOrders]; currentPage=1; renderTable();
-    } catch(e){
-      orderTable.innerHTML = `<tr><td colspan="6">Error: ${e.message}</td></tr>`;
-      console.error(e);
+
+      // Build quick maps: by timeField (exact), and also by number (fallback)
+      const statusByTime = {};
+      const statusByNumber = {};
+      for(const s of statuses){
+        if(s.timeField) statusByTime[s.timeField] = s.status;       // last write wins
+        // if timeField looks like a number or a number-like order id, keep fallback
+        if(s.timeField && !isNaN(s.timeField.replace(/\D/g,'')) && s.timeField.length>0){
+          statusByNumber[s.timeField] = s.status;
+        }
+      }
+
+      // Normalize orders
+      const ords = ordersRows.slice(1).map(r => ({
+        time: (r[0]||'').trim(),
+        number: (r[1]||'').trim(),
+        amount: (r[2]||'').trim(),
+        status: (r[3]||'').trim(),
+        email: (r[4]||'').trim()
+      }));
+
+      // For each order attempt to find status:
+      const merged = ords.map(o => {
+        let s = '';
+        // exact match by time
+        if(o.time && statusByTime[o.time]) s = statusByTime[o.time];
+        // fallback: exact match by number
+        if(!s && o.number && statusByNumber[o.number]) s = statusByNumber[o.number];
+        // fallback: look through status rows (last matching entry wins) by checking containment or equality in timeField
+        if(!s && o.number){
+          for(let i = statuses.length -1; i >=0; i--){
+            const t = statuses[i].timeField || '';
+            if(t === o.time || t === o.number || t.includes(o.number) || o.number.includes(t)){
+              s = statuses[i].status; break;
+            }
+          }
+        }
+        // final fallback: use original order status column if any
+        if(!s) s = o.status || '';
+        return {...o, status: s};
+      });
+
+      // Sort by Timestamp descending (newest first). If Date.parse fails, keep original ordering but put latest first by index.
+      merged.sort((a,b) => {
+        const da = Date.parse(a.time);
+        const db = Date.parse(b.time);
+        if(!isNaN(da) && !isNaN(db)) return db - da;
+        if(!isNaN(da) && isNaN(db)) return -1;
+        if(isNaN(da) && !isNaN(db)) return 1;
+        // both invalid date => keep original order (but reverse latest-first)
+        return 0;
+      });
+
+      // If parsed dates failed for many, ensure newest first by reversing original (csv older->newer)
+      // We'll try to detect: if first merged element has same timestamp as last in CSV then reverse:
+      // but simpler: if Date.parse on first is NaN but original order had newest at bottom, reverse.
+      // (We won't force reverse to avoid wrong order; trust sort above.)
+
+      allOrders = merged;
+      viewOrders = [...allOrders];
+      currentPage = 1;
+      renderTable();
+    } catch(err){
+      console.error(err);
+      orderTable.innerHTML = `<tr><td colspan="6">❌ Load error: ${escapeHtml(err.message)}</td></tr>`;
     }
   }
 
+  // small helper
+  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
   function statusClass(s){
-    const t=s.toLowerCase();
-    return t.includes('complete')?'completed':t.includes('cancel')?'cancelled':'waiting';
+    const t = (s||'').toLowerCase();
+    if(t.includes('complete')) return 'completed';
+    if(t.includes('cancel')) return 'cancelled';
+    return 'waiting';
   }
 
+  // Render table and attach events
   function renderTable(){
     orderTable.innerHTML = '';
     const total = viewOrders.length;
-    const start = (currentPage-1)*rowsPerPage, end = start+rowsPerPage;
+    const start = (currentPage -1) * rowsPerPage;
+    const end = start + rowsPerPage;
     const slice = viewOrders.slice(start, end);
-    if(!slice.length) orderTable.innerHTML='<tr><td colspan="6">No orders found.</td></tr>';
-    else slice.forEach((r,ix)=>{
-      const sl = total-(start+ix);
+    if(slice.length === 0){
+      orderTable.innerHTML = '<tr><td colspan="6">No orders found.</td></tr>';
+      return;
+    }
+
+    slice.forEach((r, idx) => {
+      const sl = total - (start + idx);
       const cls = statusClass(r.status);
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${sl}</td>
-        <td>${r.number}</td>
-        <td>${r.amount}</td>
-        <td><span class="status-box ${cls}">${r.status || '-'}</span></td>
-        <td>${r.time}</td>
-        <td>
-          <button class="complete-btn" onclick="updateStatus('COMPLETE','${r.time}')">✔</button>
-          <button class="cancel-btn" onclick="updateStatus('CANCEL','${r.time}')">✖</button>
-        </td>`;
+        <td style="vertical-align:middle">${sl}</td>
+        <td style="vertical-align:middle">${escapeHtml(r.number)}</td>
+        <td style="vertical-align:middle">${escapeHtml(r.amount)}</td>
+        <td style="vertical-align:middle"><span class="status-box ${cls}">${escapeHtml(r.status || '-')}</span></td>
+        <td style="vertical-align:middle">${escapeHtml(r.time)}</td>
+        <td style="vertical-align:middle">
+          <button class="complete-btn" data-time="${escapeAttribute(r.time)}">✔</button>
+          <button class="cancel-btn" data-time="${escapeAttribute(r.time)}">✖</button>
+        </td>
+      `;
       orderTable.appendChild(tr);
     });
-    prevBtn.disabled = currentPage===1; nextBtn.disabled = end>=total;
+
+    // attach event listeners (delegation not needed here)
+    document.querySelectorAll('.complete-btn').forEach(b=>{
+      b.onclick = () => updateStatus('COMPLETE', b.dataset.time);
+    });
+    document.querySelectorAll('.cancel-btn').forEach(b=>{
+      b.onclick = () => updateStatus('CANCEL', b.dataset.time);
+    });
+
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = end >= total;
+  }
+
+  function escapeAttribute(s){
+    if(!s) return '';
+    return s.replace(/"/g,'&quot;').replace(/'/g,"&#39;");
   }
 
   function applySearch(){
-    const term = (searchInput.value||'').toLowerCase().trim();
-    if(!term){viewOrders=[...allOrders];currentPage=1;renderTable();return;}
-    viewOrders = allOrders.filter(o=>
-      o.number.toLowerCase().includes(term)||
-      o.amount.toLowerCase().includes(term)||
-      o.status.toLowerCase().includes(term)||
-      o.email.toLowerCase().includes(term)
+    const term = (searchInput.value || '').toLowerCase().trim();
+    if(!term){ viewOrders = [...allOrders]; currentPage = 1; renderTable(); return; }
+    viewOrders = allOrders.filter(o =>
+      (o.number||'').toLowerCase().includes(term) ||
+      (o.amount||'').toLowerCase().includes(term) ||
+      (o.status||'').toLowerCase().includes(term) ||
+      (o.email||'').toLowerCase().includes(term)
     );
-    currentPage=1; renderTable();
+    currentPage = 1; renderTable();
   }
 
-  window.updateStatus = (status,time) => {
+  // Submit status to Google Form (hidden iframe)
+  function updateStatus(status, time){
+    if(!time){ alert('Missing reference time — cannot update'); return; }
+    // set form values (exact string)
     document.getElementById('statusField').value = status;
     document.getElementById('timeField').value = time;
-    document.getElementById('statusForm').submit();
-    alert('Status updated: ' + status);
-    setTimeout(()=>loadOrders(),2200);
-  };
-
-  prevBtn.onclick = ()=>{if(currentPage>1){currentPage--;renderTable();}}
-  nextBtn.onclick = ()=>{if((currentPage*rowsPerPage)<viewOrders.length){currentPage++;renderTable();}}
-  searchBtn.onclick = applySearch;
-  searchInput.addEventListener('keydown',e=>{if(e.key==='Enter') applySearch();});
-  clearBtn.onclick = ()=>{searchInput.value=''; viewOrders=[...allOrders]; currentPage=1; renderTable();};
-
-  onAuthStateChanged(auth, user=>{
-    if(user){
-      const u=user.email||'';
-      adminEmailBox.textContent = u + (u==='samrat.khulnas@gmail.com'?' (Admin)':'');
-      if(u!=='samrat.khulnas@gmail.com'){
-        orderTable.innerHTML='<tr><td colspan="6">Access Denied</td></tr>'; return;
-      }
-      loadOrders();
-    } else {
-      window.location.href='login.html';
+    // submit
+    try {
+      document.getElementById('statusForm').submit();
+      // provide instant feedback
+      alert('✅ Status submitted: ' + status + '\n(শিটে আপডেট হতে কিছু সেকেন্ড লাগতে পারে)');
+      // reload after delay
+      setTimeout(()=>loadAndMerge(), 2200);
+    } catch(e){
+      console.error(e); alert('Failed to submit status: ' + e.message);
     }
+  }
+
+  // pagination & events
+  prevBtn.onclick = ()=>{ if(currentPage > 1){ currentPage--; renderTable(); } };
+  nextBtn.onclick = ()=>{ if((currentPage * rowsPerPage) < viewOrders.length){ currentPage++; renderTable(); } };
+  searchBtn.onclick = applySearch;
+  searchInput.addEventListener('keydown', e => { if(e.key === 'Enter') applySearch(); });
+  clearBtn.onclick = ()=>{ searchInput.value=''; viewOrders = [...allOrders]; currentPage = 1; renderTable(); };
+
+  // Auth + admin check
+  onAuthStateChanged(auth, user => {
+    if(!user) {
+      window.location.href = 'login.html';
+      return;
+    }
+    const email = user.email || '';
+    adminEmailBox.textContent = email + (email === ADMIN_EMAIL ? ' (Admin)' : '');
+    if(email !== ADMIN_EMAIL){
+      orderTable.innerHTML = '<tr><td colspan="6">❌ Access denied. Not an admin.</td></tr>';
+      return;
+    }
+    // load data
+    loadAndMerge();
   });
 
-  logoutBtn.onclick = ()=>signOut(auth);
+  logoutBtn.onclick = ()=> signOut(auth);
 </script>
-
 </body>
 </html>
