@@ -14,47 +14,25 @@
       --ok: #10b981;
     }
     body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
-
     header { background: var(--card); border-bottom: 1px solid #202635; padding: 10px; }
     .top-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
     .site-info { display: flex; align-items: center; gap: 10px; }
     .site-logo { height: 40px; border-radius: 8px; }
     .site-name { font-size: 20px; font-weight: 800; color: var(--accent); }
-
     .user-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
     .user-box { background: #1f2430; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
     .balance { color: var(--ok); }
-
     .btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
     .btn.logout { background: var(--bad); color: #fff; }
-
+    .btn.login { background: var(--accent); color: #001; }
     .nav-row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
     .nav-row a { background: #1f2430; padding: 8px 14px; border-radius: 8px; text-decoration: none; color: var(--text); font-weight: 600; transition: background 0.2s; }
     .nav-row a:hover { background: var(--accent); color: #001; }
-
     main { padding: 20px; display: flex; justify-content: center; }
-    .card {
-      background: var(--card);
-      padding: 20px;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 6px 16px rgba(0,0,0,.25);
-      text-align: center;
-    }
-    input {
-      width: 100%; padding: 10px; margin: 8px 0;
-      border: 1px solid #333; border-radius: 6px;
-      background: #1f2430; color: var(--text);
-    }
-    .btn-submit {
-      width: 100%; padding: 10px;
-      background: var(--accent); color: #001;
-      border: none; border-radius: 6px;
-      font-size: 16px; font-weight: 600;
-      cursor: pointer; margin-top: 10px;
-    }
+    .card { background: var(--card); padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 6px 16px rgba(0,0,0,.25); text-align: center; }
+    input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #333; border-radius: 6px; background: #1f2430; color: var(--text); }
+    .btn-submit { width: 100%; padding: 10px; background: var(--accent); color: #001; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
     .error { color: var(--bad); margin-top: 10px; font-size: 14px; }
     .success { color: var(--ok); margin-top: 10px; font-size: 14px; }
   </style>
@@ -94,16 +72,15 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut, updatePassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyDJRm9-jRkxVrTLYBzK1gGrRmAEu29jVrU",
+    apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
     authDomain: "diamond-recharge-f7f59.firebaseapp.com",
     projectId: "diamond-recharge-f7f59",
     storageBucket: "diamond-recharge-f7f59.appspot.com",
     messagingSenderId: "657717928489",
-    appId: "1:657717928489:web:70431ebc9afb7002d4b238",
-    measurementId: "G-TDK78BQ8SQ"
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238"
   };
 
   const app = initializeApp(firebaseConfig);
@@ -114,58 +91,35 @@
   const updateBtn = document.getElementById("updateBtn");
   const errorBox = document.getElementById("errorBox");
   const successBox = document.getElementById("successBox");
-  const avatarInput = document.getElementById("avatar");
 
   let currentUser;
-  let avatarImg;
 
-  // ✅ Auth listener
+  // ✅ Auth check (same style as order.html)
   onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      setTimeout(() => {
-        if (!auth.currentUser) {
-          window.location.href = "login.html";
-        }
-      }, 500);
-      return;
-    }
+    if (user) {
+      currentUser = user;
+      userInfo.innerHTML = `👤 ${user.email} <button class="btn logout" id="logoutBtn">Logout</button>`;
 
-    currentUser = user;
-    const userRef = doc(db, "users", user.uid);
-
-    // ✅ Firestore realtime snapshot
-    onSnapshot(userRef, (snap) => {
-      if (!snap.exists()) return;
-      const data = snap.data();
-
-      document.getElementById("name").value = data.name || "";
-      document.getElementById("email").value = data.email || user.email;
-      document.getElementById("phone").value = data.phone || "";
-      document.getElementById("avatar").value = data.avatar || "";
-
-      let avatarUrl = data.avatar || user.photoURL || "https://via.placeholder.com/40";
-      let balance = data.balance || 0;
-
-      userInfo.innerHTML = `
-        <img id="headerAvatar" src="${avatarUrl}" class="user-avatar" alt="User"
-             onerror="this.src='https://via.placeholder.com/40'">
-        <div class="user-box">${user.email}</div>
-        <div class="user-box balance">💎 ${balance}</div>
-        <button class="btn logout" id="logoutBtn">Logout</button>
-      `;
-      avatarImg = document.getElementById("headerAvatar");
-
-      document.getElementById("logoutBtn").addEventListener("click", async () => {
+      document.getElementById("logoutBtn").onclick = async () => {
         await signOut(auth);
         window.location.href = "login.html";
-      });
-    });
-  });
+      };
 
-  // 🔹 Avatar live preview
-  avatarInput.addEventListener("input", () => {
-    if (avatarImg) {
-      avatarImg.src = avatarInput.value || "https://via.placeholder.com/40";
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (snap.exists()) {
+          const data = snap.data();
+          document.getElementById("name").value = data.name || "";
+          document.getElementById("email").value = data.email || user.email;
+          document.getElementById("phone").value = data.phone || "";
+          document.getElementById("avatar").value = data.avatar || "";
+        }
+      } catch (e) {
+        console.error("Firestore error", e);
+      }
+
+    } else {
+      window.location.href = "login.html";
     }
   });
 
@@ -178,22 +132,20 @@
 
     const name = document.getElementById("name").value.trim();
     const phone = document.getElementById("phone").value.trim();
-    const avatar = avatarInput.value.trim();
+    const avatar = document.getElementById("avatar").value.trim();
     const password = document.getElementById("password").value.trim();
 
     try {
-      const userRef = doc(db, "users", currentUser.uid);
-
-      await updateDoc(userRef, { name, phone, avatar });
+      await updateDoc(doc(db, "users", currentUser.uid), {
+        name, phone, avatar
+      });
 
       await updateProfile(currentUser, {
         displayName: name,
         photoURL: avatar || currentUser.photoURL
       });
 
-      if (password) {
-        await updatePassword(currentUser, password);
-      }
+      if (password) await updatePassword(currentUser, password);
 
       successBox.textContent = "✅ Profile updated successfully!";
     } catch (e) {
