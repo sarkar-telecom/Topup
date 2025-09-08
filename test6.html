@@ -1,131 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order History</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin Panel - Sarkar Telecom</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#0f1115; color:#e7eaf0; padding:20px; }
-    h2 { text-align:center; color:#06b6d4; margin-bottom:10px; }
-
-    table {
-      width: 80%;
-      margin: auto;
-      border-collapse: collapse;
-      background: #171a21;
-      font-size: 14px;
-    }
-
-    th, td {
-      border: 1px solid #333;
-      padding: 6px 8px;
-      text-align: center;
-      white-space: nowrap;
-    }
-
-    th {
-      background: #06b6d4;
-      color: #001;
-      font-size: 13px;
-    }
-
-    /* ছোট কলামের সাইজ */
-    th:nth-child(1), td:nth-child(1) { width: 8%; }   /* SL */
-    th:nth-child(2), td:nth-child(2) { width: 25%; }  /* Profile ID */
-    th:nth-child(3), td:nth-child(3) { width: 15%; }  /* Amount */
-    th:nth-child(4), td:nth-child(4) { width: 20%; }  /* Status */
-    th:nth-child(5), td:nth-child(5) { width: 15%; }  /* Time */
-
-    /* স্ট্যাটাস রঙ */
-    .status-waiting { color: orange; font-weight:bold; }
-    .status-completed { color: lime; font-weight:bold; }
-    .status-failed { color: red; font-weight:bold; }
+    body{font-family:Arial,Helvetica,sans-serif;background:#0f1115;color:#e7eaf0;margin:0;text-align:center}
+    header{background:#171a21;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;color:#06b6d4;font-weight:700}
+    .btn{padding:8px 12px;border-radius:6px;border:none;cursor:pointer;font-weight:700}
+    .btn-logout{background:#ef4444;color:#fff}
+    .top-bar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px}
+    .search-box input{padding:10px;border-radius:6px;border:1px solid #2b3347;background:#171a21;color:#e7eaf0;width:260px}
+    .btn-accent{background:#06b6d4;color:#001}
+    .btn-danger{background:#ef4444;color:#fff}
+    table{width:95%;margin:12px auto;border-collapse:collapse;background:#171a21}
+    th,td{border:1px solid #242836;padding:10px;text-align:left;color:#e7eaf0}
+    th{background:#06b6d4;color:#001}
+    .status-box{display:inline-block;padding:6px 8px;border-radius:8px;font-weight:700}
+    .waiting{background:#eab308;color:#000}
+    .completed{background:#22c55e;color:#001}
+    .cancelled{background:#ef4444;color:#fff}
+    .complete-btn{background:#22c55e;color:#001;border:none;padding:6px 8px;border-radius:6px;cursor:pointer}
+    .cancel-btn{background:#ef4444;color:#fff;border:none;padding:6px 8px;border-radius:6px;cursor:pointer}
+    .pagination{margin:12px}
+    .pagination button{background:#06b6d4;border:none;color:#001;padding:8px 12px;border-radius:6px}
+    @media(max-width:700px){ th,td{font-size:13px;padding:8px} .search-box input{width:200px}}
   </style>
 </head>
 <body>
-  <h2>📜 All Orders</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>SL</th>
-        <th>Profile ID</th>
-        <th>Amount</th>
-        <th>Status</th>
-        <th>Time</th>
-      </tr>
-    </thead>
-    <tbody id="orderTable"></tbody>
-  </table>
+<header>
+  <div>💎 Sarkar Telecom - Admin Panel</div>
+  <div>
+    <span id="adminEmail">Checking...</span>
+    <button id="logoutBtn" class="btn btn-logout">Logout</button>
+  </div>
+</header>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+<h2 style="color:#06b6d4;margin-top:14px">📋 All Orders</h2>
 
-    // Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
-      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
-      projectId: "diamond-recharge-f7f59",
-      storageBucket: "diamond-recharge-f7f59.appspot.com",
-      messagingSenderId: "657717928489",
-      appId: "1:657717928489:web:70431ebc9afb7002d4b238",
-      measurementId: "G-TDK78BQ8SQ"
-    };
+<div class="top-bar">
+  <div class="search-box"><input id="searchInput" placeholder="🔍 Search Number / Amount / Status / Email"></div>
+  <button id="searchBtn" class="btn btn-accent">Search</button>
+  <button id="clearBtn" class="btn btn-danger">Clear</button>
+</div>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+<table>
+  <thead>
+    <tr>
+      <th style="width:70px">SL</th>
+      <th>Number</th>
+      <th>Amount</th>
+      <th>Status</th>
+      <th>Time</th>
+      <th>Update</th>
+    </tr>
+  </thead>
+  <tbody id="orderTable"><tr><td colspan="6">Loading...</td></tr></tbody>
+</table>
 
-    async function loadOrders() {
-      const orderTable = document.getElementById("orderTable");
-      orderTable.innerHTML = "<tr><td colspan='5'>⏳ Loading...</td></tr>";
+<div class="pagination"><button id="prevBtn">⬅ Prev</button> <button id="nextBtn">Next ➡</button></div>
 
-      try {
-        const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-        const snapshot = await getDocs(q);
+<!-- Hidden form for status update -->
+<iframe name="hidden_iframe" style="display:none"></iframe>
+<form id="statusForm" action="https://docs.google.com/forms/d/e/1FAIpQLScHu8QJ-vZEJlpXDgP0H6G81PhtjRX5N8ElNjsYMmxdFvfcXA/formResponse" method="POST" target="hidden_iframe" style="display:none">
+  <input name="entry.1659785972" id="statusField"/>
+  <input name="entry.948913982" id="timeField"/>
+</form>
 
-        if (snapshot.empty) {
-          orderTable.innerHTML = "<tr><td colspan='5'>⚠ No orders found.</td></tr>";
-          return;
-        }
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-        const total = snapshot.size;
-        let serial = total;
+  const firebaseConfig = {
+    apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+    projectId: "diamond-recharge-f7f59",
+    storageBucket: "diamond-recharge-f7f59.appspot.com",
+    messagingSenderId: "657717928489",
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+  };
+  const ORDERS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=1098128992&single=true&output=csv";
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
 
-        orderTable.innerHTML = "";
-        snapshot.forEach(doc => {
-          const data = doc.data();
+  const adminEmailBox = document.getElementById('adminEmail');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const orderTable = document.getElementById('orderTable');
+  const searchInput = document.getElementById('searchInput');
+  const searchBtn = document.getElementById('searchBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
 
-          // সময়কে hh:mm AM/PM ফরম্যাটে কনভার্ট করা
-          let timeStr = "-";
-          if (data.createdAt?.toDate) {
-            const dateObj = data.createdAt.toDate();
-            timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          }
+  let allOrders = [], viewOrders = [], currentPage = 1;
+  const rowsPerPage = 10;
 
-          // স্ট্যাটাস কালার
-          let statusClass = "";
-          if (data.status === "WAITING") statusClass = "status-waiting";
-          else if (data.status === "COMPLETED") statusClass = "status-completed";
-          else if (data.status === "FAILED") statusClass = "status-failed";
-
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${serial}</td>
-            <td>${data.profileId || "-"}</td>
-            <td>${data.amount || "-"}</td>
-            <td class="${statusClass}">${data.status || "-"}</td>
-            <td>${timeStr}</td>
-          `;
-          orderTable.appendChild(tr);
-
-          serial--;
-        });
-      } catch (err) {
-        orderTable.innerHTML = "<tr><td colspan='5'>❌ " + err.message + "</td></tr>";
+  // CSV parser
+  function parseCSV(text) {
+    const rows = []; const lines = text.replace(/\r/g,'').split('\n').filter(r=>r);
+    for (const line of lines) {
+      const row=[]; let cur='', inQ=false;
+      for (let i=0;i<line.length;i++){
+        const ch=line[i];
+        if(ch === '"'){
+          if(inQ && line[i+1]==='"'){ cur+='"'; i++; }
+          else inQ=!inQ;
+        } else if (ch === ',' && !inQ){
+          row.push(cur); cur='';
+        } else cur += ch;
       }
+      row.push(cur); rows.push(row);
     }
+    return rows;
+  }
 
-    loadOrders();
-  </script>
+  async function loadOrders(){
+    orderTable.innerHTML = '<tr><td colspan="6">⏳ Loading...</td></tr>';
+    try {
+      const res = await fetch(ORDERS_CSV, {cache:'no-store'}); if(!res.ok) throw new Error(res.status);
+      const rows = parseCSV(await res.text());
+      if(rows.length <=1){ orderTable.innerHTML = '<tr><td colspan="6">No data</td></tr>'; return; }
+
+      const data = rows.slice(1).map(r=>({
+        time: r[0].trim(), number: r[1].trim(), amount: r[2].trim(),
+        status: r[3].trim(), email: r[4]?.trim()||''
+      }));
+      // sort by Timestamp descending
+      data.sort((a,b)=>Date.parse(b.time)-Date.parse(a.time));
+      allOrders = data; viewOrders = [...allOrders]; currentPage=1; renderTable();
+    } catch(e){
+      orderTable.innerHTML = `<tr><td colspan="6">Error: ${e.message}</td></tr>`;
+      console.error(e);
+    }
+  }
+
+  function statusClass(s){
+    const t=s.toLowerCase();
+    return t.includes('complete')?'completed':t.includes('cancel')?'cancelled':'waiting';
+  }
+
+  function renderTable(){
+    orderTable.innerHTML = '';
+    const total = viewOrders.length;
+    const start = (currentPage-1)*rowsPerPage, end = start+rowsPerPage;
+    const slice = viewOrders.slice(start, end);
+    if(!slice.length) orderTable.innerHTML='<tr><td colspan="6">No orders found.</td></tr>';
+    else slice.forEach((r,ix)=>{
+      const sl = total-(start+ix);
+      const cls = statusClass(r.status);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${sl}</td>
+        <td>${r.number}</td>
+        <td>${r.amount}</td>
+        <td><span class="status-box ${cls}">${r.status || '-'}</span></td>
+        <td>${r.time}</td>
+        <td>
+          <button class="complete-btn" onclick="updateStatus('COMPLETE','${r.time}')">✔</button>
+          <button class="cancel-btn" onclick="updateStatus('CANCEL','${r.time}')">✖</button>
+        </td>`;
+      orderTable.appendChild(tr);
+    });
+    prevBtn.disabled = currentPage===1; nextBtn.disabled = end>=total;
+  }
+
+  function applySearch(){
+    const term = (searchInput.value||'').toLowerCase().trim();
+    if(!term){viewOrders=[...allOrders];currentPage=1;renderTable();return;}
+    viewOrders = allOrders.filter(o=>
+      o.number.toLowerCase().includes(term)||
+      o.amount.toLowerCase().includes(term)||
+      o.status.toLowerCase().includes(term)||
+      o.email.toLowerCase().includes(term)
+    );
+    currentPage=1; renderTable();
+  }
+
+  window.updateStatus = (status,time) => {
+    document.getElementById('statusField').value = status;
+    document.getElementById('timeField').value = time;
+    document.getElementById('statusForm').submit();
+    alert('Status updated: ' + status);
+    setTimeout(()=>loadOrders(),2200);
+  };
+
+  prevBtn.onclick = ()=>{if(currentPage>1){currentPage--;renderTable();}}
+  nextBtn.onclick = ()=>{if((currentPage*rowsPerPage)<viewOrders.length){currentPage++;renderTable();}}
+  searchBtn.onclick = applySearch;
+  searchInput.addEventListener('keydown',e=>{if(e.key==='Enter') applySearch();});
+  clearBtn.onclick = ()=>{searchInput.value=''; viewOrders=[...allOrders]; currentPage=1; renderTable();};
+
+  onAuthStateChanged(auth, user=>{
+    if(user){
+      const u=user.email||'';
+      adminEmailBox.textContent = u + (u==='samrat.khulnas@gmail.com'?' (Admin)':'');
+      if(u!=='samrat.khulnas@gmail.com'){
+        orderTable.innerHTML='<tr><td colspan="6">Access Denied</td></tr>'; return;
+      }
+      loadOrders();
+    } else {
+      window.location.href='login.html';
+    }
+  });
+
+  logoutBtn.onclick = ()=>signOut(auth);
+</script>
+
 </body>
 </html>
