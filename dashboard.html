@@ -52,12 +52,15 @@
     </div>
   </div>
 
+  <!-- Footer container -->
+  <div id="footer-container"></div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
     import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-    // 🔹 Same Firebase config as your order.html
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
       authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -78,6 +81,7 @@
     const nameBox=document.getElementById("nameBox");
     const balanceBox=document.getElementById("balanceBox");
 
+    // Dashboard auth state
     onAuthStateChanged(auth, async (user)=>{
       if(user){
         currentUser=user;
@@ -89,7 +93,6 @@
         emailBox.textContent=user.email;
         nameBox.textContent=user.displayName || "N/A";
 
-        // Firestore balance check
         try {
           const snap=await getDoc(doc(db,"users",user.uid));
           if(snap.exists()){
@@ -113,15 +116,44 @@
         balanceBox.textContent="0";
       }
     });
+
+    // Load footer
+    fetch("footer.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("footer-container").innerHTML = html;
+        attachUserBox(); 
+      })
+      .catch(err=>console.error("Footer load error:", err));
+
+    // Attach user info in footer
+    async function attachUserBox() {
+      const userBox = document.getElementById("userBox");
+      if(!userBox) return;
+
+      onAuthStateChanged(auth, async (user)=>{
+        if(user){
+          const ref = doc(db, "users", user.uid);
+          const snap = await getDoc(ref);
+          const data = snap.exists() ? snap.data() : {};
+          const bal = data.balance ?? 0;
+          const role = data.role ?? "User";
+          const phone = data.phone ?? "N/A";
+
+          userBox.innerHTML = `
+            <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" width="100" style="border-radius:50%;border:3px solid #06b6d4;">
+            <div class="user-details">
+              <h3>${data.name || user.displayName || "No Name"} <span style="color:orange">(${role})</span></h3>
+              <p>💎 <span style="color:lime">${bal}</span></p>
+              <p>📱 <span style="color:gold">${phone}</span></p>
+              <p>📧 <span style="color:skyblue">${user.email ?? "No Email"}</span></p>
+            </div>
+          `;
+        } else {
+          userBox.innerHTML = "<p>❌ Not logged in</p>";
+        }
+      });
+    }
   </script>
 </body>
-<div id="footer-container"></div>
-<script>
-  fetch("footer.html")
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById("footer-container").innerHTML = html;
-    })
-    .catch(err => console.error("Footer load failed:", err));
-</script>
 </html>
