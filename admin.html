@@ -28,6 +28,8 @@
     .pagination{margin:12px}
     .pagination button{background:#06b6d4;border:none;color:#001;padding:8px 12px;border-radius:6px}
     @media(max-width:700px){ th,td{font-size:13px;padding:8px} .search-box input{width:200px} }
+    /* footer container spacing */
+    #footer-container{max-width:980px;margin:20px auto;}
   </style>
 </head>
 <body>
@@ -71,7 +73,7 @@
 
 <div class="pagination"><button id="prevBtn">⬅ Prev</button> <button id="nextBtn">Next ➡</button></div>
 
-<!-- Hidden form -->
+<!-- Hidden form (Google Form submit) -->
 <iframe name="hidden_iframe" style="display:none"></iframe>
 <form id="statusForm" action="https://docs.google.com/forms/d/e/1FAIpQLScHu8QJ-vZEJlpXDgP0H6G81PhtjRX5N8ElNjsYMmxdFvfcXA/formResponse"
       method="POST" target="hidden_iframe" style="display:none;">
@@ -79,9 +81,14 @@
   <input name="entry.948913982" id="timeField"/>
 </form>
 
+<!-- Footer container (will be filled by footer.html) -->
+<div id="footer-container"></div>
+
 <script type="module">
+  // Firebase + App logic (single module)
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
@@ -92,13 +99,16 @@
     appId: "1:657717928489:web:70431ebc9afb7002d4b238"
   };
 
+  // CSV sources (publicly published Google Sheets CSV)
   const ORDERS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=798765937&single=true&output=csv";
   const STATUS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=117579495&single=true&output=csv";
   const ADMIN_EMAIL = "samrat.khulnas@gmail.com";
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const db = getFirestore(app);
 
+  // DOM refs
   const adminEmailBox = document.getElementById('adminEmail');
   const logoutBtn = document.getElementById('logoutBtn');
   const orderTable = document.getElementById('orderTable');
@@ -111,6 +121,7 @@
   let allOrders = [], viewOrders = [], currentPage = 1;
   const rowsPerPage = 10;
 
+  // CSV parser (resilient)
   function parseCSV(text){
     text = text.replace(/\r/g,'');
     const lines = text.split('\n').filter(l => l.trim().length>0);
@@ -141,6 +152,7 @@
     return parseCSV(txt);
   }
 
+  // Load + merge orders & statuses
   async function loadAndMerge(){
     orderTable.innerHTML = '<tr><td colspan="6">⏳ Loading...</td></tr>';
     try{
@@ -269,8 +281,11 @@
 
   function updateStatus(status, time){
     if(!time){ alert('Missing reference time — cannot update'); return; }
-    document.getElementById('statusField').value = status;
-    document.getElementById('timeField').value = time;
+    const statusField = document.getElementById('statusField');
+    const timeField = document.getElementById('timeField');
+    if(!statusField || !timeField){ alert('Status form not found'); return; }
+    statusField.value = status;
+    timeField.value = time;
     try {
       document.getElementById('statusForm').submit();
       alert('✅ Status submitted: ' + status + '\n(শিটে আপডেট হতে কিছু সেকেন্ড লাগতে পারে)');
@@ -280,14 +295,17 @@
     }
   }
 
+  // Pagination / search bindings
   prevBtn.onclick = ()=>{ if(currentPage > 1){ currentPage--; renderTable(); } };
   nextBtn.onclick = ()=>{ if((currentPage * rowsPerPage) < viewOrders.length){ currentPage++; renderTable(); } };
   searchBtn.onclick = applySearch;
   searchInput.addEventListener('keydown', e => { if(e.key === 'Enter') applySearch(); });
   clearBtn.onclick = ()=>{ searchInput.value=''; viewOrders = [...allOrders]; currentPage = 1; renderTable(); };
 
+  // Auth check (admin)
   onAuthStateChanged(auth, user => {
     if(!user) {
+      // not logged in -> redirect to login
       window.location.href = 'login.html';
       return;
     }
@@ -301,51 +319,59 @@
   });
 
   logoutBtn.onclick = ()=> signOut(auth);
-</script>
 
-<!-- ✅ Footer Loader -->
-<div id="footer-container"></div>
-<script>
-  fetch("footer.html")
-    .then(res => res.text())
+  // --- Footer loading & attach user info ---
+  fetch("footer.html", {cache: 'no-store'})
+    .then(res => {
+      if(!res.ok) throw new Error('Footer not found: ' + res.status);
+      return res.text();
+    })
     .then(html => {
       document.getElementById("footer-container").innerHTML = html;
-
-      // Footer এর userBox update
-      if (typeof auth !== "undefined") {
-        const userBox = document.getElementById("userBox");
-        if (userBox) {
-          onAuthStateChanged(auth, async (user) => {
-            if (user) {
-              // db থাকলে balance / role ও আনতে পারবেন
-              if (typeof db !== "undefined") {
-                const ref = doc(db, "users", user.uid);
-                const snap = await getDoc(ref);
-                const data = snap.exists() ? snap.data() : {};
-                const bal = data.balance ?? 0;
-                const role = data.role ?? "User";
-                const phone = data.phone ?? "N/A";
-
-                userBox.innerHTML = `
-                  <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" width="90" style="border-radius:50%;border:3px solid #06b6d4;">
-                  <div class="user-details">
-                    <h3>${data.name || user.displayName || "No Name"} 
-                        <span style="color:orange">(${role})</span></h3>
-                    <p>💎 <span style="color:lime">${bal}</span></p>
-                    <p>📱 <span style="color:gold">${phone}</span></p>
-                    <p>📧 <span style="color:skyblue">${user.email}</span></p>
-                  </div>`;
-              } else {
-                userBox.innerHTML = `<p>👤 ${user.email}</p>`;
-              }
-            } else {
-              userBox.innerHTML = "<p>❌ Not logged in</p>";
-            }
-          });
-        }
-      }
+      attachUserBox();
     })
-    .catch(err => console.error("Footer load error:", err));
+    .catch(err => {
+      console.warn("Footer load error:", err);
+      // fallback inline footer
+      document.getElementById("footer-container").innerHTML = `
+        <footer>
+          <div id="footerUser"><p style="color:#f88;">Footer load failed</p></div>
+          <p style="margin-top:8px;color:#9aa3b2">© SARKAR TELECOM 2025-2026</p>
+        </footer>`;
+    });
+
+  // Attach user info in footer (reads Firestore 'users' doc)
+  function attachUserBox(){
+    const userBox = document.getElementById("userBox");
+    if(!userBox) return; // footer.html doesn't include #userBox
+    onAuthStateChanged(auth, async (user)=>{
+      if(user){
+        try{
+          const ref = doc(db, "users", user.uid);
+          const snap = await getDoc(ref);
+          const data = snap.exists() ? snap.data() : {};
+          const bal = data.balance ?? 0;
+          const role = data.role ?? "User";
+          const phone = data.phone ?? "N/A";
+          userBox.innerHTML = `
+            <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" width="100" style="border-radius:50%;border:3px solid #06b6d4;">
+            <div class="user-details" style="text-align:left;display:inline-block;margin-left:12px;">
+              <h3 style="margin:6px 0;font-size:18px">${escapeHtml(data.name || user.displayName || "No Name")} <span style="color:orange">(${escapeHtml(role)})</span></h3>
+              <p style="margin:4px 0">💎 <span style="color:lime">${escapeHtml(String(bal))}</span></p>
+              <p style="margin:4px 0">📱 <span style="color:gold">${escapeHtml(phone)}</span></p>
+              <p style="margin:4px 0">📧 <span style="color:skyblue">${escapeHtml(user.email ?? "No Email")}</span></p>
+            </div>
+          `;
+        }catch(err){
+          console.error('attachUserBox error', err);
+          userBox.innerHTML = "<p style='color:red'>Failed to load user info</p>";
+        }
+      }else{
+        userBox.innerHTML = "<p style='color:red;'>❌ Not logged in</p>";
+      }
+    });
+  }
+
 </script>
 </body>
 </html>
