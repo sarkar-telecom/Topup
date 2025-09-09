@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Panel</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#0f1115; color:#eee; padding:20px; }
+    h1 { color:#f43f5e; }
+    table { border-collapse: collapse; width: 100%; margin-top:10px; }
+    th, td { border:1px solid #444; padding:8px; text-align:center; }
+    th { background:#171a21; }
+    button { margin:2px; padding:5px 10px; border:none; border-radius:4px; cursor:pointer; }
+    .complete { background:lime; color:#000; }
+    .cancel { background:red; color:#fff; }
+    .waiting { background:orange; color:#000; }
+  </style>
+</head>
+<body>
+  <h1>⚙️ Admin Panel</h1>
+  <div id="orders">⏳ লোড হচ্ছে...</div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=1098128992&single=true&output=csv";
+
+    function renderTable(data) {
+      const html = `
+        <table>
+          <tr>
+            <th>সময়</th>
+            <th>নাম্বার</th>
+            <th>Amount</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+          ${data.map(o => `
+            <tr>
+              <td>${o.Timestamp}</td>
+              <td>${o.Number}</td>
+              <td>${o.Amount}💎</td>
+              <td>${o.Email}</td>
+              <td>${o.Status}</td>
+              <td>
+                <button class="complete">Complete</button>
+                <button class="cancel">Cancel</button>
+                <button class="waiting">Waiting</button>
+              </td>
+            </tr>
+          `).join("")}
+        </table>`;
+      document.getElementById("orders").innerHTML = html;
+    }
+
+    onAuthStateChanged(auth, user => {
+      if (!user || user.email !== "admin@gmail.com") { // ✅ এখানে নিজের admin ইমেইল বসান
+        document.getElementById("orders").innerHTML = "<p>❌ অ্যাডমিন অ্যাক্সেস নেই</p>";
+        return;
+      }
+      fetch(SHEET_URL)
+        .then(res => res.text())
+        .then(csv => {
+          const rows = csv.split("\n").slice(1);
+          const data = rows.map(r => {
+            const c = r.split(",");
+            return {
+              Timestamp: c[0], Number: c[1], Amount: c[2], Email: c[3], Status: c[4]
+            };
+          });
+          renderTable(data);
+        });
+    });
+  </script>
+</body>
+</html>
