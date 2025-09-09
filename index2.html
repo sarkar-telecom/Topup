@@ -12,7 +12,7 @@
     nav a:hover{color:#06b6d4;}
     /* 🔽 Live Ticker */
     .ticker-wrap{width:100%;overflow:hidden;background:#0f172a;color:#facc15;border-top:2px solid #06b6d4;border-bottom:2px solid #06b6d4;}
-    .ticker{display:inline-block;white-space:nowrap;animation:scroll 20s linear infinite;padding:8px 0;}
+    .ticker{display:inline-block;white-space:nowrap;animation:scroll 25s linear infinite;padding:8px 0;}
     @keyframes scroll{0%{transform:translateX(100%);}100%{transform:translateX(-100%);}}
     .hero{padding:60px 20px;text-align:center;}
     .hero h2{font-size:28px;color:#06b6d4;}
@@ -39,7 +39,7 @@
 
   <!-- 🔽 Live Updates Ticker -->
   <div class="ticker-wrap">
-    <div id="ticker" class="ticker">Loading latest updates...</div>
+    <div id="ticker" class="ticker">সর্বশেষ আপডেট লোড হচ্ছে...</div>
   </div>
 
   <section class="hero">
@@ -49,10 +49,10 @@
   </section>
 
   <section class="features">
-    <div class="feature"><h3>⚡ Fast Recharge</h3><p>Instant mobile top-up & gaming recharge.</p></div>
-    <div class="feature"><h3>📋 Order Tracking</h3><p>Check & manage all your past orders easily.</p></div>
-    <div class="feature"><h3>🔐 Secure Login</h3><p>Safe authentication system with Firebase.</p></div>
-    <div class="feature"><h3>📱 24/7 Support</h3><p>We are here to help you anytime.</p></div>
+    <div class="feature"><h3>⚡ দ্রুত রিচার্জ</h3><p>ইনস্ট্যান্ট মোবাইল টপ-আপ ও গেমিং রিচার্জ।</p></div>
+    <div class="feature"><h3>📋 অর্ডার ট্র্যাকিং</h3><p>অতীতের সব অর্ডার সহজেই চেক ও ম্যানেজ করুন।</p></div>
+    <div class="feature"><h3>🔐 সিকিউর লগইন</h3><p>ফায়ারবেজ দিয়ে নিরাপদ অথেনটিকেশন।</p></div>
+    <div class="feature"><h3>📱 ২৪/৭ সাপোর্ট</h3><p>আমরা সবসময় আপনার সাথে আছি।</p></div>
   </section>
 
   <!-- Footer load -->
@@ -82,16 +82,37 @@
         authBtn.textContent="Logout";
         authBtn.href="#";
         authBtn.onclick=()=>signOut(auth);
+
+        // Footer এ ইউজার ইনফো দেখানো
+        const footerUser=document.getElementById("footer-user");
+        if(footerUser){
+          footerUser.textContent=`🔐 লগইন করা হয়েছে: ${user.displayName || user.email}`;
+        }
       }else{
         authBtn.textContent="Login";
         authBtn.href="login.html";
+        const footerUser=document.getElementById("footer-user");
+        if(footerUser){
+          footerUser.textContent="❌ আপনি লগইন করেননি";
+        }
       }
     });
 
     // ✅ Load footer
     fetch("footer.html")
       .then(res=>res.text())
-      .then(html=>document.getElementById("footer").innerHTML=html);
+      .then(html=>{
+        document.getElementById("footer").innerHTML=html;
+
+        // Footer user info placeholder add
+        if(!document.getElementById("footer-user")){
+          const div=document.createElement("div");
+          div.id="footer-user";
+          div.style.textAlign="center";
+          div.style.padding="10px";
+          document.getElementById("footer").appendChild(div);
+        }
+      });
 
     // ✅ Google Sheet থেকে লাইভ আপডেট ফেচ
     const sheetURL="https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=1098128992&single=true&output=csv";
@@ -103,9 +124,9 @@
         const rows=text.trim().split("\n").slice(1); // skip header
         const updates=rows.map(r=>{
           const [time,number,amount,email,status]=r.split(",");
-          if(status==="Waiting") return `🟡 ${email} placed order of ${amount} 💎`;
-          if(status==="CANCEL") return `🔴 ${email} got refund of ${amount} 💎`;
-          if(status==="COMPLETE") return `🟢 ${email} completed order of ${amount} 💎`;
+          if(status==="Waiting") return `🟡 সর্বশেষ - ${email} একটি ${amount} 💎 এর অর্ডার দিয়েছেন ⏳`;
+          if(status==="CANCEL") return `🔴 সর্বশেষ - অর্ডার ক্যান্সেল হওয়ায় ${email} ${amount} 💎 ফেরত পেয়েছেন`;
+          if(status==="COMPLETE") return `✅ সর্বশেষ - ${email} সফলভাবে ${amount} 💎 অর্ডার সম্পন্ন করেছেন`;
           return null;
         }).filter(Boolean);
         document.getElementById("ticker").textContent=updates.join(" 🔸 ");
@@ -115,7 +136,7 @@
     }
 
     loadTicker();
-    setInterval(loadTicker,15000); // প্রতি 15 সেকেন্ড পরপর আপডেট
+    setInterval(loadTicker,15000); // প্রতি 15 সেকেন্ডে আপডেট
   </script>
 </body>
 </html>
