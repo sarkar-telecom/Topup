@@ -1,0 +1,83 @@
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+    projectId: "diamond-recharge-f7f59",
+    storageBucket: "diamond-recharge-f7f59.appspot.com",
+    messagingSenderId: "657717928489",
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  const msgEl=document.getElementById("msg");
+  const passEl=document.getElementById("password");
+  const emailEl=document.getElementById("email");
+  const rememberMeEl=document.getElementById("rememberMe");
+
+  // Helper function: get query parameter
+  function getQueryParam(name){
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+  }
+
+  // Saved credentials if Remember Me checked previously
+  window.addEventListener("load", ()=>{
+    const savedEmail = localStorage.getItem("savedEmail");
+    const savedPass = localStorage.getItem("savedPass");
+    if(savedEmail && savedPass){
+      emailEl.value = savedEmail;
+      passEl.value = savedPass;
+      rememberMeEl.checked = true;
+    }
+  });
+
+  // Show/Hide Password
+  document.getElementById("showPass").addEventListener("change",e=>{
+    passEl.type=e.target.checked?"text":"password";
+  });
+
+  // Login Function
+  window.login=()=>{
+    const email=emailEl.value.trim();
+    const pass=passEl.value.trim();
+    if(!email||!pass){ msgEl.textContent="⚠️ Enter email & password"; return; }
+    msgEl.textContent="⏳ Logging in...";
+    signInWithEmailAndPassword(auth,email,pass).then(()=>{
+      msgEl.textContent="✅ Login success!";
+      
+      // Save credentials if remember me checked
+      if(rememberMeEl.checked){
+        localStorage.setItem("savedEmail", email);
+        localStorage.setItem("savedPass", pass);
+      } else {
+        localStorage.removeItem("savedEmail");
+        localStorage.removeItem("savedPass");
+      }
+
+      // Redirect logic
+      const redirectUrl = getQueryParam("redirect");
+      if(redirectUrl){
+        window.location.href = redirectUrl;
+      } else {
+        window.location.href = "dashboard.html";
+      }
+
+    }).catch(e=>{
+      msgEl.textContent="❌ "+e.message;
+    });
+  };
+
+  // Forgot Password
+  window.forgotPass=()=>{
+    const email=emailEl.value.trim();
+    if(!email){ msgEl.textContent="⚠️ Enter your email first"; return; }
+    sendPasswordResetEmail(auth,email,{url:"https://sarkar-telecom.github.io/Topup/reset.html"})
+      .then(()=>msgEl.textContent="📩 Reset email sent! Check your inbox.")
+      .catch(e=>msgEl.textContent="❌ "+e.message);
+  };
+</script>
