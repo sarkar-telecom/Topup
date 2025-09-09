@@ -30,9 +30,6 @@
     .btn.logout { background:var(--bad); color:#fff; }
 
     footer { background:#11151c; padding:20px; margin-top:30px; }
-    .footer-user { text-align:center; }
-    .footer-user img { border-radius:50%; width:80px; border:2px solid var(--accent); }
-    .footer-user h4 { margin:6px 0; }
   </style>
 </head>
 <body>
@@ -58,19 +55,22 @@
       <button type="submit" class="btn">Update Profile</button>
     </form>
 
+    <h2>Change Password</h2>
+    <form id="passForm">
+      <input type="password" id="oldPass" placeholder="Old Password"><br>
+      <input type="password" id="newPass" placeholder="New Password"><br>
+      <button type="submit" class="btn">Change Password</button>
+    </form>
+
     <button class="btn logout" id="logoutBtn" style="display:none;">Logout</button>
   </div>
 
-  <!-- Footer -->
-  <footer>
-    <div class="footer-user" id="footerUser">
-      <p>Loading footer user info...</p>
-    </div>
-  </footer>
+  <!-- Footer container -->
+  <div id="footer-container"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
     // Firebase config
@@ -91,15 +91,17 @@
     const authBtn=document.getElementById("authBtn");
     const profileBox=document.getElementById("profileBox");
     const logoutBtn=document.getElementById("logoutBtn");
-    const footerUser=document.getElementById("footerUser");
 
     const nameInput=document.getElementById("nameInput");
     const phoneInput=document.getElementById("phoneInput");
     const avatarInput=document.getElementById("avatarInput");
 
+    const oldPass=document.getElementById("oldPass");
+    const newPass=document.getElementById("newPass");
+
     let currentUser=null;
 
-    // Auth check
+    // Auth state
     onAuthStateChanged(auth, async (user)=>{
       if(user){
         currentUser=user;
@@ -115,7 +117,6 @@
           const snap=await getDoc(ref);
           const data=snap.exists()?snap.data():{};
 
-          // Profile Box
           profileBox.innerHTML=`
             <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" width="120">
             <h3>${data.name || user.displayName || "No Name"} <span style="color:orange">(${data.role || "User"})</span></h3>
@@ -124,20 +125,11 @@
             <p>📧 Email: <span style="color:skyblue">${user.email}</span></p>
           `;
 
-          // Footer User Info
-          footerUser.innerHTML=`
-            <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}">
-            <h4>${data.name || user.displayName || "No Name"} (${data.role || "User"})</h4>
-            <p>💎 ${data.balance ?? 0} | 📧 ${user.email}</p>
-          `;
-
-          // Prefill edit form
           nameInput.value=data.name || "";
           phoneInput.value=data.phone || "";
           avatarInput.value=data.avatar || "";
         } catch(e){
-          console.error("Firestore error", e);
-          profileBox.innerHTML="<p>Error loading profile.</p>";
+          console.error(e);
         }
       } else {
         currentUser=null;
@@ -147,18 +139,15 @@
         authBtn.onclick=()=>window.location.href="login.html";
         logoutBtn.style.display="none";
         profileBox.innerHTML="<p>❌ Please login to view profile.</p>";
-        footerUser.innerHTML="<p>❌ Not logged in</p>";
       }
     });
 
-    // Profile Update
+    // Profile update
     document.getElementById("editForm").addEventListener("submit", async (e)=>{
       e.preventDefault();
       if(!currentUser) return alert("Login first!");
-
       try {
-        const ref=doc(db,"users",currentUser.uid);
-        await setDoc(ref,{
+        await setDoc(doc(db,"users",currentUser.uid),{
           name:nameInput.value,
           phone:phoneInput.value,
           avatar:avatarInput.value
@@ -166,10 +155,51 @@
         alert("✅ Profile updated!");
         location.reload();
       } catch(e){
-        console.error(e);
         alert("❌ Update failed!");
       }
     });
+
+    // Password change
+    document.getElementById("passForm").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      if(!currentUser) return alert("Login first!");
+
+      const cred = EmailAuthProvider.credential(currentUser.email, oldPass.value);
+      try {
+        await reauthenticateWithCredential(currentUser, cred);
+        await updatePassword(currentUser, newPass.value);
+        alert("✅ Password updated!");
+        oldPass.value=""; newPass.value="";
+      } catch(e){
+        alert("❌ "+e.message);
+      }
+    });
+
+    // Load footer
+    fetch("footer.html")
+      .then(res=>res.text())
+      .then(html=>{
+        document.getElementById("footer-container").innerHTML=html;
+        attachFooterUser();
+      });
+
+    // Attach footer user info
+    function attachFooterUser(){
+      const footerUser=document.getElementById("footerUser");
+      onAuthStateChanged(auth, async (user)=>{
+        if(user){
+          const snap=await getDoc(doc(db,"users",user.uid));
+          const data=snap.exists()?snap.data():{};
+          footerUser.innerHTML=`
+            <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" width="80" style="border-radius:50%;border:2px solid #06b6d4;">
+            <h4>${data.name || user.displayName || "No Name"} (${data.role || "User"})</h4>
+            <p>💎 ${data.balance ?? 0} | 📧 ${user.email}</p>
+          `;
+        } else {
+          footerUser.innerHTML="<p>❌ Not logged in</p>";
+        }
+      });
+    }
   </script>
 </body>
 </html>
