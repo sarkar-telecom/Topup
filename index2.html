@@ -20,15 +20,13 @@
     .feature h3{color:#06b6d4;margin-top:0;}
     #footer{margin-top:40px;}
 
-    /* 🔽 Live Ticker */
+    /* 🔽 Live Ticker (Header এর নিচে) */
     #tickerBar{
-      position:fixed;
-      bottom:0;left:0;width:100%;
-      background:#171a21;color:#06b6d4;
+      background:#11151c;color:#06b6d4;
       padding:8px 0;overflow:hidden;
       white-space:nowrap;font-weight:bold;
       border-top:2px solid #06b6d4;
-      z-index:1000;
+      border-bottom:2px solid #06b6d4;
     }
     #tickerContent{
       display:inline-block;
@@ -57,6 +55,11 @@
       <button id="logoutBtn" style="display:none;background:#ef4444;color:#fff;padding:6px 12px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Logout</button>
     </div>
   </header>
+
+  <!-- 🔴 Live Ticker Bar -->
+  <div id="tickerBar">
+    <div id="tickerContent">🔔 Waiting for live updates...</div>
+  </div>
 
   <!-- Hero -->
   <section class="hero">
@@ -87,11 +90,6 @@
 
   <!-- Footer -->
   <div id="footer"></div>
-
-  <!-- Live Ticker -->
-  <div id="tickerBar">
-    <div id="tickerContent">🔔 Waiting for live updates...</div>
-  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
@@ -131,7 +129,7 @@
     loginBtn.onclick=()=>window.location.href="login.html";
     logoutBtn.onclick=()=>signOut(auth);
 
-    // Footer load
+    // Footer load (auth issue ছাড়া শুধু inject হবে)
     fetch("footer.html")
       .then(res=>res.text())
       .then(html=>document.getElementById("footer").innerHTML=html)
