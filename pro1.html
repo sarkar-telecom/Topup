@@ -175,40 +175,43 @@
       }
     });
 
- // Load footer
-fetch("footer.html")
-  .then(res => res.text())
-  .then(html => {
-    document.getElementById("footer-container").innerHTML = html;
+   // Load footer
+    fetch("footer.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("footer-container").innerHTML = html;
+        attachUserBox(); 
+      })
+      .catch(err=>console.error("Footer load error:", err));
 
-    // এখন footer ঢোকার পর user info attach করব
-    const footerUser = document.getElementById("footerUser");
-    if (footerUser) {
-      onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          try {
-            const snap = await getDoc(doc(db, "users", user.uid));
-            const data = snap.exists() ? snap.data() : {};
-            footerUser.innerHTML = `
-              <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" width="70" style="border-radius:50%;border:2px solid #06b6d4;">
-              <h4>${data.name || user.displayName || "No Name"} (${data.role || "User"})</h4>
-              <p>💎 ${data.balance ?? 0}</p>
-              <p>📧 ${user.email}</p>
-            `;
-          } catch (err) {
-            footerUser.innerHTML = "<p>⚠️ Failed to load user info</p>";
-            console.error(err);
-          }
+    // Attach user info in footer
+    async function attachUserBox() {
+      const userBox = document.getElementById("userBox");
+      if(!userBox) return;
+
+      onAuthStateChanged(auth, async (user)=>{
+        if(user){
+          const ref = doc(db, "users", user.uid);
+          const snap = await getDoc(ref);
+          const data = snap.exists() ? snap.data() : {};
+          const bal = data.balance ?? 0;
+          const role = data.role ?? "User";
+          const phone = data.phone ?? "N/A";
+
+          userBox.innerHTML = `
+            <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" width="100" style="border-radius:50%;border:3px solid #06b6d4;">
+            <div class="user-details">
+              <h3>${data.name || user.displayName || "No Name"} <span style="color:orange">(${role})</span></h3>
+              <p>💎 <span style="color:lime">${bal}</span></p>
+              <p>📱 <span style="color:gold">${phone}</span></p>
+              <p>📧 <span style="color:skyblue">${user.email ?? "No Email"}</span></p>
+            </div>
+          `;
         } else {
-          footerUser.innerHTML = "<p>❌ Not logged in</p>";
+          userBox.innerHTML = "<p>❌ Not logged in</p>";
         }
       });
     }
-  })
-  .catch(err => {
-    console.error("Footer load error:", err);
-    document.getElementById("footer-container").innerHTML = "<p>⚠️ Footer load failed</p>";
-  });
-</script>
+  </script>
 </body>
 </html>
