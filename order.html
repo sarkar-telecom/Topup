@@ -9,7 +9,7 @@
       --bg:#0f1115; --card:#171a21; --text:#e7eaf0; --muted:#9aa3b2;
       --accent:#06b6d4; --ok:#22c55e; --bad:#ef4444;
     }
-    body { background:var(--bg); color:var(--text); font-family:Arial, sans-serif; margin:0; }
+    body { background:var(--bg); color:var(--text); font-family:Arial,sans-serif; margin:0; }
     header { background:var(--card); display:flex; justify-content:space-between; align-items:center;
              padding:12px 16px; color:var(--accent); font-weight:800; }
     .user-info { font-size:14px; color:var(--text); }
@@ -75,13 +75,18 @@
     <input type="text" name="entry.1172671786" id="f_number">
     <input type="text" name="entry.1509335158" id="f_amount">
     <input type="text" name="entry.588493421" id="f_status" value="Waiting">
-    <input type="text" name="entry.198105099" id="f_email"> <!-- hidden email -->
+    <input type="text" name="entry.198105099" id="f_email">
   </form>
+
+  <!-- ✅ Footer container -->
+  <div id="footer-container"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
       authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -93,20 +98,30 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    let currentUser=null;
+    let currentUser=null, currentBalance=0;
     const userInfo=document.getElementById("userInfo");
     const authBtn=document.getElementById("authBtn");
 
-    onAuthStateChanged(auth,(user)=>{
+    // Auth state
+    onAuthStateChanged(auth, async (user)=>{
       if(user){
         currentUser=user;
         userInfo.textContent="👤 "+(user.displayName || user.email);
         authBtn.textContent="Logout";
         authBtn.classList.add("logout");
         authBtn.onclick=()=>signOut(auth);
+
+        const ref=doc(db,"users",user.uid);
+        const snap=await getDoc(ref);
+        if(snap.exists()){
+          const data=snap.data();
+          currentBalance=data.balance ?? 0;
+        }
       }else{
         currentUser=null;
+        currentBalance=0;
         userInfo.textContent="❌ Not logged in";
         authBtn.textContent="Login";
         authBtn.classList.remove("logout");
@@ -123,13 +138,14 @@
       document.getElementById('selected').textContent=amount;
     };
 
-    window.submitOrder=()=>{
+    window.submitOrder=async ()=>{
       const number=document.getElementById('number').value.trim();
       const msgEl=document.getElementById('message');
       const btn=document.getElementById('submitBtn');
 
       if(!currentUser){ msgEl.textContent="⚠️ Please login first!"; return; }
       if(!number||!selectedAmount){ msgEl.textContent="⚠️ Enter number & select amount!"; return; }
+      if(selectedAmount>currentBalance){ msgEl.textContent="❌ Not enough balance!"; return; }
 
       document.getElementById('f_number').value=number;
       document.getElementById('f_amount').value=String(selectedAmount);
@@ -140,27 +156,49 @@
       msgEl.textContent="⏳ Submitting...";
       document.getElementById('gform').submit();
 
+      try{
+        const ref=doc(db,"users",currentUser.uid);
+        await updateDoc(ref,{ balance: currentBalance - selectedAmount });
+      }catch(e){ console.error("Balance update error",e); }
+
       setTimeout(()=>{
         msgEl.textContent="✅ Order submitted!";
         window.location.href="order-history.html";
       },1200);
     };
-  </script>
-<body>
-  <!-- আপনার main content -->
 
-  <div id="footer-container"></div>
-  
-  <!-- footer loader -->
-  <script>
+    // ✅ Footer Loader
     fetch("footer.html")
       .then(res => res.text())
       .then(html => {
         document.getElementById("footer-container").innerHTML = html;
+        const userBox=document.getElementById("userBox");
+
+        if(userBox){
+          onAuthStateChanged(auth, async (user)=>{
+            if(user){
+              const ref=doc(db,"users",user.uid);
+              const snap=await getDoc(ref);
+              const data=snap.exists()?snap.data():{};
+              const bal=data.balance ?? 0;
+              const role=data.role ?? "User";
+              const phone=data.phone ?? "N/A";
+
+              userBox.innerHTML=`
+                <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" width="80" style="border-radius:50%;border:3px solid #06b6d4;">
+                <div>
+                  <h3>${data.name || user.displayName || "No Name"} <span style="color:orange">(${role})</span></h3>
+                  <p>💎 <span style="color:lime">${bal}</span></p>
+                  <p>📱 <span style="color:gold">${phone}</span></p>
+                  <p>📧 <span style="color:skyblue">${user.email}</span></p>
+                </div>
+              `;
+            }else{
+              userBox.innerHTML="<p>❌ Not logged in</p>";
+            }
+          });
+        }
       });
   </script>
-</body>
-</html>
-
 </body>
 </html>
