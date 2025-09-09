@@ -2,7 +2,7 @@
   <div class="footer-container">
 
     <!-- Left Buttons -->
-    <div class="footer-nav left">
+    <div class="footer-nav-grid">
       <button onclick="location.href='index.html'">🏠 Home</button>
       <button onclick="location.href='dashboard.html'">📊 Dashboard</button>
       <button onclick="location.href='profile.html'">👤 Profile</button>
@@ -15,7 +15,7 @@
     <div class="user-card" id="userBox">🔄 Checking login...</div>
 
     <!-- Right Buttons -->
-    <div class="footer-nav right">
+    <div class="footer-nav-grid">
       <button onclick="location.href='forgot.html'">❓ Forgot</button>
       <button onclick="location.href='reset.html'">♻ Reset</button>
       <button onclick="location.href='order.html'">➕ Order</button>
@@ -44,79 +44,78 @@
     gap: 20px;
   }
 
-  /* Glass style for buttons */
-  .footer-nav {
-    display: flex;
-    flex-direction: column;
+  /* Grid Style */
+  .footer-nav-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 14px;
+    max-width: 260px;
   }
 
-  .footer-nav button {
+  .footer-nav-grid button {
     background: rgba(23, 26, 33, 0.65);
     border: 1px solid rgba(255,255,255,0.08);
     color: #e7eaf0;
-    padding: 12px 18px;
+    padding: 12px 14px;
     border-radius: 14px;
     cursor: pointer;
     font-weight: bold;
-    min-width: 130px;
     transition: 0.3s;
-    font-size: 15px;
+    font-size: 14px;
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   }
 
-  .footer-nav button:hover {
+  .footer-nav-grid button:hover {
     background: #06b6d4;
     color: #001;
     transform: translateY(-2px) scale(1.02);
     box-shadow: 0 6px 16px rgba(6,182,212,0.5);
   }
 
-  .footer-nav .logout-btn {
+  .footer-nav-grid .logout-btn {
     background: #ef4444cc;
     color: #fff;
   }
-  .footer-nav .logout-btn:hover {
+  .footer-nav-grid .logout-btn:hover {
     background: #dc2626;
     box-shadow: 0 6px 16px rgba(239,68,68,0.5);
   }
 
-  /* User Card Glass style */
+  /* User Card */
   .user-card {
-    padding: 35px;
-    border-radius: 22px;
+    padding: 30px;
+    border-radius: 20px;
     background: rgba(23,26,33,0.65);
     backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
     display: flex;
     align-items: center;
-    gap: 28px;
+    gap: 24px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.6);
     flex: 1;
     justify-content: center;
-    min-width: 330px;
-    min-height: 200px; /* more height */
+    min-width: 280px;
+    max-width: 420px; /* width কমানো হলো */
     border: 1px solid rgba(255,255,255,0.08);
   }
 
   .user-card img {
-    width: 160px;   /* bigger avatar */
-    height: 160px;
+    width: 130px;
+    height: 130px;
     border-radius: 50%;
-    border: 5px solid #06b6d4;
+    border: 4px solid #06b6d4;
     object-fit: cover;
-    box-shadow: 0 0 25px rgba(6,182,212,0.5);
+    box-shadow: 0 0 20px rgba(6,182,212,0.5);
   }
 
   .user-details {
-    font-size: 19px;
-    line-height: 1.9;
+    font-size: 16px;
+    line-height: 1.7;
     text-align: left;
   }
 
   .user-details strong {
-    font-size: 24px;
+    font-size: 20px;
     color: #06b6d4;
   }
   .user-details .email { color: #38bdf8; }
@@ -135,20 +134,18 @@
       flex-direction: column;
       gap: 25px;
     }
-    .footer-nav {
-      flex-direction: row;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 12px;
+    .footer-nav-grid {
+      grid-template-columns: repeat(3, 1fr);
+      max-width: 100%;
     }
     .user-card {
       flex-direction: column;
       text-align: center;
-      min-height: auto;
+      max-width: 100%;
     }
     .user-card img {
-      width: 150px;
-      height: 150px;
+      width: 120px;
+      height: 120px;
     }
   }
 </style>
