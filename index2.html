@@ -99,14 +99,18 @@
     const loginBtn = document.getElementById("loginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
 
+    let currentUserName = null;
+
     // ✅ Auth State Change
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        userNameBox.textContent = user.displayName || user.email;
+        currentUserName = user.displayName || user.email;
+        userNameBox.textContent = currentUserName;
         loginBtn.style.display = "none";
         logoutBtn.style.display = "inline-block";
         updateFooter(user);
       } else {
+        currentUserName = null;
         userNameBox.textContent = "Not logged in";
         loginBtn.style.display = "inline-block";
         logoutBtn.style.display = "none";
@@ -122,6 +126,7 @@
       .then(res => res.text())
       .then(html => {
         document.getElementById("footer").innerHTML = html;
+        updateFooter(auth.currentUser);
       });
 
     function updateFooter(user){
@@ -145,10 +150,11 @@
         rows.forEach(r=>{
           const [time, number, amount, email, status] = r;
           if(!status) return;
+          const nameOrEmail = currentUserName || email;
           if(status.includes("CANCEL")){
-            messages.push(`সর্বশেষ - অর্ডার ক্যান্সেল হওয়ায় ${email} ${amount} 💎 ফেরত পেয়েছেন 🔴`);
+            messages.push(`সর্বশেষ - অর্ডার ক্যান্সেল হওয়ায় ${nameOrEmail} ${amount} 💎 ফেরত পেয়েছেন 🔴`);
           } else if(status.includes("COMPLETE")){
-            messages.push(`সর্বশেষ - ${email} সফলভাবে ${amount} 💎 অর্ডার করেছেন ✅`);
+            messages.push(`সর্বশেষ - ${nameOrEmail} সফলভাবে ${amount} 💎 অর্ডার করেছেন ✅`);
           }
         });
 
