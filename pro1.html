@@ -175,31 +175,39 @@
       }
     });
 
-    // Load footer
-    fetch("footer.html")
-      .then(res=>res.text())
-      .then(html=>{
-        document.getElementById("footer-container").innerHTML=html;
-        attachFooterUser();
-      });
+ // Load footer
+fetch("footer.html")
+  .then(res => res.text())
+  .then(html => {
+    document.getElementById("footer-container").innerHTML = html;
 
-    // Attach footer user info
-    function attachFooterUser(){
-      const footerUser=document.getElementById("footerUser");
-      onAuthStateChanged(auth, async (user)=>{
-        if(user){
-          const snap=await getDoc(doc(db,"users",user.uid));
-          const data=snap.exists()?snap.data():{};
-          footerUser.innerHTML=`
-            <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" width="80" style="border-radius:50%;border:2px solid #06b6d4;">
-            <h4>${data.name || user.displayName || "No Name"} (${data.role || "User"})</h4>
-            <p>💎 ${data.balance ?? 0} | 📧 ${user.email}</p>
-          `;
+    // এখন footer ঢোকার পর user info attach করব
+    const footerUser = document.getElementById("footerUser");
+    if (footerUser) {
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          try {
+            const snap = await getDoc(doc(db, "users", user.uid));
+            const data = snap.exists() ? snap.data() : {};
+            footerUser.innerHTML = `
+              <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" width="70" style="border-radius:50%;border:2px solid #06b6d4;">
+              <h4>${data.name || user.displayName || "No Name"} (${data.role || "User"})</h4>
+              <p>💎 ${data.balance ?? 0}</p>
+              <p>📧 ${user.email}</p>
+            `;
+          } catch (err) {
+            footerUser.innerHTML = "<p>⚠️ Failed to load user info</p>";
+            console.error(err);
+          }
         } else {
-          footerUser.innerHTML="<p>❌ Not logged in</p>";
+          footerUser.innerHTML = "<p>❌ Not logged in</p>";
         }
       });
     }
-  </script>
+  })
+  .catch(err => {
+    console.error("Footer load error:", err);
+    document.getElementById("footer-container").innerHTML = "<p>⚠️ Footer load failed</p>";
+  });
 </body>
 </html>
