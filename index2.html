@@ -1,88 +1,66 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sarkar Telecom - Home</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sarkar Telecom – Index</title>
   <style>
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#0f1115;color:#e7eaf0;text-align:center;}
-    header{background:#171a21;padding:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
-    header h1{color:#06b6d4;margin:0;display:flex;align-items:center;gap:6px;}
-    nav a{color:#e7eaf0;text-decoration:none;margin:0 10px;font-weight:600;}
-    nav a:hover{color:#06b6d4;}
-    .auth-box{display:flex;align-items:center;gap:10px;}
-    .btn{padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-weight:700;}
-    .btn-login{background:#06b6d4;color:#001;}
-    .btn-logout{background:#ef4444;color:#fff;}
-    .ticker{background:#111827;color:#facc15;padding:6px;font-weight:bold;overflow:hidden;white-space:nowrap;}
-    .ticker span{display:inline-block;padding-left:100%;animation:scroll-left 15s linear infinite;}
-    @keyframes scroll-left{0%{transform:translateX(0);}100%{transform:translateX(-100%);}}
-    .hero{padding:60px 20px;}
-    .hero h2{font-size:28px;color:#06b6d4;}
-    .hero p{color:#9aa3b2;margin:10px 0 20px;}
-    .btn-main{background:#06b6d4;color:#001;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;}
-    .btn-main:hover{background:#0ea5e9;}
-    .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;padding:30px;max-width:900px;margin:auto;}
-    .feature{background:#171a21;padding:20px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.4);}
-    .feature h3{color:#06b6d4;margin-top:0;}
-    #footer{margin-top:40px;}
+    :root{
+      --bg:#0f1115; --card:#171a21; --text:#e7eaf0; --muted:#9aa3b2;
+      --accent:#06b6d4; --ok:#22c55e; --bad:#ef4444;
+    }
+    body { background:var(--bg); color:var(--text); font-family:Arial,sans-serif; margin:0; }
+    header { background:var(--card); display:flex; justify-content:space-between; align-items:center;
+             padding:12px 16px; color:var(--accent); font-weight:800; }
+    .user-info { font-size:14px; color:var(--text); }
+    .auth-btn { background:#06b6d4; border:none; color:#001; padding:6px 10px; border-radius:6px;
+                font-size:13px; font-weight:bold; cursor:pointer; }
+    .auth-btn.logout { background:#ef4444; color:#fff; }
+
+    .container { max-width:520px; margin:20px auto; background:var(--card); border-radius:10px; padding:18px; text-align:center; }
+    h2 { margin:8px 0 14px; color:var(--accent); }
+
+    .info-box { margin:10px 0; font-size:15px; }
+    .balance { color:var(--ok); font-weight:bold; }
+
+    .nav-btns { margin-top:16px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+    .nav-btns button {
+      padding:10px 14px; border:none; border-radius:8px; cursor:pointer;
+      background:#1f2430; border:1px solid #2b3347; color:var(--text); font-weight:700;
+    }
+    .nav-btns button:hover { background:var(--accent); color:#001; }
   </style>
 </head>
 <body>
-  <!-- Header -->
   <header>
-    <h1>💎 Sarkar Telecom</h1>
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="order.html">Order</a>
-      <a href="order-history.html">History</a>
-      <a href="profile.html">Profile</a>
-    </nav>
-    <div class="auth-box">
-      <span id="userName">Checking...</span>
-      <button id="loginBtn" class="btn btn-login" style="display:none;">Login</button>
-      <button id="logoutBtn" class="btn btn-logout" style="display:none;">Logout</button>
+    <span>💎 Sarkar Telecom</span>
+    <div>
+      <span class="user-info" id="userInfo">🔄 Checking...</span>
+      <button id="authBtn" class="auth-btn">Login</button>
     </div>
   </header>
 
-  <!-- 🔔 Live Updates -->
-  <div class="ticker"><span id="liveTicker">⏳ লাইভ আপডেট লোড হচ্ছে...</span></div>
+  <div class="container">
+    <h2>📊 Welcome Dashboard</h2>
+    <div class="info-box"><b>Email:</b> <span id="emailBox">-</span></div>
+    <div class="info-box"><b>Name:</b> <span id="nameBox">-</span></div>
+    <div class="info-box"><b>Balance:</b> 💎 <span id="balanceBox">0</span></div>
 
-  <!-- Hero -->
-  <section class="hero">
-    <h2>Welcome to Sarkar Telecom</h2>
-    <p>Fast & Secure Online Recharge Service</p>
-    <a href="order.html" class="btn-main">🚀 Order Now</a>
-  </section>
-
-  <!-- Features -->
-  <section class="features">
-    <div class="feature">
-      <h3>⚡ ফাস্ট রিচার্জ</h3>
-      <p>ইনস্ট্যান্ট মোবাইল টপ-আপ & গেমিং রিচার্জ।</p>
+    <div class="nav-btns">
+      <button onclick="window.location.href='order.html'">📝 Place Order</button>
+      <button onclick="window.location.href='order-history.html'">📜 Order History</button>
     </div>
-    <div class="feature">
-      <h3>📋 অর্ডার ট্র্যাকিং</h3>
-      <p>অতীতের সব অর্ডার সহজেই চেক ও ম্যানেজ করুন।</p>
-    </div>
-    <div class="feature">
-      <h3>🔐 সিকিউর লগইন</h3>
-      <p>ফায়ারবেস দিয়ে নিরাপদ authentication।</p>
-    </div>
-    <div class="feature">
-      <h3>📱 ২৪/৭ সাপোর্ট</h3>
-      <p>আমরা সর্বসময় আপনার সাথে আছি।</p>
-    </div>
-  </section>
+  </div>
 
   <!-- Footer -->
-  <div id="footer"></div>
+  <div id="footer-container"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-    // ✅ Firebase Config
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
       authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -94,81 +72,83 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    const userNameBox = document.getElementById("userName");
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
+    let currentUser=null;
+    const userInfo=document.getElementById("userInfo");
+    const authBtn=document.getElementById("authBtn");
+    const emailBox=document.getElementById("emailBox");
+    const nameBox=document.getElementById("nameBox");
+    const balanceBox=document.getElementById("balanceBox");
 
-    let currentUserName = null;
+    // Auth state check
+    onAuthStateChanged(auth, async (user)=>{
+      if(user){
+        currentUser=user;
+        userInfo.textContent="👤 "+(user.displayName || user.email);
+        authBtn.textContent="Logout";
+        authBtn.classList.add("logout");
+        authBtn.onclick=()=>signOut(auth);
 
-    // ✅ Auth State Change
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        currentUserName = user.displayName || user.email;
-        userNameBox.textContent = currentUserName;
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-        updateFooter(user);
+        emailBox.textContent=user.email;
+        nameBox.textContent=user.displayName || "N/A";
+
+        try {
+          const snap=await getDoc(doc(db,"users",user.uid));
+          balanceBox.textContent=snap.exists() ? (snap.data().balance ?? 0) : "0";
+        } catch(e){
+          console.error("Firestore error", e);
+        }
       } else {
-        currentUserName = null;
-        userNameBox.textContent = "Not logged in";
-        loginBtn.style.display = "inline-block";
-        logoutBtn.style.display = "none";
-        updateFooter(null);
+        currentUser=null;
+        userInfo.textContent="❌ Not logged in";
+        authBtn.textContent="Login";
+        authBtn.classList.remove("logout");
+        authBtn.onclick=()=>window.location.href="login.html";
+
+        emailBox.textContent="-";
+        nameBox.textContent="-";
+        balanceBox.textContent="0";
       }
     });
 
-    loginBtn.onclick = () => window.location.href = "login.html";
-    logoutBtn.onclick = () => signOut(auth);
-
-    // ✅ Load footer.html & set user info
+    // Load footer
     fetch("footer.html")
       .then(res => res.text())
       .then(html => {
-        document.getElementById("footer").innerHTML = html;
-        updateFooter(auth.currentUser);
-      });
+        document.getElementById("footer-container").innerHTML = html;
+        attachUserBox(); 
+      })
+      .catch(err=>console.error("Footer load error:", err));
 
-    function updateFooter(user){
-      const footerUser = document.getElementById("footer-user");
-      if(!footerUser) return;
-      if(user){
-        footerUser.innerHTML = `🔐 লগইন করা হয়েছে: <span style="color:#06b6d4">${user.displayName || user.email}</span>`;
-      } else {
-        footerUser.innerHTML = "❌ আপনি লগইন করেননি";
-      }
-    }
+    // Footer user info
+    async function attachUserBox() {
+      const userBox = document.getElementById("userBox");
+      if(!userBox) return;
 
-    // ✅ Live Ticker (Google Sheet CSV থেকে)
-    async function loadTicker(){
-      try {
-        const res = await fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=1098128992&single=true&output=csv");
-        const csv = await res.text();
-        const rows = csv.split("\n").slice(1).map(r=>r.split(","));
-        
-        let messages = [];
-        rows.forEach(r=>{
-          const [time, number, amount, email, status] = r;
-          if(!status) return;
-          const nameOrEmail = currentUserName || email;
-          if(status.includes("CANCEL")){
-            messages.push(`সর্বশেষ - অর্ডার ক্যান্সেল হওয়ায় ${nameOrEmail} ${amount} 💎 ফেরত পেয়েছেন 🔴`);
-          } else if(status.includes("COMPLETE")){
-            messages.push(`সর্বশেষ - ${nameOrEmail} সফলভাবে ${amount} 💎 অর্ডার করেছেন ✅`);
-          }
-        });
+      onAuthStateChanged(auth, async (user)=>{
+        if(user){
+          const ref = doc(db, "users", user.uid);
+          const snap = await getDoc(ref);
+          const data = snap.exists() ? snap.data() : {};
+          const bal = data.balance ?? 0;
+          const role = data.role ?? "User";
+          const phone = data.phone ?? "N/A";
 
-        if(messages.length===0){
-          document.getElementById("liveTicker").textContent = "⏳ আপডেট পাওয়া যায়নি...";
+          userBox.innerHTML = `
+            <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" width="100" style="border-radius:50%;border:3px solid #06b6d4;">
+            <div class="user-details">
+              <h3>${data.name || user.displayName || "No Name"} <span style="color:orange">(${role})</span></h3>
+              <p>💎 <span style="color:lime">${bal}</span></p>
+              <p>📱 <span style="color:gold">${phone}</span></p>
+              <p>📧 <span style="color:skyblue">${user.email ?? "No Email"}</span></p>
+            </div>
+          `;
         } else {
-          document.getElementById("liveTicker").textContent = messages.join(" 🔔 ");
+          userBox.innerHTML = "<p>❌ Not logged in</p>";
         }
-      } catch(e){
-        document.getElementById("liveTicker").textContent = "⚠️ আপডেট লোড করতে সমস্যা হয়েছে";
-      }
+      });
     }
-    loadTicker();
-    setInterval(loadTicker, 15000); // প্রতি 15 সেকেন্ডে আপডেট
   </script>
 </body>
 </html>
