@@ -157,13 +157,17 @@
   </script>
 </body>
 </html>
+<script type="module">
+  import { auth, db } from "./firebase.js";
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-<div id="footer-container"></div>
-
-<script>
-  fetch("footer.html")
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById("footer-container").innerHTML = html;
-    });
+  onAuthStateChanged(auth, async (user)=>{
+    if(user){
+      const snap = await getDoc(doc(db,"users",user.uid));
+      console.log("User Data:", snap.data());
+    } else {
+      console.log("Not logged in");
+    }
+  });
 </script>
