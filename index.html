@@ -6,7 +6,7 @@
   <title>Sarkar Telecom - Home</title>
   <style>
     body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#0f1115;color:#e7eaf0;text-align:center;}
-    header{background:#171a21;padding:14px;display:flex;justify-content:space-between;align-items:center;}
+    header{background:#171a21;padding:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
     header h1{color:#06b6d4;margin:0;}
     nav a{color:#e7eaf0;text-decoration:none;margin:0 10px;font-weight:600;}
     nav a:hover{color:#06b6d4;}
@@ -15,9 +15,10 @@
     .hero p{color:#9aa3b2;margin:10px 0 20px;}
     .btn{background:#06b6d4;color:#001;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;}
     .btn:hover{background:#0ea5e9;}
-    .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;padding:30px;}
+    .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;padding:30px;max-width:900px;margin:auto;}
     .feature{background:#171a21;padding:20px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.4);}
-    footer{background:#171a21;padding:16px;margin-top:30px;}
+    .feature h3{color:#06b6d4;margin-top:0;}
+    #footer{margin-top:40px;}
   </style>
 </head>
 <body>
@@ -41,20 +42,31 @@
   <section class="features">
     <div class="feature">
       <h3>⚡ Fast Recharge</h3>
-      <p>Get your top-up done instantly.</p>
+      <p>Instant mobile top-up & gaming recharge.</p>
     </div>
     <div class="feature">
       <h3>📋 Order Tracking</h3>
-      <p>Check your order history anytime.</p>
+      <p>Check & manage all your past orders easily.</p>
     </div>
     <div class="feature">
       <h3>🔐 Secure Login</h3>
-      <p>Safe & reliable authentication system.</p>
+      <p>Safe authentication system with Firebase.</p>
+    </div>
+    <div class="feature">
+      <h3>📱 24/7 Support</h3>
+      <p>We are here to help you anytime.</p>
     </div>
   </section>
 
-  <footer>
-    <p>© 2025 Sarkar Telecom. All Rights Reserved.</p>
-  </footer>
+  <!-- Footer load -->
+  <div id="footer"></div>
+
+  <script>
+    // footer.html auto load
+    fetch("footer.html")
+      .then(res=>res.text())
+      .then(html=>{ document.getElementById("footer").innerHTML=html; })
+      .catch(err=>console.error("Footer load failed:",err));
+  </script>
 </body>
 </html>
