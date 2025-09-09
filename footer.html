@@ -1,7 +1,7 @@
 <footer class="site-footer">
   <div class="footer-container">
 
-    <!-- Left Buttons (আগের ডান পাশেরগুলো) -->
+    <!-- Left Buttons -->
     <div class="footer-nav-grid">
       <button onclick="location.href='index.html'">🏠 Home</button>
       <button onclick="location.href='dashboard.html'">📊 Dashboard</button>
@@ -16,7 +16,7 @@
       🔄 Checking login...
     </div>
 
-    <!-- Right Buttons (আগের বাম পাশেরগুলো) -->
+    <!-- Right Buttons -->
     <div class="footer-nav-grid">
       <button onclick="location.href='forgot.html'">❓ Forgot</button>
       <button onclick="location.href='reset.html'">♻ Reset</button>
@@ -66,34 +66,42 @@
     background:#06b6d4;
     color:#001;
   }
+
+  /* User Card - Avatar left, Info right */
   .user-card {
-    flex:1.2;
+    flex:1.4;
     background:#0f1115;
     border:1px solid #2b3347;
     border-radius:12px;
-    padding:20px;
-    text-align:center;
-    min-width:220px;
-    max-width:300px;
+    padding:15px;
+    display:flex;
+    align-items:center;
+    gap:15px;
+    min-width:260px;
+    max-width:380px;
     box-shadow:0 4px 12px rgba(0,0,0,0.4);
   }
   .user-card img {
-    width:90px;
-    height:90px;
+    width:85px;
+    height:85px;
     border-radius:50%;
-    margin-bottom:10px;
     border:3px solid #06b6d4;
   }
-  .user-card h3 {
+  .user-details {
+    text-align:left;
+    flex:1;
+  }
+  .user-details h3 {
     margin:5px 0;
     font-size:18px;
     color:#06b6d4;
   }
-  .user-card p {
+  .user-details p {
     margin:3px 0;
     font-size:15px;
     color:#9aa3b2;
   }
+
   .footer-copy {
     margin-top:20px;
     font-size:14px;
@@ -102,7 +110,8 @@
   @media(max-width:768px){
     .footer-container { flex-direction:column; }
     .footer-nav-grid { width:100%; grid-template-columns:repeat(3,1fr); }
-    .user-card { width:100%; max-width:100%; }
+    .user-card { width:100%; max-width:100%; justify-content:center; }
+    .user-details { text-align:center; }
   }
 </style>
 
@@ -132,12 +141,16 @@
       const data = snap.exists() ? snap.data() : {};
       const bal = data.balance ?? 0;
       const role = data.role ?? "User";
+      const number = data.number ?? "N/A";
+
       userBox.innerHTML = `
         <img src="${user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" alt="avatar">
-        <h3>${user.displayName || "No Name"} <span style="color:#9aa3b2;font-size:14px;">(${role})</span></h3>
-        <p>💎 Balance: <span style="color:#22c55e;font-weight:bold">${bal}</span></p>
-        <p>📱 ${data.number || "N/A"}</p>
-        <p>📧 ${user.email}</p>
+        <div class="user-details">
+          <h3>${user.displayName || "No Name"} <span style="color:#9aa3b2;font-size:14px;">(${role})</span></h3>
+          <p>💎 Balance: <span style="color:#22c55e;font-weight:bold">${bal}</span></p>
+          <p>📱 ${number}</p>
+          <p>📧 ${user.email}</p>
+        </div>
       `;
     } else {
       userBox.innerHTML = "<p>❌ Not logged in</p>";
