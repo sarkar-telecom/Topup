@@ -146,5 +146,21 @@
       },1200);
     };
   </script>
+<body>
+  <!-- আপনার main content -->
+
+  <div id="footer-container"></div>
+  
+  <!-- footer loader -->
+  <script>
+    fetch("footer.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("footer-container").innerHTML = html;
+      });
+  </script>
+</body>
+</html>
+
 </body>
 </html>
