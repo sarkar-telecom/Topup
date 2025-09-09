@@ -11,7 +11,7 @@
       <button onclick="location.href='order-history.html'">📜 History</button>
     </div>
 
-    <!-- User Info Card -->
+    <!-- User Info Card (Center) -->
     <div class="user-card" id="userBox">
       🔄 Checking login...
     </div>
@@ -38,18 +38,21 @@
     color:#e7eaf0;
     text-align:center;
   }
+
   .footer-container {
     display:flex;
-    justify-content:space-between;
-    align-items:stretch;
+    justify-content:center; /* ✅ সবকিছু center হবে */
+    align-items:center;
     flex-wrap:wrap;
     gap:15px;
   }
+
   .footer-nav-grid {
     display:grid;
     grid-template-columns:repeat(2,1fr);
     gap:10px;
     flex:1;
+    min-width:200px;
   }
   .footer-nav-grid button {
     background:#0f1115;
@@ -68,22 +71,24 @@
     color:#001;
   }
 
-/* User Card */
-.user-card {
-  flex:1 1 100%;
-  background:#0f1115;
-  border:1px solid #2b3347;
-  border-radius:12px;
-  padding:22px;
-  display:flex;
-  align-items:center;
-  gap:20px;
-  min-width:240px;
-  max-width:100%;
-  box-shadow:0 4px 12px rgba(0,0,0,0.4);
-  margin:0 auto;  /* ✅ Center in container */
-  box-sizing:border-box; /* ✅ Ensure padding counted in width */
-}
+  /* ✅ User Card always center */
+  .user-card {
+    flex:1 1 100%;
+    background:#0f1115;
+    border:1px solid #2b3347;
+    border-radius:12px;
+    padding:22px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:20px;
+    min-width:260px;
+    max-width:600px;
+    margin:0 auto;
+    box-shadow:0 4px 12px rgba(0,0,0,0.4);
+    box-sizing:border-box;
+  }
+
   .user-card img {
     width:110px;
     height:110px;
@@ -92,6 +97,7 @@
     box-shadow:0 0 15px #06b6d4;
     animation: glowPulse 2s infinite alternate;
   }
+
   @keyframes glowPulse {
     from { box-shadow:0 0 10px #06b6d4; }
     to { box-shadow:0 0 25px #22c55e; }
@@ -132,52 +138,7 @@
   @media(max-width:768px){
     .footer-container { flex-direction:column; }
     .footer-nav-grid { width:100%; grid-template-columns:repeat(3,1fr); }
-    .user-card { width:100%; max-width:100%; justify-content:center; }
+    .user-card { width:100%; max-width:100%; flex-direction:column; text-align:center; }
     .user-details { text-align:center; }
   }
 </style>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
-    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
-    projectId: "diamond-recharge-f7f59",
-    storageBucket: "diamond-recharge-f7f59.appspot.com",
-    messagingSenderId: "657717928489",
-    appId: "1:657717928489:web:70431ebc9afb7002d4b238"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const userBox = document.getElementById("userBox");
-
-  onAuthStateChanged(auth, async (user)=>{
-    if(user){
-      const userRef = doc(db,"users",user.uid);
-      const snap = await getDoc(userRef);
-      const data = snap.exists() ? snap.data() : {};
-      const bal = data.balance ?? 0;
-      const role = data.role ?? "User";
-      const phone = data.phone ?? "N/A";
-
-      userBox.innerHTML = `
-        <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" alt="avatar">
-        <div class="user-details">
-          <h3>${data.name || user.displayName || "No Name"} 
-              <span class="role-text">(${role})</span>
-          </h3>
-          <p>💎 <span class="balance-gradient">${bal}</span></p>
-          <p>📱 <span class="phone-text">${phone}</span></p>
-          <p>📧 <span class="email-text">${user.email}</span></p>
-        </div>
-      `;
-    } else {
-      userBox.innerHTML = "<p>❌ Not logged in</p>";
-    }
-  });
-</script>
