@@ -71,16 +71,16 @@
 
   /* User Card */
   .user-card {
-    flex:1 1 100%;       /* ছোট হলে ফুল-উইডথ */
+    flex:1 1 100%;
     background:#0f1115;
     border:1px solid #2b3347;
     border-radius:12px;
     padding:22px;
     min-width:240px;
-    max-width:100%;      /* container এর বাইরে যাবে না */
+    max-width:100%;
     text-align:center;
     box-shadow:0 4px 12px rgba(0,0,0,0.4);
-    margin:0 auto;       /* সবসময় সেন্টারে */
+    margin:0 auto;
   }
   .user-card img {
     width:90px;
@@ -122,7 +122,6 @@
     color:#9aa3b2;
   }
 
-  /* Responsive fix */
   @media(max-width:768px){
     .footer-container { 
       flex-direction:column; 
@@ -137,3 +136,68 @@
     }
   }
 </style>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+
+<script>
+  // ✅ আপনার Firebase config এখানে বসান
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_APP.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_APP.appspot.com",
+    messagingSenderId: "SENDER_ID",
+    appId: "APP_ID"
+  };
+
+  const app = firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // ✅ User Info Load
+  auth.onAuthStateChanged(async (user) => {
+    const userBox = document.getElementById("userBox");
+
+    if (user) {
+      try {
+        const docRef = db.collection("users").doc(user.uid);
+        const docSnap = await docRef.get();
+
+        if (docSnap.exists) {
+          const data = docSnap.data();
+
+          userBox.innerHTML = `
+            <img src="${data.photoURL || 'https://via.placeholder.com/100'}" alt="User">
+            <div class="user-details">
+              <h3>${data.displayName || user.displayName || 'Unknown'} <span class="role-text">(${data.role || 'user'})</span></h3>
+              <p class="balance-gradient">💎 ${data.balance || 0}</p>
+              <p class="phone-text">📞 ${data.phone || 'N/A'}</p>
+              <p class="email-text">✉ ${data.email || user.email}</p>
+            </div>
+          `;
+        } else {
+          userBox.innerHTML = `
+            <div class="user-details">
+              <h3>${user.displayName || "No Name"}</h3>
+              <p class="email-text">✉ ${user.email}</p>
+              <p>New user, profile not set.</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        userBox.innerHTML = "⚠ Error loading profile";
+      }
+    } else {
+      userBox.innerHTML = `
+        <div class="user-details">
+          <p>Not logged in</p>
+          <button onclick="location.href='login.html'">🔑 Login</button>
+        </div>
+      `;
+    }
+  });
+</script>
