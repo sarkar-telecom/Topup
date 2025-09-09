@@ -41,7 +41,7 @@
   .footer-container {
     display:flex;
     justify-content:space-between;
-    align-items:flex-start;
+    align-items:stretch;
     flex-wrap:wrap;
     gap:15px;
   }
@@ -50,7 +50,6 @@
     grid-template-columns:repeat(2,1fr);
     gap:10px;
     flex:1;
-    min-width:200px;
   }
   .footer-nav-grid button {
     background:#0f1115;
@@ -69,22 +68,25 @@
     color:#001;
   }
 
-  /* User Card */
-  .user-card {
-    flex:1 1 100%;
-    background:#0f1115;
-    border:1px solid #2b3347;
-    border-radius:12px;
-    padding:22px;
-    min-width:240px;
-    max-width:100%;
-    text-align:center;
-    box-shadow:0 4px 12px rgba(0,0,0,0.4);
-    margin:0 auto;
-  }
+/* User Card */
+.user-card {
+  flex:1 1 100%;
+  background:#0f1115;
+  border:1px solid #2b3347;
+  border-radius:12px;
+  padding:22px;
+  display:flex;
+  align-items:center;
+  gap:20px;
+  min-width:240px;
+  max-width:100%;
+  box-shadow:0 4px 12px rgba(0,0,0,0.4);
+  margin:0 auto;  /* ✅ Center in container */
+  box-sizing:border-box; /* ✅ Ensure padding counted in width */
+}
   .user-card img {
-    width:90px;
-    height:90px;
+    width:110px;
+    height:110px;
     border-radius:50%;
     border:3px solid #06b6d4;
     box-shadow:0 0 15px #06b6d4;
@@ -95,9 +97,13 @@
     to { box-shadow:0 0 25px #22c55e; }
   }
 
+  .user-details {
+    text-align:left;
+    flex:1;
+  }
   .user-details h3 {
     margin:5px 0;
-    font-size:18px;
+    font-size:19px;
     color:#06b6d4;
   }
   .user-details p {
@@ -106,6 +112,7 @@
     font-weight:bold;
   }
 
+  /* Colorful Info */
   .role-text { color:#f97316; font-size:14px; }
   .balance-gradient {
     background: linear-gradient(90deg, #06b6d4, #22c55e);
@@ -123,81 +130,54 @@
   }
 
   @media(max-width:768px){
-    .footer-container { 
-      flex-direction:column; 
-      align-items:center;
-    }
-    .footer-nav-grid { 
-      width:100%; 
-      grid-template-columns:repeat(3,1fr); 
-    }
-    .user-card { 
-      width:90%; 
-    }
+    .footer-container { flex-direction:column; }
+    .footer-nav-grid { width:100%; grid-template-columns:repeat(3,1fr); }
+    .user-card { width:100%; max-width:100%; justify-content:center; }
+    .user-details { text-align:center; }
   }
 </style>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-<script>
-  // ✅ আপনার Firebase config এখানে বসান
   const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_APP.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_APP.appspot.com",
-    messagingSenderId: "SENDER_ID",
-    appId: "APP_ID"
+    apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+    projectId: "diamond-recharge-f7f59",
+    storageBucket: "diamond-recharge-f7f59.appspot.com",
+    messagingSenderId: "657717928489",
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238"
   };
 
-  const app = firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const userBox = document.getElementById("userBox");
 
-  // ✅ User Info Load
-  auth.onAuthStateChanged(async (user) => {
-    const userBox = document.getElementById("userBox");
+  onAuthStateChanged(auth, async (user)=>{
+    if(user){
+      const userRef = doc(db,"users",user.uid);
+      const snap = await getDoc(userRef);
+      const data = snap.exists() ? snap.data() : {};
+      const bal = data.balance ?? 0;
+      const role = data.role ?? "User";
+      const phone = data.phone ?? "N/A";
 
-    if (user) {
-      try {
-        const docRef = db.collection("users").doc(user.uid);
-        const docSnap = await docRef.get();
-
-        if (docSnap.exists) {
-          const data = docSnap.data();
-
-          userBox.innerHTML = `
-            <img src="${data.photoURL || 'https://via.placeholder.com/100'}" alt="User">
-            <div class="user-details">
-              <h3>${data.displayName || user.displayName || 'Unknown'} <span class="role-text">(${data.role || 'user'})</span></h3>
-              <p class="balance-gradient">💎 ${data.balance || 0}</p>
-              <p class="phone-text">📞 ${data.phone || 'N/A'}</p>
-              <p class="email-text">✉ ${data.email || user.email}</p>
-            </div>
-          `;
-        } else {
-          userBox.innerHTML = `
-            <div class="user-details">
-              <h3>${user.displayName || "No Name"}</h3>
-              <p class="email-text">✉ ${user.email}</p>
-              <p>New user, profile not set.</p>
-            </div>
-          `;
-        }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-        userBox.innerHTML = "⚠ Error loading profile";
-      }
-    } else {
       userBox.innerHTML = `
+        <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" alt="avatar">
         <div class="user-details">
-          <p>Not logged in</p>
-          <button onclick="location.href='login.html'">🔑 Login</button>
+          <h3>${data.name || user.displayName || "No Name"} 
+              <span class="role-text">(${role})</span>
+          </h3>
+          <p>💎 <span class="balance-gradient">${bal}</span></p>
+          <p>📱 <span class="phone-text">${phone}</span></p>
+          <p>📧 <span class="email-text">${user.email}</span></p>
         </div>
       `;
+    } else {
+      userBox.innerHTML = "<p>❌ Not logged in</p>";
     }
   });
 </script>
