@@ -41,7 +41,7 @@
   .footer-container {
     display:flex;
     justify-content:space-between;
-    align-items:center;
+    align-items:stretch; /* ✅ সব কন্টেইনার একই height হবে */
     flex-wrap:wrap;
     gap:15px;
   }
@@ -55,12 +55,13 @@
     background:#0f1115;
     color:#e7eaf0;
     border:1px solid #2b3347;
-    padding:12px;
+    padding:14px;
     border-radius:8px;
     font-size:15px;
     font-weight:bold;
     cursor:pointer;
     transition:0.2s;
+    height:60px; /* ✅ সব বাটনের সমান height */
   }
   .footer-nav-grid button:hover {
     background:#06b6d4;
@@ -73,17 +74,17 @@
     background:#0f1115;
     border:1px solid #2b3347;
     border-radius:12px;
-    padding:15px;
+    padding:20px;
     display:flex;
     align-items:center;
-    gap:15px;
+    gap:20px;
     min-width:260px;
     max-width:380px;
     box-shadow:0 4px 12px rgba(0,0,0,0.4);
   }
   .user-card img {
-    width:85px;
-    height:85px;
+    width:95px; /* ✅ Avatar একটু বড় করা */
+    height:95px;
     border-radius:50%;
     border:3px solid #06b6d4;
   }
@@ -97,7 +98,7 @@
     color:#06b6d4;
   }
   .user-details p {
-    margin:3px 0;
+    margin:4px 0;
     font-size:15px;
     color:#9aa3b2;
   }
@@ -141,14 +142,16 @@
       const data = snap.exists() ? snap.data() : {};
       const bal = data.balance ?? 0;
       const role = data.role ?? "User";
-      const number = data.number ?? "N/A";
+      const phone = data.phone ?? "N/A";  // ✅ phone ফিল্ড ফিক্স
 
       userBox.innerHTML = `
-        <img src="${user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" alt="avatar">
+        <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" alt="avatar">
         <div class="user-details">
-          <h3>${user.displayName || "No Name"} <span style="color:#9aa3b2;font-size:14px;">(${role})</span></h3>
+          <h3>${data.name || user.displayName || "No Name"} 
+              <span style="color:#9aa3b2;font-size:14px;">(${role})</span>
+          </h3>
           <p>💎 Balance: <span style="color:#22c55e;font-weight:bold">${bal}</span></p>
-          <p>📱 ${number}</p>
+          <p>📱 ${phone}</p>
           <p>📧 ${user.email}</p>
         </div>
       `;
