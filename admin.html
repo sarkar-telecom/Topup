@@ -303,4 +303,48 @@
   logoutBtn.onclick = ()=> signOut(auth);
 </script>
 </body>
+<!-- ✅ Footer Loader -->
+<div id="footer-container"></div>
+<script>
+  fetch("footer.html")
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById("footer-container").innerHTML = html;
+
+      // Footer এর userBox update
+      if (typeof auth !== "undefined") {
+        const userBox = document.getElementById("userBox");
+        if (userBox) {
+          onAuthStateChanged(auth, async (user) => {
+            if (user) {
+              // db থাকলে balance / role ও আনতে পারবেন
+              if (typeof db !== "undefined") {
+                const ref = doc(db, "users", user.uid);
+                const snap = await getDoc(ref);
+                const data = snap.exists() ? snap.data() : {};
+                const bal = data.balance ?? 0;
+                const role = data.role ?? "User";
+                const phone = data.phone ?? "N/A";
+
+                userBox.innerHTML = `
+                  <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" width="90" style="border-radius:50%;border:3px solid #06b6d4;">
+                  <div class="user-details">
+                    <h3>${data.name || user.displayName || "No Name"} 
+                        <span style="color:orange">(${role})</span></h3>
+                    <p>💎 <span style="color:lime">${bal}</span></p>
+                    <p>📱 <span style="color:gold">${phone}</span></p>
+                    <p>📧 <span style="color:skyblue">${user.email}</span></p>
+                  </div>`;
+              } else {
+                userBox.innerHTML = `<p>👤 ${user.email}</p>`;
+              }
+            } else {
+              userBox.innerHTML = "<p>❌ Not logged in</p>";
+            }
+          });
+        }
+      }
+    })
+    .catch(err => console.error("Footer load error:", err));
+</script>
 </html>
