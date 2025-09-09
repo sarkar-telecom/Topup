@@ -39,38 +39,37 @@
   .footer-container {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     flex-wrap: wrap;
     gap: 20px;
   }
 
-  /* Grid Style */
+  /* Grid Style (2 columns × 3 rows) */
   .footer-nav-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 14px;
-    max-width: 260px;
+    max-width: 200px;
   }
 
   .footer-nav-grid button {
-    background: rgba(23, 26, 33, 0.65);
+    background: rgba(23, 26, 33, 0.75);
     border: 1px solid rgba(255,255,255,0.08);
     color: #e7eaf0;
-    padding: 12px 14px;
-    border-radius: 14px;
+    padding: 12px;
+    border-radius: 12px;
     cursor: pointer;
     font-weight: bold;
     transition: 0.3s;
     font-size: 14px;
     backdrop-filter: blur(10px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
   }
 
   .footer-nav-grid button:hover {
     background: #06b6d4;
     color: #001;
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 6px 16px rgba(6,182,212,0.5);
+    transform: translateY(-2px);
   }
 
   .footer-nav-grid .logout-btn {
@@ -79,14 +78,13 @@
   }
   .footer-nav-grid .logout-btn:hover {
     background: #dc2626;
-    box-shadow: 0 6px 16px rgba(239,68,68,0.5);
   }
 
   /* User Card */
   .user-card {
-    padding: 30px;
+    padding: 25px;
     border-radius: 20px;
-    background: rgba(23,26,33,0.65);
+    background: rgba(23,26,33,0.75);
     backdrop-filter: blur(14px);
     display: flex;
     align-items: center;
@@ -94,18 +92,16 @@
     box-shadow: 0 6px 20px rgba(0,0,0,0.6);
     flex: 1;
     justify-content: center;
-    min-width: 280px;
-    max-width: 420px; /* width কমানো হলো */
-    border: 1px solid rgba(255,255,255,0.08);
+    min-width: 260px;
+    max-width: 420px;
   }
 
   .user-card img {
-    width: 130px;
-    height: 130px;
+    width: 120px;
+    height: 120px;
     border-radius: 50%;
     border: 4px solid #06b6d4;
     object-fit: cover;
-    box-shadow: 0 0 20px rgba(6,182,212,0.5);
   }
 
   .user-details {
@@ -113,11 +109,7 @@
     line-height: 1.7;
     text-align: left;
   }
-
-  .user-details strong {
-    font-size: 20px;
-    color: #06b6d4;
-  }
+  .user-details strong { font-size: 20px; color: #06b6d4; }
   .user-details .email { color: #38bdf8; }
   .user-details .phone { color: #facc15; }
   .user-details .balance { color: #22c55e; font-weight: bold; }
@@ -130,23 +122,10 @@
 
   /* Mobile view */
   @media(max-width:950px){
-    .footer-container {
-      flex-direction: column;
-      gap: 25px;
-    }
-    .footer-nav-grid {
-      grid-template-columns: repeat(3, 1fr);
-      max-width: 100%;
-    }
-    .user-card {
-      flex-direction: column;
-      text-align: center;
-      max-width: 100%;
-    }
-    .user-card img {
-      width: 120px;
-      height: 120px;
-    }
+    .footer-container { flex-direction: column; align-items: center; }
+    .footer-nav-grid { grid-template-columns: repeat(3, 1fr); max-width: 100%; }
+    .user-card { flex-direction: column; text-align: center; max-width: 100%; }
+    .user-card img { width: 100px; height: 100px; }
   }
 </style>
 
@@ -171,10 +150,7 @@
   const userBox = document.getElementById("userBox");
 
   onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      userBox.innerHTML = "❌ Not logged in";
-      return;
-    }
+    if (!user) { userBox.innerHTML = "❌ Not logged in"; return; }
     try {
       const snap = await getDoc(doc(db, "users", user.uid));
       let balance = 0, phone = "N/A", avatar="", name="";
