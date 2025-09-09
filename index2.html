@@ -19,21 +19,30 @@
     .feature{background:#171a21;padding:20px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.4);}
     .feature h3{color:#06b6d4;margin-top:0;}
     #footer{margin-top:40px;}
-    /* 🔔 Popup Notification Style */
-    .popup{
-      position:fixed;bottom:20px;right:20px;z-index:9999;
-      background:#06b6d4;color:#001;padding:12px 18px;
-      border-radius:8px;font-weight:bold;
-      box-shadow:0 4px 10px rgba(0,0,0,0.5);
-      animation:slideIn 0.3s ease;
+
+    /* 🔽 Live Ticker */
+    #tickerBar{
+      position:fixed;
+      bottom:0;left:0;width:100%;
+      background:#171a21;color:#06b6d4;
+      padding:8px 0;overflow:hidden;
+      white-space:nowrap;font-weight:bold;
+      border-top:2px solid #06b6d4;
+      z-index:1000;
     }
-    @keyframes slideIn{
-      from{transform:translateY(30px);opacity:0;}
-      to{transform:translateY(0);opacity:1;}
+    #tickerContent{
+      display:inline-block;
+      padding-left:100%;
+      animation:scrollTicker 25s linear infinite;
+    }
+    @keyframes scrollTicker{
+      from{transform:translateX(0);}
+      to{transform:translateX(-100%);}
     }
   </style>
 </head>
 <body>
+  <!-- Header -->
   <header>
     <h1>💎 Sarkar Telecom</h1>
     <nav>
@@ -41,17 +50,22 @@
       <a href="order.html">Order</a>
       <a href="order-history.html">History</a>
       <a href="profile.html">Profile</a>
-      <a href="login.html" id="loginLink">Login</a>
-      <a href="#" id="logoutLink" style="display:none;">Logout</a>
     </nav>
+    <div>
+      <span id="userEmail">Checking...</span>
+      <button id="loginBtn" style="display:none;background:#06b6d4;color:#001;padding:6px 12px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Login</button>
+      <button id="logoutBtn" style="display:none;background:#ef4444;color:#fff;padding:6px 12px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Logout</button>
+    </div>
   </header>
 
+  <!-- Hero -->
   <section class="hero">
     <h2>Welcome to Sarkar Telecom</h2>
     <p>Fast & Secure Online Recharge Service</p>
     <a href="order.html" class="btn">🚀 Order Now</a>
   </section>
 
+  <!-- Features -->
   <section class="features">
     <div class="feature">
       <h3>⚡ Fast Recharge</h3>
@@ -71,13 +85,18 @@
     </div>
   </section>
 
-  <!-- Footer load -->
+  <!-- Footer -->
   <div id="footer"></div>
+
+  <!-- Live Ticker -->
+  <div id="tickerBar">
+    <div id="tickerContent">🔔 Waiting for live updates...</div>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import { getFirestore, doc, getDoc, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
     // Firebase config
     const firebaseConfig = {
@@ -93,78 +112,65 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const loginLink=document.getElementById("loginLink");
-    const logoutLink=document.getElementById("logoutLink");
+    // Auth toggle for header
+    const userEmailBox=document.getElementById("userEmail");
+    const loginBtn=document.getElementById("loginBtn");
+    const logoutBtn=document.getElementById("logoutBtn");
 
-    // 🔄 Auth toggle
     onAuthStateChanged(auth,(user)=>{
       if(user){
-        loginLink.style.display="none";
-        logoutLink.style.display="inline";
+        userEmailBox.textContent=user.email;
+        loginBtn.style.display="none";
+        logoutBtn.style.display="inline-block";
       } else {
-        loginLink.style.display="inline";
-        logoutLink.style.display="none";
+        userEmailBox.textContent="Not logged in";
+        loginBtn.style.display="inline-block";
+        logoutBtn.style.display="none";
       }
     });
+    loginBtn.onclick=()=>window.location.href="login.html";
+    logoutBtn.onclick=()=>signOut(auth);
 
-    logoutLink.onclick=()=>signOut(auth);
-
-    // 🔽 Load footer
+    // Footer load
     fetch("footer.html")
       .then(res=>res.text())
-      .then(html=>{
-        document.getElementById("footer").innerHTML=html;
-        attachUserInfo();
-      })
+      .then(html=>document.getElementById("footer").innerHTML=html)
       .catch(err=>console.error("Footer load failed:",err));
 
-    function attachUserInfo(){
-      const userBox=document.getElementById("userBox");
-      if(!userBox) return;
-      onAuthStateChanged(auth,async(user)=>{
-        if(user){
-          const snap=await getDoc(doc(db,"users",user.uid));
-          const data=snap.exists()?snap.data():{};
-          userBox.innerHTML=`
-            <h3>${data.name || user.displayName || "No Name"}</h3>
-            <p>💎 ${data.balance ?? 0}</p>
-            <p>${user.email}</p>
-          `;
-        } else {
-          userBox.innerHTML="<p>❌ Not logged in</p>";
-        }
-      });
-    }
+    // ===== Live Ticker =====
+    const ticker=document.getElementById("tickerContent");
+    let messages=[];
 
-    // 🔔 Realtime Order Listener
-    const orderQ=query(collection(db,"orders"),orderBy("createdAt","desc"),limit(1));
-    onSnapshot(orderQ,(snapshot)=>{
-      snapshot.docChanges().forEach(change=>{
+    // Orders Listener
+    const orderQ=query(collection(db,"orders"),orderBy("createdAt","desc"),limit(10));
+    onSnapshot(orderQ,(snap)=>{
+      snap.docChanges().forEach(change=>{
         if(change.type==="added"){
-          const order=change.doc.data();
-          showPopup(`🛒 New Order: ${order.userName || "Unknown"} - ${order.amount}৳`);
+          const d=change.doc.data();
+          if(d.status==="success"){
+            addTicker(`🟢 User: ${d.userName||"Unknown"} placed order of ${d.amount} 💎`);
+          } else if(d.status==="cancelled"){
+            addTicker(`🔴 Order cancelled for ${d.userName||"Unknown"} – refund pending`);
+          }
         }
       });
     });
 
-    // 🔔 Realtime Refund Listener
-    const refundQ=query(collection(db,"refunds"),orderBy("time","desc"),limit(1));
-    onSnapshot(refundQ,(snapshot)=>{
-      snapshot.docChanges().forEach(change=>{
+    // Refunds Listener
+    const refundQ=query(collection(db,"refunds"),orderBy("time","desc"),limit(10));
+    onSnapshot(refundQ,(snap)=>{
+      snap.docChanges().forEach(change=>{
         if(change.type==="added"){
-          const refund=change.doc.data();
-          showPopup(`💰 Refund: ${refund.amount}৳ to ${refund.userEmail || "user"}`);
+          const d=change.doc.data();
+          addTicker(`🟡 User: ${d.userName||"Unknown"} got refund of ${d.amount} 💎`);
         }
       });
     });
 
-    // ✅ Popup function
-    function showPopup(msg){
-      const popup=document.createElement("div");
-      popup.className="popup";
-      popup.textContent=msg;
-      document.body.appendChild(popup);
-      setTimeout(()=>popup.remove(),5000);
+    // Add message to ticker
+    function addTicker(msg){
+      messages.push(" ⏩ "+msg);
+      ticker.innerHTML=messages.join(" | ");
     }
   </script>
 </body>
