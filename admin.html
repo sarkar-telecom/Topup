@@ -79,6 +79,9 @@
   <input name="entry.948913982" id="timeField"/>
 </form>
 
+<!-- ✅ Footer container -->
+<div id="footer-container"></div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
@@ -301,6 +304,14 @@
   });
 
   logoutBtn.onclick = ()=> signOut(auth);
+
+  // ✅ Footer loader
+  fetch("footer.html")
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById("footer-container").innerHTML = html;
+    })
+    .catch(err => console.error("Footer load error:", err));
 </script>
 </body>
 </html>
