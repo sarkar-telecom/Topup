@@ -47,20 +47,23 @@
       <p>Loading profile...</p>
     </div>
 
-    <h2>Edit Profile</h2>
-    <form id="editForm">
-      <input type="text" id="nameInput" placeholder="Full Name"><br>
-      <input type="text" id="phoneInput" placeholder="Phone"><br>
-      <input type="text" id="avatarInput" placeholder="Avatar URL"><br>
-      <button type="submit" class="btn">Update Profile</button>
-    </form>
+    <!-- Edit Profile Form -->
+    <div id="editSection" style="display:none;">
+      <h2>Edit Profile</h2>
+      <form id="editForm">
+        <input type="text" id="nameInput" placeholder="Full Name"><br>
+        <input type="text" id="phoneInput" placeholder="Phone"><br>
+        <input type="text" id="avatarInput" placeholder="Avatar URL"><br>
+        <button type="submit" class="btn">Update Profile</button>
+      </form>
 
-    <h2>Change Password</h2>
-    <form id="passForm">
-      <input type="password" id="oldPass" placeholder="Old Password"><br>
-      <input type="password" id="newPass" placeholder="New Password"><br>
-      <button type="submit" class="btn">Change Password</button>
-    </form>
+      <h2>Change Password</h2>
+      <form id="passForm">
+        <input type="password" id="oldPass" placeholder="Old Password"><br>
+        <input type="password" id="newPass" placeholder="New Password"><br>
+        <button type="submit" class="btn">Change Password</button>
+      </form>
+    </div>
   </div>
 
   <!-- Footer container -->
@@ -88,6 +91,7 @@
     const userInfo=document.getElementById("userInfo");
     const authBtn=document.getElementById("authBtn");
     const profileBox=document.getElementById("profileBox");
+    const editSection=document.getElementById("editSection");
 
     const nameInput=document.getElementById("nameInput");
     const phoneInput=document.getElementById("phoneInput");
@@ -120,9 +124,14 @@
             <p>📧 Email: <span style="color:skyblue">${user.email}</span></p>
           `;
 
+          // form values fill
           nameInput.value=data.name || "";
           phoneInput.value=data.phone || "";
           avatarInput.value=data.avatar || "";
+
+          // show forms
+          editSection.style.display="block";
+
         } catch(e){
           console.error(e);
         }
@@ -132,7 +141,9 @@
         authBtn.textContent="Login";
         authBtn.classList.remove("logout");
         authBtn.onclick=()=>window.location.href="login.html";
-        profileBox.innerHTML="<p>❌ Please login to view profile.</p>";
+
+        profileBox.innerHTML="<p style='color:red;'>❌ Please login to view profile.</p>";
+        editSection.style.display="none"; // hide forms
       }
     });
 
@@ -185,26 +196,24 @@
 
       onAuthStateChanged(auth, async (user)=>{
         if(user){
-          try {
-            const ref = doc(db, "users", user.uid);
-            const snap = await getDoc(ref);
-            const data = snap.exists() ? snap.data() : {};
-            const bal = data.balance ?? 0;
-            const role = data.role ?? "User";
-            const phone = data.phone ?? "N/A";
+          const ref = doc(db, "users", user.uid);
+          const snap = await getDoc(ref);
+          const data = snap.exists() ? snap.data() : {};
+          const bal = data.balance ?? 0;
+          const role = data.role ?? "User";
+          const phone = data.phone ?? "N/A";
 
-            userBox.innerHTML = `
-              <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" width="100" style="border-radius:50%;border:3px solid #06b6d4;">
-              <div class="user-details">
-                <h3>${data.name || user.displayName || "No Name"} <span style="color:orange">(${role})</span></h3>
-                <p>💎 <span style="color:lime">${bal}</span></p>
-                <p>📱 <span style="color:gold">${phone}</span></p>
-                <p>📧 <span style="color:skyblue">${user.email ?? "No Email"}</span></p>
-              </div>
-            `;
-          } catch(e){ console.error(e); }
+          userBox.innerHTML = `
+            <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" width="100" style="border-radius:50%;border:3px solid #06b6d4;">
+            <div class="user-details">
+              <h3>${data.name || user.displayName || "No Name"} <span style="color:orange">(${role})</span></h3>
+              <p>💎 <span style="color:lime">${bal}</span></p>
+              <p>📱 <span style="color:gold">${phone}</span></p>
+              <p>📧 <span style="color:skyblue">${user.email ?? "No Email"}</span></p>
+            </div>
+          `;
         } else {
-          userBox.innerHTML = "<p>❌ Not logged in</p>";
+          userBox.innerHTML = "<p style='color:red;'>❌ Not logged in</p>";
         }
       });
     }
