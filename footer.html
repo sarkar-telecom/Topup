@@ -68,23 +68,21 @@
     color:#001;
   }
 
- .user-card {
-  flex: 0 1 320px;   /* fixed width card */
-  background:#0f1115;
-  border:1px solid #2b3347;
-  border-radius:12px;
-  padding:12px;      /* আগে ছিল 22px, কমিয়ে দিলাম */
-  display:flex;
-  align-items:center;
-  gap:15px;          /* আগে 20px ছিল, কমিয়ে দিলাম */
-  min-width:260px;
-  max-width:320px;   /* 380px এর বদলে 320px করলাম */
-  margin:auto;       /* যাতে মাঝখানে থাকে */
-  box-shadow:0 4px 12px rgba(0,0,0,0.4);
-  box-sizing:border-box;
-}
-.user-details h3 { font-size:16px; }
-.user-details p { font-size:13px; }
+  /* User Card */
+  .user-card {
+    flex: 0 1 320px;   /* fixed width card */
+    background:#0f1115;
+    border:1px solid #2b3347;
+    border-radius:12px;
+    padding:12px;     
+    display:flex;
+    align-items:center;
+    gap:15px;          
+    min-width:260px;
+    max-width:320px;  
+    margin:auto;       
+    box-shadow:0 4px 12px rgba(0,0,0,0.4);
+    box-sizing:border-box;
   }
   .user-card img {
     width:90px;
@@ -129,11 +127,9 @@
 
 <!-- Firebase Auth Detect -->
 <script type="module">
-  // Import Firebase
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-  // আপনার Firebase config বসান
   const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
     authDomain: "YOUR_PROJECT.firebaseapp.com",
@@ -172,7 +168,6 @@
     }
   });
 
-  // Logout button click
   document.querySelectorAll(".logout-btn").forEach(btn=>{
     btn.addEventListener("click",(e)=>{
       e.preventDefault();
