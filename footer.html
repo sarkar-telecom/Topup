@@ -1,6 +1,6 @@
 <footer>
   <!-- Navigation -->
-  <div>
+  <div class="nav-grid">
     <a href="index.html" class="footer-btn">🏠 Home</a>
     <a href="dashboard.html" class="footer-btn">📊 Dashboard</a>
     <a href="profile.html" class="footer-btn">👤 Profile</a>
@@ -11,7 +11,7 @@
     <a href="order.html" class="footer-btn">➕ Order</a>
     <a href="order-history.html" class="footer-btn">📜 History</a>
     <a href="login.html" class="footer-btn">🔑 Login</a>
-    <a href="logout.html" class="footer-btn">🚪 Logout</a>
+    <a href="logout.html" class="footer-btn logout-btn">🚪 Logout</a>
   </div>
 
   <!-- User Info -->
@@ -33,11 +33,20 @@
     text-align:center;
     border-top:2px solid #2b3347;
   }
+
+  /* 🔹 Navigation Grid */
+  .nav-grid {
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap:10px;
+    margin-bottom:18px;
+  }
+
+  /* 🔹 Button style */
   .footer-btn {
-    display:inline-block;
-    margin:5px;
-    padding:10px 16px;
-    border-radius:8px;
+    display:block;
+    padding:12px;
+    border-radius:10px;
     background:#1f2430;
     color:#e7eaf0;
     font-weight:bold;
@@ -45,42 +54,65 @@
     text-decoration:none;
     transition:0.2s;
     border:1px solid #2b3347;
+    text-align:center;
   }
   .footer-btn:hover {
     background:#06b6d4;
     color:#001;
     transform:scale(1.05);
   }
-  .copyright {
-    margin-top:12px;
-    font-size:13px;
-    color:#9aa3b2;
+  .logout-btn {
+    background:#ef4444;
+    color:#fff;
+    border:1px solid #ef4444;
   }
-  /* User info box */
+  .logout-btn:hover {
+    background:#dc2626;
+  }
+
+  /* 🔹 User info box */
   .user-box {
     margin-top:16px;
     padding:14px;
-    border-radius:12px;
+    border-radius:14px;
     background:#0f1115;
-    display:inline-flex;
+    display:flex;
     align-items:center;
-    gap:12px;
-    box-shadow:0 0 10px rgba(0,0,0,0.5);
+    gap:14px;
+    box-shadow:0 0 12px rgba(0,0,0,0.5);
     text-align:left;
+    justify-content:center;
+    flex-wrap:wrap;
   }
   .user-box img {
-    width:60px; height:60px;
+    width:80px; height:80px; /* ✅ Avatar bigger */
     border-radius:50%;
-    border:2px solid #06b6d4;
+    border:3px solid #06b6d4;
+    object-fit:cover;
   }
   .user-details {
-    font-size:14px;
+    font-size:15px;
     line-height:1.6;
   }
-  .user-details strong { color:#06b6d4; font-size:15px; }
+  .user-details strong { color:#06b6d4; font-size:16px; }
   .user-details .email { color:#38bdf8; }
   .user-details .phone { color:#facc15; }
   .user-details .balance { color:#22c55e; font-weight:bold; }
+  
+  .copyright {
+    margin-top:14px;
+    font-size:13px;
+    color:#9aa3b2;
+  }
+
+  /* 🔹 Mobile optimization */
+  @media(max-width:600px){
+    .user-box {
+      flex-direction:column;
+      text-align:center;
+    }
+    .user-details { font-size:14px; }
+  }
 </style>
 
 <script type="module">
@@ -116,10 +148,10 @@
       if (snap.exists()) {
         const data = snap.data();
         balance = data.balance || 0;
-        phone = data.phone || "N/A";  // ✅ phone field ঠিক করা হলো
+        phone = data.phone || "N/A";
       }
 
-      const name = user.displayName || snap.data()?.name || "No Name";
+      const name = snap.data()?.name || user.displayName || "No Name";
       const email = user.email || "Unknown";
       const avatar = snap.data()?.avatar || user.photoURL || "https://i.ibb.co/3T1VYwF/user.png";
 
