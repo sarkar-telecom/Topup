@@ -1,96 +1,181 @@
-<!-- /Topup/footer.html -->
+<footer class="site-footer">
+  <div class="footer-container">
+
+    <!-- Left Buttons -->
+    <div class="footer-nav-grid">
+      <button onclick="location.href='index.html'">🏠 Home</button>
+      <button onclick="location.href='dashboard.html'">📊 Dashboard</button>
+      <button onclick="location.href='profile.html'">👤 Profile</button>
+      <button onclick="location.href='admin.html'">🛠 Admin</button>
+      <button onclick="location.href='order.html'">➕ Order</button>
+      <button onclick="location.href='order-history.html'">📜 History</button>
+    </div>
+
+    <!-- User Info Card -->
+    <div class="user-card" id="userBox">
+      🔄 Checking login...
+    </div>
+
+    <!-- Right Buttons -->
+    <div class="footer-nav-grid">
+      <button onclick="location.href='forgot.html'">❓ Forgot</button>
+      <button onclick="location.href='reset.html'">♻ Reset</button>
+      <button onclick="location.href='register.html'">📝 Register</button>
+      <button onclick="location.href='https://wa.me/8801715118684'">💬 Support</button>
+      <button onclick="location.href='login.html'">🔑 Login</button>
+      <button onclick="location.href='logout.html'" class="logout-btn">🚪 Logout</button>
+    </div>
+  </div>
+
+  <p class="footer-copy">© SARKAR TELECOM 2025-2026</p>
+</footer>
+
 <style>
-  :root{
-    --bg:#0f1115; --card:#12161f; --chip:#1c2331; --chip2:#20283a;
-    --text:#e7eaf0; --muted:#9aa3b2; --accent:#06b6d4;
-    --ok:#22c55e; --warn:#eab308; --phone:#f59e0b; --mail:#38bdf8;
-    --ring:#2b3347; --shadow:0 10px 24px rgba(0,0,0,.35);
+  .site-footer {
+    background:#171a21;
+    padding:20px 10px;
+    margin-top:30px;
+    color:#e7eaf0;
+    text-align:center;
   }
-  footer#st-footer{background:#171a21;color:var(--text);font-family:Arial,Helvetica,sans-serif;padding:18px 10px}
-  .ft-wrap{max-width:1150px;margin:0 auto}
-  .ft-grid{
-    display:grid; grid-template-columns:280px 1fr 280px; gap:14px; align-items:center;
+  .footer-container {
+    display:flex;
+    justify-content:space-between;
+    align-items:stretch;
+    flex-wrap:wrap;
+    gap:15px;
   }
-  /* Side button columns (2 cols x 3 rows) */
-  .ft-col{display:grid; grid-template-columns:1fr 1fr; gap:12px}
-  .ft-btn{
-    background:var(--chip); border:1px solid var(--ring); color:var(--text);
-    padding:12px 14px; border-radius:14px; font-weight:700; text-decoration:none;
-    display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:var(--shadow);
-    transition:.25s;
+  .footer-nav-grid {
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+    flex:1;
   }
-  .ft-btn:hover{background:var(--accent); color:#001; transform:translateY(-1px)}
-  /* User card (center) */
-  .ft-card{
-    background:var(--card); border:1px solid var(--ring); box-shadow:var(--shadow);
-    border-radius:18px; padding:18px 20px; display:flex; align-items:center; gap:18px;
-    min-height:170px;
+  .footer-nav-grid button {
+    background:#0f1115;
+    color:#e7eaf0;
+    border:1px solid #2b3347;
+    padding:14px;
+    border-radius:8px;
+    font-size:15px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.2s;
+    height:60px;
   }
-  .ft-avatar-wrap{
-    position:relative; width:110px; height:110px; flex:0 0 110px;
-    border-radius:999px; padding:4px; background: radial-gradient(120px 120px at 50% 50%, #0ea5e955, #0000);
-    box-shadow:0 0 0 3px var(--accent) inset, 0 0 24px #0ea5e955;
+  .footer-nav-grid button:hover {
+    background:#06b6d4;
+    color:#001;
   }
-  .ft-avatar{width:100%;height:100%;object-fit:cover;border-radius:999px}
-  .ft-info{line-height:1.6}
-  .ft-name{font-size:22px; font-weight:800; color:#20e3b2}
-  .ft-role{font-size:14px; color:#ffa726; margin-left:6px}
-  .ft-line{display:flex; align-items:center; gap:10px; font-size:16px}
-  .ft-balance{color:var(--ok); font-weight:800}
-  .ft-phone{color:var(--phone); font-weight:700}
-  .ft-mail{color:var(--mail); font-weight:700}
-  .ft-copy{margin-top:16px; text-align:center; color:var(--muted); font-size:13px}
-  /* Mobile */
-  @media (max-width: 960px){
-    .ft-grid{grid-template-columns:1fr; gap:12px}
-    .ft-card{order:1}
-    .ft-col.left{order:0}
-    .ft-col.right{order:2}
-    .ft-card{min-height:180px}
+
+  /* User Card */
+  .user-card {
+    flex:1.4;
+    background:#0f1115;
+    border:1px solid #2b3347;
+    border-radius:12px;
+    padding:22px;
+    display:flex;
+    align-items:center;
+    gap:20px;
+    min-width:260px;
+    max-width:380px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.4);
+  }
+  .user-card img {
+    width:110px;
+    height:110px;
+    border-radius:50%;
+    border:3px solid #06b6d4;
+    box-shadow:0 0 15px #06b6d4;
+    animation: glowPulse 2s infinite alternate;
+  }
+  @keyframes glowPulse {
+    from { box-shadow:0 0 10px #06b6d4; }
+    to { box-shadow:0 0 25px #22c55e; }
+  }
+
+  .user-details {
+    text-align:left;
+    flex:1;
+  }
+  .user-details h3 {
+    margin:5px 0;
+    font-size:19px;
+    color:#06b6d4;
+  }
+  .user-details p {
+    margin:6px 0;
+    font-size:15px;
+    font-weight:bold;
+  }
+
+  /* Colorful Info */
+  .role-text { color:#f97316; font-size:14px; }
+  .balance-gradient {
+    background: linear-gradient(90deg, #06b6d4, #22c55e);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    font-weight:bold;
+  }
+  .phone-text { color:#facc15; }
+  .email-text { color:#3b82f6; }
+
+  .footer-copy {
+    margin-top:20px;
+    font-size:14px;
+    color:#9aa3b2;
+  }
+
+  @media(max-width:768px){
+    .footer-container { flex-direction:column; }
+    .footer-nav-grid { width:100%; grid-template-columns:repeat(3,1fr); }
+    .user-card { width:100%; max-width:100%; justify-content:center; }
+    .user-details { text-align:center; }
   }
 </style>
 
-<footer id="st-footer">
-  <div class="ft-wrap">
-    <div class="ft-grid">
-      <!-- LEFT 2x3 -->
-      <div class="ft-col left">
-        <a class="ft-btn" href="/Topup/index.html">🏠 Home</a>
-        <a class="ft-btn" href="/Topup/dashboard.html">📊 Dashboard</a>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-        <a class="ft-btn" href="/Topup/profile.html">👤 Profile</a>
-        <a class="ft-btn" href="/Topup/admin.html">🛠️ Admin</a>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+    projectId: "diamond-recharge-f7f59",
+    storageBucket: "diamond-recharge-f7f59.appspot.com",
+    messagingSenderId: "657717928489",
+    appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+  };
 
-        <a class="ft-btn" href="/Topup/order.html">➕ Order</a>
-        <a class="ft-btn" href="/Topup/order-history.html">📜 History</a>
-      </div>
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const userBox = document.getElementById("userBox");
 
-      <!-- CENTER USER CARD -->
-      <div class="ft-card" id="ftCard">
-        <div class="ft-avatar-wrap">
-          <img id="ftAvatar" class="ft-avatar" alt="Avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='110' height='110'%3E%3Crect width='100%25' height='100%25' rx='55' ry='55' fill='%23182535'/%3E%3Ctext x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='%23a7f3d0' font-size='14'%3EUser%20Avatar%3C/text%3E%3C/svg%3E">
+  onAuthStateChanged(auth, async (user)=>{
+    if(user){
+      const userRef = doc(db,"users",user.uid);
+      const snap = await getDoc(userRef);
+      const data = snap.exists() ? snap.data() : {};
+      const bal = data.balance ?? 0;
+      const role = data.role ?? "User";
+      const phone = data.phone ?? "N/A";
+
+      userBox.innerHTML = `
+        <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" alt="avatar">
+        <div class="user-details">
+          <h3>${data.name || user.displayName || "No Name"} 
+              <span class="role-text">(${role})</span>
+          </h3>
+          <p>💎 <span class="balance-gradient">${bal}</span></p>
+          <p>📱 <span class="phone-text">${phone}</span></p>
+          <p>📧 <span class="email-text">${user.email}</span></p>
         </div>
-        <div class="ft-info">
-          <div class="ft-name" id="ftName">Guest <span class="ft-role" id="ftRole">(guest)</span></div>
-          <div class="ft-line"><span>💎</span><span class="ft-balance" id="ftBalance">0</span></div>
-          <div class="ft-line"><span>📞</span><span class="ft-phone" id="ftPhone">-</span></div>
-          <div class="ft-line"><span>✉️</span><span class="ft-mail" id="ftEmail">-</span></div>
-        </div>
-      </div>
-
-      <!-- RIGHT 2x3 -->
-      <div class="ft-col right">
-        <a class="ft-btn" href="/Topup/forgot.html">❓ Forgot</a>
-        <a class="ft-btn" href="/Topup/reset.html">♻️ Reset</a>
-
-        <a class="ft-btn" href="/Topup/register.html">📝 Register</a>
-        <a class="ft-btn" target="_blank" rel="noopener" href="https://wa.me/8801715118684?text=Hi%20SARKAR%20TELECOM%20Support">💬 Support</a>
-
-        <a class="ft-btn" href="/Topup/login.html">🔐 Login</a>
-        <a class="ft-btn" href="/Topup/logout.html">🚪 Logout</a>
-      </div>
-    </div>
-
-    <div class="ft-copy">© SARKAR TELECOM 2025-2026</div>
-  </div>
-</footer>
+      `;
+    } else {
+      userBox.innerHTML = "<p>❌ Not logged in</p>";
+    }
+  });
+</script>
