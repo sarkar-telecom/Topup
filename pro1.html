@@ -1,174 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Profile - Sarkar Telecom</title>
   <style>
-    :root {
-      --bg: #0f1115;
-      --card: #171a21;
-      --text: #e7eaf0;
-      --accent: #06b6d4;
-      --bad: #ef4444;
-      --ok: #10b981;
+    :root{
+      --bg:#0f1115; --card:#171a21; --text:#e7eaf0; --muted:#9aa3b2;
+      --accent:#06b6d4; --ok:#22c55e; --bad:#ef4444;
     }
-    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
-    header { background: var(--card); border-bottom: 1px solid #202635; padding: 10px; }
-    .top-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-    .site-info { display: flex; align-items: center; gap: 10px; }
-    .site-logo { height: 40px; border-radius: 8px; }
-    .site-name { font-size: 20px; font-weight: 800; color: var(--accent); }
-    .user-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .user-box { background: #1f2430; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
-    .btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
-    .btn.logout { background: var(--bad); color: #fff; }
-    .btn.login { background: var(--accent); color: #001; }
-    .balance { color: var(--ok); }
-    .nav-row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-    .nav-row a { background: #1f2430; padding: 8px 14px; border-radius: 8px; text-decoration: none; color: var(--text); font-weight: 600; transition: background 0.2s; }
-    .nav-row a:hover { background: var(--accent); color: #001; }
-    main { padding: 20px; display: flex; justify-content: center; }
-    .card { background: var(--card); padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 6px 16px rgba(0,0,0,.25); text-align: center; }
-    input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #333; border-radius: 6px; background: #1f2430; color: var(--text); }
-    .btn-submit { width: 100%; padding: 10px; background: var(--accent); color: #001; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
-    .error { color: var(--bad); margin-top: 10px; font-size: 14px; }
-    .success { color: var(--ok); margin-top: 10px; font-size: 14px; }
-    footer { background: var(--card); padding: 15px; text-align: center; border-top: 1px solid #202635; margin-top: 20px; }
-    footer .footer-user { margin-bottom: 10px; }
+    body { background:var(--bg); color:var(--text); font-family:Arial,sans-serif; margin:0; text-align:center; }
+    header { background:var(--card); display:flex; justify-content:space-between; align-items:center;
+             padding:12px 16px; color:var(--accent); font-weight:800; }
+    .user-info { font-size:14px; color:var(--text); }
+    .auth-btn { background:#06b6d4; border:none; color:#001; padding:6px 10px; border-radius:6px;
+                font-size:13px; font-weight:bold; cursor:pointer; }
+    .auth-btn.logout { background:#ef4444; color:#fff; }
+
+    .container { max-width:520px; margin:20px auto; background:var(--card); border-radius:10px; padding:18px; text-align:center; }
+    h2 { margin:8px 0 14px; color:var(--accent); }
+
+    .profile-box img { border-radius:50%; border:3px solid var(--accent); margin-bottom:10px; }
+    .profile-box h3 { margin:6px 0; }
+    .profile-box p { margin:4px 0; font-size:14px; color:var(--muted); }
+    .profile-box span { color:var(--text); font-weight:bold; }
+    .btn { margin-top:14px; padding:10px 16px; background:var(--accent); border:none; border-radius:8px; cursor:pointer; font-weight:700; }
+    .btn.logout { background:var(--bad); color:#fff; }
   </style>
 </head>
 <body>
-
-<header>
-  <div class="top-row">
-    <div class="site-info">
-      <img src="https://sarkar-telecom.github.io/Topup/logo.png" alt="Logo" class="site-logo">
-      <span class="site-name">SARKAR TELECOM</span>
+  <header>
+    <span>👤 Sarkar Telecom – Profile</span>
+    <div>
+      <span class="user-info" id="userInfo">🔄 Checking...</span>
+      <button id="authBtn" class="auth-btn">Login</button>
     </div>
-    <div class="user-info" id="userInfo">🔄 Checking...</div>
+  </header>
+
+  <div class="container">
+    <h2>My Profile</h2>
+    <div class="profile-box" id="profileBox">
+      <p>Loading profile...</p>
+    </div>
+    <button class="btn logout" id="logoutBtn" style="display:none;">Logout</button>
   </div>
-  <div class="nav-row">
-    <a href="dashboard.html">Dashboard</a>
-    <a href="order.html">Order</a>
-    <a href="order-history.html">Order History</a>
-    <a href="profile.html">Profile</a>
-  </div>
-</header>
 
-<main>
-  <div class="card">
-    <h2>Update Profile</h2>
-    <input type="text" id="name" placeholder="Full Name">
-    <input type="email" id="email" placeholder="Email" disabled>
-    <input type="text" id="phone" placeholder="Phone Number">
-    <input type="text" id="avatar" placeholder="Profile Image URL">
-    <input type="password" id="password" placeholder="New Password (optional)">
-    <button class="btn-submit" id="updateBtn">Update Profile</button>
-    <p class="error" id="errorBox"></p>
-    <p class="success" id="successBox"></p>
-  </div>
-</main>
+  <!-- Footer container -->
+  <div id="footer-container"></div>
 
-<!-- Footer container -->
-<div id="footer"></div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut, updatePassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+    };
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
-    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
-    projectId: "diamond-recharge-f7f59",
-    storageBucket: "diamond-recharge-f7f59.appspot.com",
-    messagingSenderId: "657717928489",
-    appId: "1:657717928489:web:70431ebc9afb7002d4b238"
-  };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+    const userInfo=document.getElementById("userInfo");
+    const authBtn=document.getElementById("authBtn");
+    const profileBox=document.getElementById("profileBox");
+    const logoutBtn=document.getElementById("logoutBtn");
 
-  const userInfo = document.getElementById("userInfo");
-  const updateBtn = document.getElementById("updateBtn");
-  const errorBox = document.getElementById("errorBox");
-  const successBox = document.getElementById("successBox");
+    // Auth check
+    onAuthStateChanged(auth, async (user)=>{
+      if(user){
+        userInfo.textContent="👤 "+(user.displayName || user.email);
+        authBtn.textContent="Logout";
+        authBtn.classList.add("logout");
+        authBtn.onclick=()=>signOut(auth);
+        logoutBtn.style.display="block";
+        logoutBtn.onclick=()=>signOut(auth);
 
-  let currentUser;
-
-  // Load footer.html dynamically
-  fetch("footer.html")
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById("footer").innerHTML = html;
+        try {
+          const snap=await getDoc(doc(db,"users",user.uid));
+          const data=snap.exists()?snap.data():{};
+          profileBox.innerHTML=`
+            <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" width="120">
+            <h3>${data.name || user.displayName || "No Name"} <span style="color:orange">(${data.role || "User"})</span></h3>
+            <p>💎 Balance: <span style="color:lime">${data.balance ?? 0}</span></p>
+            <p>📱 Phone: <span style="color:gold">${data.phone ?? "N/A"}</span></p>
+            <p>📧 Email: <span style="color:skyblue">${user.email}</span></p>
+          `;
+        } catch(e){
+          console.error("Firestore error", e);
+          profileBox.innerHTML="<p>Error loading profile.</p>";
+        }
+      } else {
+        userInfo.textContent="❌ Not logged in";
+        authBtn.textContent="Login";
+        authBtn.classList.remove("logout");
+        authBtn.onclick=()=>window.location.href="login.html";
+        logoutBtn.style.display="none";
+        profileBox.innerHTML="<p>❌ Please login to view profile.</p>";
+      }
     });
 
-  // Auth state observer
-  onAuthStateChanged(auth, async (user) => {
-    const footerUserInfo = document.getElementById("footerUserInfo");
-    if (user) {
-      currentUser = user;
-      const html = `👤 ${user.email} <button class="btn logout" id="logoutBtn">Logout</button>`;
-      userInfo.innerHTML = html;
-      if (footerUserInfo) footerUserInfo.innerHTML = html;
-
-      document.querySelectorAll("#logoutBtn").forEach(btn => {
-        btn.onclick = async () => {
-          await signOut(auth);
-          window.location.href = "login.html";
-        };
-      });
-
-      try {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        if (snap.exists()) {
-          const data = snap.data();
-          document.getElementById("name").value = data.name || "";
-          document.getElementById("email").value = data.email || user.email;
-          document.getElementById("phone").value = data.phone || "";
-          document.getElementById("avatar").value = data.avatar || "";
-        }
-      } catch (e) {
-        console.error("Firestore error", e);
-      }
-
-    } else {
-      const loginHtml = `<a href="login.html" class="btn login">Login</a>`;
-      userInfo.innerHTML = loginHtml;
-      if (footerUserInfo) footerUserInfo.innerHTML = loginHtml;
-      window.location.href = "login.html";
-    }
-  });
-
-  // Update Profile
-  updateBtn.addEventListener("click", async () => {
-    errorBox.textContent = "";
-    successBox.textContent = "";
-
-    if (!currentUser) return;
-
-    const name = document.getElementById("name").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const avatar = document.getElementById("avatar").value.trim();
-    const password = document.getElementById("password").value.trim();
-
-    try {
-      await updateDoc(doc(db, "users", currentUser.uid), { name, phone, avatar });
-
-      await updateProfile(currentUser, {
-        displayName: name,
-        photoURL: avatar || currentUser.photoURL
-      });
-
-      if (password) await updatePassword(currentUser, password);
-
-      successBox.textContent = "✅ Profile updated successfully!";
-    } catch (e) {
-      errorBox.textContent = "⚠ " + e.message;
-    }
-  });
-</script>
+    // Load footer
+    fetch("footer.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("footer-container").innerHTML = html;
+      })
+      .catch(err=>console.error("Footer load error:", err));
+  </script>
 </body>
 </html>
