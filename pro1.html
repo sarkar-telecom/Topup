@@ -13,28 +13,29 @@
       --bad: #ef4444;
       --ok: #10b981;
     }
-    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; min-height: 100vh; }
+    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
     header { background: var(--card); border-bottom: 1px solid #202635; padding: 10px; }
     .top-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
     .site-info { display: flex; align-items: center; gap: 10px; }
     .site-logo { height: 40px; border-radius: 8px; }
     .site-name { font-size: 20px; font-weight: 800; color: var(--accent); }
     .user-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .user-box { background: #1f2430; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
     .btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
     .btn.logout { background: var(--bad); color: #fff; }
     .btn.login { background: var(--accent); color: #001; }
+    .balance { color: var(--ok); }
     .nav-row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
     .nav-row a { background: #1f2430; padding: 8px 14px; border-radius: 8px; text-decoration: none; color: var(--text); font-weight: 600; transition: background 0.2s; }
     .nav-row a:hover { background: var(--accent); color: #001; }
-    main { padding: 20px; display: flex; justify-content: center; flex: 1; }
+    main { padding: 20px; display: flex; justify-content: center; }
     .card { background: var(--card); padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 6px 16px rgba(0,0,0,.25); text-align: center; }
     input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #333; border-radius: 6px; background: #1f2430; color: var(--text); }
     .btn-submit { width: 100%; padding: 10px; background: var(--accent); color: #001; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
     .error { color: var(--bad); margin-top: 10px; font-size: 14px; }
     .success { color: var(--ok); margin-top: 10px; font-size: 14px; }
-    footer, .site-footer { background: var(--card); border-top: 1px solid #202635; text-align: center; padding: 15px; font-size: 14px; margin-top: auto; }
-    footer a, .site-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
-    footer a:hover, .site-footer a:hover { text-decoration: underline; }
+    footer { background: var(--card); padding: 15px; text-align: center; border-top: 1px solid #202635; margin-top: 20px; }
+    footer .footer-user { margin-bottom: 10px; }
   </style>
 </head>
 <body>
@@ -45,7 +46,7 @@
       <img src="https://sarkar-telecom.github.io/Topup/logo.png" alt="Logo" class="site-logo">
       <span class="site-name">SARKAR TELECOM</span>
     </div>
-    <div class="user-info" id="userInfo">🔄 Checking login...</div>
+    <div class="user-info" id="userInfo">🔄 Checking...</div>
   </div>
   <div class="nav-row">
     <a href="dashboard.html">Dashboard</a>
@@ -69,7 +70,8 @@
   </div>
 </main>
 
-<div id="footerContainer"></div>
+<!-- Footer container -->
+<div id="footer"></div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
@@ -89,81 +91,83 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const userInfo = document.getElementById("userInfo");
-    const updateBtn = document.getElementById("updateBtn");
-    const errorBox = document.getElementById("errorBox");
-    const successBox = document.getElementById("successBox");
-    let currentUser;
+  const userInfo = document.getElementById("userInfo");
+  const updateBtn = document.getElementById("updateBtn");
+  const errorBox = document.getElementById("errorBox");
+  const successBox = document.getElementById("successBox");
 
-    // ✅ Auth check
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        currentUser = user;
-        userInfo.innerHTML = `👤 ${user.email} <button class="btn logout" id="logoutBtn">Logout</button>`;
+  let currentUser;
 
-        document.getElementById("logoutBtn").addEventListener("click", async () => {
+  // Load footer.html dynamically
+  fetch("footer.html")
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById("footer").innerHTML = html;
+    });
+
+  // Auth state observer
+  onAuthStateChanged(auth, async (user) => {
+    const footerUserInfo = document.getElementById("footerUserInfo");
+    if (user) {
+      currentUser = user;
+      const html = `👤 ${user.email} <button class="btn logout" id="logoutBtn">Logout</button>`;
+      userInfo.innerHTML = html;
+      if (footerUserInfo) footerUserInfo.innerHTML = html;
+
+      document.querySelectorAll("#logoutBtn").forEach(btn => {
+        btn.onclick = async () => {
           await signOut(auth);
           window.location.href = "login.html";
-        });
-
-        try {
-          const snap = await getDoc(doc(db, "users", user.uid));
-          if (snap.exists()) {
-            const data = snap.data();
-            document.getElementById("name").value = data.name || "";
-            document.getElementById("email").value = data.email || user.email;
-            document.getElementById("phone").value = data.phone || "";
-            document.getElementById("avatar").value = data.avatar || "";
-          }
-        } catch (e) {
-          console.error("Firestore error", e);
-        }
-
-      } else {
-        window.location.href = "login.html";
-      }
-    });
-
-    // ✅ Update Profile
-    updateBtn.addEventListener("click", async () => {
-      errorBox.textContent = "";
-      successBox.textContent = "";
-
-      if (!currentUser) return;
-
-      const name = document.getElementById("name").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const avatar = document.getElementById("avatar").value.trim();
-      const password = document.getElementById("password").value.trim();
+        };
+      });
 
       try {
-        await updateDoc(doc(db, "users", currentUser.uid), { name, phone, avatar });
-
-        await updateProfile(currentUser, {
-          displayName: name,
-          photoURL: avatar || currentUser.photoURL
-        });
-
-        if (password) await updatePassword(currentUser, password);
-
-        successBox.textContent = "✅ Profile updated successfully!";
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (snap.exists()) {
+          const data = snap.data();
+          document.getElementById("name").value = data.name || "";
+          document.getElementById("email").value = data.email || user.email;
+          document.getElementById("phone").value = data.phone || "";
+          document.getElementById("avatar").value = data.avatar || "";
+        }
       } catch (e) {
-        errorBox.textContent = "⚠ " + e.message;
+        console.error("Firestore error", e);
       }
-    });
 
-    // ✅ Load footer
-    fetch("footer.html", { cache: "no-store" })
-      .then(res => res.ok ? res.text() : Promise.reject(res.status))
-      .then(html => document.getElementById("footerContainer").innerHTML = html)
-      .catch(err => {
-        console.warn("Footer load failed", err);
-        document.getElementById("footerContainer").innerHTML = `
-          <footer class="site-footer">
-            <p>© 2025 Sarkar Telecom. All rights reserved.</p>
-          </footer>`;
+    } else {
+      const loginHtml = `<a href="login.html" class="btn login">Login</a>`;
+      userInfo.innerHTML = loginHtml;
+      if (footerUserInfo) footerUserInfo.innerHTML = loginHtml;
+      window.location.href = "login.html";
+    }
+  });
+
+  // Update Profile
+  updateBtn.addEventListener("click", async () => {
+    errorBox.textContent = "";
+    successBox.textContent = "";
+
+    if (!currentUser) return;
+
+    const name = document.getElementById("name").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const avatar = document.getElementById("avatar").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    try {
+      await updateDoc(doc(db, "users", currentUser.uid), { name, phone, avatar });
+
+      await updateProfile(currentUser, {
+        displayName: name,
+        photoURL: avatar || currentUser.photoURL
       });
+
+      if (password) await updatePassword(currentUser, password);
+
+      successBox.textContent = "✅ Profile updated successfully!";
+    } catch (e) {
+      errorBox.textContent = "⚠ " + e.message;
+    }
   });
 </script>
 </body>
