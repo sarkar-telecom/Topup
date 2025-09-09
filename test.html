@@ -1,157 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel - Sarkar Telecom</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Place Order - Sarkar Telecom</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#0f1115; color:#e7eaf0; margin:0; text-align:center; }
-    header { background:#171a21; padding:12px 20px; display:flex; justify-content:space-between; align-items:center; color:#06b6d4; font-weight:bold; }
-    h2 { margin:15px 0; color:#06b6d4; }
-    .btn { padding:6px 12px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; }
-    .btn-logout { background:#ef4444; color:#fff; }
-    .btn-update { padding:4px 8px; border:none; border-radius:6px; cursor:pointer; margin:2px; }
-    .complete { background:#22c55e; color:#fff; }
-    .cancel { background:#ef4444; color:#fff; }
-    table { width:95%; margin:auto; border-collapse:collapse; background:#171a21; font-size:14px; }
-    th, td { border:1px solid #333; padding:6px; text-align:center; }
-    th { background:#06b6d4; color:#001; }
-    .status-box { padding:4px 8px; border-radius:6px; font-weight:bold; }
-    .completed { background:#22c55e; color:#fff; }
-    .cancelled { background:#ef4444; color:#fff; }
-    .waiting { background:#eab308; color:#000; }
+    :root{
+      --bg:#0f1115; --card:#171a21; --text:#e7eaf0; --muted:#9aa3b2;
+      --accent:#06b6d4; --ok:#22c55e; --bad:#ef4444;
+    }
+    body { background:var(--bg); color:var(--text); font-family:Arial, sans-serif; margin:0; }
+    header { background:var(--card); display:flex; justify-content:space-between; align-items:center;
+             padding:12px 16px; color:var(--accent); font-weight:800; }
+    .user-info { font-size:14px; color:var(--text); }
+    .auth-btn { background:#06b6d4; border:none; color:#001; padding:6px 10px; border-radius:6px;
+                font-size:13px; font-weight:bold; cursor:pointer; }
+    .auth-btn.logout { background:#ef4444; color:#fff; }
+    .container { max-width:520px; margin:18px auto; background:var(--card); border-radius:10px; padding:18px; text-align:center; }
+    h2 { margin:8px 0 14px; color:var(--accent); }
+    input { width:92%; background:#0f1115; border:1px solid #2b3347; color:var(--text);
+            border-radius:8px; padding:12px; font-size:16px; text-align:center; }
+    .grid { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:12px 0 4px; }
+    .amt-btn {
+      background:#1f2430; border:1px solid #2b3347; color:var(--text); 
+      padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:700; min-width:84px;
+    }
+    .amt-btn.active { background:var(--accent); color:#001; border-color:var(--accent); }
+    .submit-btn { margin-top:10px; padding:12px 16px; font-size:16px; font-weight:800;
+                  background:var(--accent); color:#001; border:none; border-radius:8px; cursor:pointer; }
+    .submit-btn:disabled { opacity:0.6; cursor:not-allowed; }
+    #message { margin-top:10px; font-weight:700; }
+    .hint { color:var(--muted); font-size:13px; margin-top:6px; }
   </style>
 </head>
 <body>
-<header>
-  <span>💎 Sarkar Telecom - Admin Panel</span>
-  <div>
-    <span id="adminEmail">Checking...</span>
-    <button id="logoutBtn" class="btn btn-logout">Logout</button>
+  <header>
+    <span>💎 Sarkar Telecom – Place Order</span>
+    <div>
+      <span class="user-info" id="userInfo">🔄 Checking...</span>
+      <button id="authBtn" class="auth-btn">Login</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <h2>📝 Place New Order</h2>
+
+    <input type="text" id="number" placeholder="Enter Game ID / Number (with country code)">
+    <div class="hint">উদাহরণ: +8801XXXXXXXXX বা গেম প্রোফাইল আইডি</div>
+
+    <p style="margin:14px 0 8px;">Select Amount</p>
+    <div id="diamonds" class="grid">
+      <button class="amt-btn" onclick="selectAmount(10, this)">10</button>
+      <button class="amt-btn" onclick="selectAmount(50, this)">50</button>
+      <button class="amt-btn" onclick="selectAmount(100, this)">100</button>
+      <button class="amt-btn" onclick="selectAmount(200, this)">200</button>
+      <button class="amt-btn" onclick="selectAmount(500, this)">500</button>
+      <button class="amt-btn" onclick="selectAmount(1000, this)">1000</button>
+      <button class="amt-btn" onclick="selectAmount(2000, this)">2000</button>
+      <button class="amt-btn" onclick="selectAmount(5000, this)">5000</button>
+      <button class="amt-btn" onclick="selectAmount(10000, this)">10000</button>
+      <button class="amt-btn" onclick="selectAmount(20000, this)">20000</button>
+    </div>
+
+    <div class="hint">Selected: <span id="selected">None</span></div>
+
+    <button id="submitBtn" class="submit-btn" onclick="submitOrder()">✅ Confirm Order</button>
+    <p id="message"></p>
   </div>
-</header>
 
-<h2>📋 All Orders (with Status)</h2>
+  <!-- Hidden Google Form submit -->
+  <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
+  <form id="gform" action="https://docs.google.com/forms/d/e/1FAIpQLScLsqajnZepD3HBTwnXwdjGQaItAVtnnGPRkD3TBsU3lPLzuQ/formResponse"
+        method="POST" target="hidden_iframe" style="display:none;">
+    <input type="text" name="entry.1172671786" id="f_number">
+    <input type="text" name="entry.1509335158" id="f_amount">
+    <input type="text" name="entry.588493421" id="f_status" value="Waiting">
+    <input type="text" name="entry.198105099" id="f_email"> <!-- hidden email -->
+  </form>
 
-<table>
-  <thead>
-    <tr>
-      <th>SL</th>
-      <th>Number</th>
-      <th>Amount</th>
-      <th>Status</th>
-      <th>Time</th>
-      <th>Update</th>
-    </tr>
-  </thead>
-  <tbody id="orderTable"></tbody>
-</table>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-<!-- Hidden form for status update -->
-<iframe name="hidden_iframe" style="display:none;"></iframe>
-<form id="statusForm" action="https://docs.google.com/forms/d/e/1FAIpQLScHu8QJ-vZEJlpXDgP0H6G81PhtjRX5N8ElNjsYMmxdFvfcXA/formResponse" method="POST" target="hidden_iframe" style="display:none;">
-  <input type="text" name="entry.1659785972" id="statusField">
-  <input type="text" name="entry.948913982" id="timeField">
-</form>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+    };
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
-  // Firebase config
-  const firebaseConfig = {
-    apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
-    authDomain: "diamond-recharge-f7f59.firebaseapp.com",
-    projectId: "diamond-recharge-f7f59",
-    storageBucket: "diamond-recharge-f7f59.appspot.com",
-    messagingSenderId: "657717928489",
-    appId: "1:657717928489:web:70431ebc9afb7002d4b238"
-  };
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
+    let currentUser=null;
+    const userInfo=document.getElementById("userInfo");
+    const authBtn=document.getElementById("authBtn");
 
-  // CSV Links
-  const ORDERS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=798765937&single=true&output=csv";
-  const STATUS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=117579495&single=true&output=csv";
-
-  const adminEmailBox = document.getElementById("adminEmail");
-  const logoutBtn = document.getElementById("logoutBtn");
-  const orderTable = document.getElementById("orderTable");
-
-  let currentUser = null;
-
-  // CSV Parser
-  async function fetchCSV(url) {
-    const res = await fetch(url);
-    const text = await res.text();
-    return text.trim().split("\n").map(r => r.split(","));
-  }
-
-  // Merge Orders + Status
-  async function loadOrders() {
-    orderTable.innerHTML = "<tr><td colspan='6'>⏳ Loading...</td></tr>";
-    try {
-      const orders = await fetchCSV(ORDERS_URL);
-      const statusRows = await fetchCSV(STATUS_URL);
-
-      const statusMap = {};
-      statusRows.slice(1).forEach(r => {
-        const st = (r[1] || "").trim();
-        const time = (r[2] || "").trim();
-        if (time) statusMap[time] = st;
-      });
-
-      orderTable.innerHTML = "";
-      orders.slice(1).reverse().forEach((row, i) => {
-        const [time, number, amount,, email] = row;
-        const status = statusMap[time] || "";
-        const cls = status === "COMPLETE" ? "completed" : status === "CANCEL" ? "cancelled" : "waiting";
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${i+1}</td>
-          <td>${number}</td>
-          <td>${amount}</td>
-          <td><span class="status-box ${cls}">${status || "-"}</span></td>
-          <td>${time}</td>
-          <td>
-            <button class="btn-update complete" onclick="updateStatus('COMPLETE','${time}')">✔</button>
-            <button class="btn-update cancel" onclick="updateStatus('CANCEL','${time}')">✖</button>
-          </td>
-        `;
-        orderTable.appendChild(tr);
-      });
-
-    } catch (e) {
-      orderTable.innerHTML = `<tr><td colspan='6'>❌ Error: ${e.message}</td></tr>`;
-    }
-  }
-
-  // Submit Status Update via Form
-  window.updateStatus = (status, time) => {
-    document.getElementById("statusField").value = status;
-    document.getElementById("timeField").value = time;
-    document.getElementById("statusForm").submit();
-    alert("✅ Status updated: " + status);
-  };
-
-  // Auth
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      currentUser = user;
-      if (user.email !== "samrat.khulnas@gmail.com") {
-        orderTable.innerHTML = "<tr><td colspan='6'>❌ Access denied. Not an admin.</td></tr>";
-        adminEmailBox.textContent = user.email;
-        return;
+    onAuthStateChanged(auth,(user)=>{
+      if(user){
+        currentUser=user;
+        userInfo.textContent="👤 "+(user.displayName || user.email);
+        authBtn.textContent="Logout";
+        authBtn.classList.add("logout");
+        authBtn.onclick=()=>signOut(auth);
+      }else{
+        currentUser=null;
+        userInfo.textContent="❌ Not logged in";
+        authBtn.textContent="Login";
+        authBtn.classList.remove("logout");
+        authBtn.onclick=()=>window.location.href="login.html";
       }
-      adminEmailBox.textContent = user.email + " (Admin)";
-      loadOrders();
-    } else {
-      window.location.href = "login.html";
-    }
-  });
+    });
 
-  logoutBtn.onclick = () => signOut(auth);
-</script>
+    // Order functions
+    let selectedAmount=null;
+    window.selectAmount=(amount,el)=>{
+      selectedAmount=amount;
+      document.querySelectorAll('.amt-btn').forEach(b=>b.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('selected').textContent=amount;
+    };
+
+    window.submitOrder=()=>{
+      const number=document.getElementById('number').value.trim();
+      const msgEl=document.getElementById('message');
+      const btn=document.getElementById('submitBtn');
+
+      if(!currentUser){ msgEl.textContent="⚠️ Please login first!"; return; }
+      if(!number||!selectedAmount){ msgEl.textContent="⚠️ Enter number & select amount!"; return; }
+
+      document.getElementById('f_number').value=number;
+      document.getElementById('f_amount').value=String(selectedAmount);
+      document.getElementById('f_status').value="Waiting";
+      document.getElementById('f_email').value=currentUser.email;
+
+      btn.disabled=true;
+      msgEl.textContent="⏳ Submitting...";
+      document.getElementById('gform').submit();
+
+      setTimeout(()=>{
+        msgEl.textContent="✅ Order submitted!";
+        window.location.href="order-history.html";
+      },1200);
+    };
+  </script>
+
+  <!-- ✅ Footer container -->
+  <div id="footer-container"></div>
+
+  <!-- ✅ Footer loader -->
+  <script>
+    fetch("footer.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("footer-container").innerHTML = html;
+      });
+  </script>
 </body>
 </html>
