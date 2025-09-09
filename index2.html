@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sarkar Telecom – Index</title>
+  <title>💎 Sarkar Telecom – Dashboard</title>
   <style>
     :root{
       --bg:#0f1115; --card:#171a21; --text:#e7eaf0; --muted:#9aa3b2;
@@ -11,11 +11,19 @@
     }
     body { background:var(--bg); color:var(--text); font-family:Arial,sans-serif; margin:0; }
     header { background:var(--card); display:flex; justify-content:space-between; align-items:center;
-             padding:12px 16px; color:var(--accent); font-weight:800; }
-    .user-info { font-size:14px; color:var(--text); }
+             padding:12px 16px; color:var(--accent); font-weight:800; position:relative; flex-wrap:wrap; }
+    .user-info { font-size:14px; color:var(--text); margin-right:8px; }
     .auth-btn { background:#06b6d4; border:none; color:#001; padding:6px 10px; border-radius:6px;
                 font-size:13px; font-weight:bold; cursor:pointer; }
     .auth-btn.logout { background:#ef4444; color:#fff; }
+
+    /* Ticker */
+    .ticker { width:100%; background:#1c2029; overflow:hidden; white-space:nowrap; border-top:1px solid #2b3347; border-bottom:1px solid #2b3347; }
+    .ticker span { display:inline-block; padding:8px 24px; animation:scroll 25s linear infinite; font-size:14px; }
+    @keyframes scroll {
+      0% { transform:translateX(100%); }
+      100% { transform:translateX(-100%); }
+    }
 
     .container { max-width:520px; margin:20px auto; background:var(--card); border-radius:10px; padding:18px; text-align:center; }
     h2 { margin:8px 0 14px; color:var(--accent); }
@@ -33,11 +41,13 @@
 </head>
 <body>
   <header>
-    <span>💎 Sarkar Telecom</span>
+    <span>💎 Sarkar Telecom – Dashboard</span>
     <div>
       <span class="user-info" id="userInfo">🔄 Checking...</span>
       <button id="authBtn" class="auth-btn">Login</button>
     </div>
+    <!-- Live Ticker -->
+    <div class="ticker"><span id="tickerText">সর্বশেষ আপডেট লোড হচ্ছে...</span></div>
   </header>
 
   <div class="container">
@@ -149,6 +159,35 @@
         }
       });
     }
+
+    // Live ticker fetch from Google Sheet (last 5 updates)
+    const sheetURL="https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=1098128992&single=true&output=csv";
+    async function loadTicker(){
+      try{
+        const res=await fetch(sheetURL);
+        const csv=await res.text();
+        const rows=csv.trim().split("\n").slice(1); // remove header
+        const last5=rows.slice(-5); // last 5 updates
+
+        const messages=last5.map(row=>{
+          const [time,number,amount,email,status]=row.split(",");
+          if(status==="CANCEL"){
+            return `সর্বশেষ - অর্ডার ক্যান্সেল হওয়ায় ${email} ${amount} 💎 ফেরত পেয়েছেন 🔴`;
+          } else if(status==="COMPLETE"){
+            return `সর্বশেষ - ${email} সফলভাবে ${amount} 💎 অর্ডার করেছেন ✅`;
+          } else {
+            return `⏳ ${email} ${amount} 💎 অর্ডার অপেক্ষমান`;
+          }
+        });
+
+        document.getElementById("tickerText").innerHTML=messages.join(" ⚡ ");
+      }catch(e){
+        console.error("Ticker load error", e);
+        document.getElementById("tickerText").textContent="❌ আপডেট পাওয়া যাচ্ছে না";
+      }
+    }
+    loadTicker();
+    setInterval(loadTicker,15000); // প্রতি 15 সেকেন্ড পর refresh হবে
   </script>
 </body>
 </html>
