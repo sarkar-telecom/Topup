@@ -19,10 +19,13 @@
     .feature{background:#171a21;padding:20px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.4);}
     .feature h3{color:#06b6d4;margin-top:0;}
 
-    /* 🔄 টিকার */
-    .ticker-wrap{background:#111;padding:10px 0;text-align:center;font-size:15px;font-weight:bold;color:#fff;}
-    .ticker{opacity:0;transition:opacity 1s ease;}
-    .ticker.show{opacity:1;}
+    /* 🔄 টিকার (scrolling) */
+    .ticker-wrap{background:#111;padding:6px 0;overflow:hidden;white-space:nowrap;}
+    .ticker{display:inline-block;padding-left:100%;animation:ticker 25s linear infinite;}
+    @keyframes ticker {
+      0%{transform:translateX(100%);}
+      100%{transform:translateX(-100%);}
+    }
 
     /* Footer */
     #footer{margin-top:30px;padding:20px;background:#171a21;text-align:center;}
@@ -147,35 +150,29 @@
       });
     }
 
-    // 🔄 Ticker Logic
+    // 🔄 Ticker Logic (scrolling, সর্বশেষ ৫ টা একসাথে দেখাবে)
     const ticker=document.getElementById("ticker");
-    let messages=[];
-    let index=0;
 
     fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=1098128992&single=true&output=csv")
       .then(res=>res.text())
       .then(csv=>{
         const rows=csv.split("\n").slice(1).reverse(); // সর্বশেষ আগে
-        messages=rows.slice(0,5).map(r=>{
+        const messages=rows.slice(0,5).map(r=>{
           const cols=r.split(",");
           const email=cols[3]||"অজানা ইউজার";
           const amount=cols[2]||"0";
           const status=cols[4]||"Waiting";
           if(status.trim()==="COMPLETE"){
-            return `✅ সর্বশেষ: ${email} সফলভাবে ${amount} 💎 অর্ডার করেছেন`;
+            return `✅ ${email} সফলভাবে ${amount} 💎 অর্ডার করেছেন`;
           } else if(status.trim()==="CANCEL"){
-            return `🔴 সর্বশেষ: ${email} ${amount} 💎 ফেরত পেয়েছেন (অর্ডার ক্যান্সেল)`;
+            return `🔴 ${email} ${amount} 💎 ফেরত পেয়েছেন (অর্ডার ক্যান্সেল)`;
           } else {
-            return `⏳ সর্বশেষ: ${email} ${amount} 💎 অর্ডার দিয়েছেন, অপেক্ষমান...`;
+            return `⏳ ${email} ${amount} 💎 অর্ডার দিয়েছেন, অপেক্ষমান...`;
           }
         });
 
         if(messages.length>0){
-          showTickerMessage();
-          setInterval(()=>{
-            index=(index+1)%messages.length;
-            showTickerMessage();
-          },10000); // প্রতি ১০ সেকেন্ডে নতুন মেসেজ
+          ticker.textContent = messages.join(" ⚡ ");
         } else {
           ticker.textContent="কোনও অর্ডারের তথ্য পাওয়া যায়নি।";
         }
@@ -184,14 +181,6 @@
         console.error("Ticker load failed:", err);
         ticker.textContent="⚠️ টিকার তথ্য লোডে সমস্যা হচ্ছে";
       });
-
-    function showTickerMessage(){
-      ticker.classList.remove("show");
-      setTimeout(()=>{
-        ticker.textContent=messages[index];
-        ticker.classList.add("show");
-      },1000); // fade effect
-    }
   </script>
 </body>
 </html>
