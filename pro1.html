@@ -35,10 +35,18 @@
     .btn-submit { width: 100%; padding: 10px; background: var(--accent); color: #001; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
     .error { color: var(--bad); margin-top: 10px; font-size: 14px; }
     .success { color: var(--ok); margin-top: 10px; font-size: 14px; }
-    /* ✅ Footer Style */
-    footer { background: var(--card); border-top: 1px solid #202635; text-align: center; padding: 15px; font-size: 14px; margin-top: auto; }
-    footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
-    footer a:hover { text-decoration: underline; }
+
+    /* Footer style (applies to loaded footer too) */
+    .site-footer, footer {
+      background: var(--card);
+      border-top: 1px solid #202635;
+      text-align: center;
+      padding: 15px;
+      font-size: 14px;
+      margin-top: auto;
+    }
+    .site-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .site-footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -73,10 +81,8 @@
   </div>
 </main>
 
-<!-- ✅ Static Footer -->
-<footer>
-  <p>© 2025 Sarkar Telecom. All rights reserved. | <a href="contact.html">Contact Us</a></p>
-</footer>
+<!-- placeholder where external footer.html will be injected -->
+<div id="footerContainer"></div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
@@ -103,7 +109,7 @@
 
   let currentUser;
 
-  // ✅ Auth check (same style as order.html)
+  // Auth check
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       currentUser = user;
@@ -132,7 +138,7 @@
     }
   });
 
-  // 🔹 Update Profile
+  // Update Profile
   updateBtn.addEventListener("click", async () => {
     errorBox.textContent = "";
     successBox.textContent = "";
@@ -159,6 +165,26 @@
       successBox.textContent = "✅ Profile updated successfully!";
     } catch (e) {
       errorBox.textContent = "⚠ " + e.message;
+    }
+  });
+
+  // -------------------------
+  // Load footer.html into page
+  // -------------------------
+  document.addEventListener('DOMContentLoaded', async () => {
+    const container = document.getElementById('footerContainer');
+    try {
+      const res = await fetch('footer.html', { cache: 'no-store' });
+      if (!res.ok) throw new Error('Footer not found: ' + res.status);
+      const footerHtml = await res.text();
+      container.innerHTML = footerHtml;
+      console.log('Footer loaded from footer.html');
+    } catch (err) {
+      console.warn('Footer load failed:', err);
+      // fallback footer
+      container.innerHTML = `<footer class="site-footer">
+        <p>© 2025 Sarkar Telecom. All rights reserved. | <a href="contact.html">Contact Us</a></p>
+      </footer>`;
     }
   });
 </script>
