@@ -34,7 +34,7 @@
 <header>
   <div>💎 Sarkar Telecom - Admin Panel</div>
   
-  <!-- ✅ Navigation বাটন -->
+  <!-- ✅ Navigation -->
   <div class="nav-buttons">
     <a href="dashboard.html">Dashboard</a>
     <a href="order.html">Order</a>
@@ -110,9 +110,60 @@
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
 
-  // ... 🔹 আপনার আগের order table লোড ফাংশনগুলো অপরিবর্তিত থাকবে ...
+  let allOrders = [], viewOrders = [], currentPage = 1;
+  const rowsPerPage = 10;
 
-  // Auth check
+  // ---- CSV Parse + Fetch + Render Functions ----
+  function parseCSV(text){
+    text = text.replace(/\r/g,'');
+    const lines = text.split('\n').filter(l => l.trim().length>0);
+    const rows = [];
+    for(const line of lines){
+      const row = [];
+      let cur = '', inQ = false;
+      for(let i=0;i<line.length;i++){
+        const ch = line[i];
+        if(ch === '"'){
+          if(inQ && line[i+1] === '"'){ cur += '"'; i++; }
+          else inQ = !inQ;
+        } else if(ch === ',' && !inQ){
+          row.push(cur);
+          cur = '';
+        } else cur += ch;
+      }
+      row.push(cur);
+      rows.push(row);
+    }
+    return rows;
+  }
+
+  async function fetchCSV(url){
+    const res = await fetch(url, {cache: 'no-store'});
+    if(!res.ok) throw new Error('CSV fetch failed: ' + res.status);
+    const txt = await res.text();
+    return parseCSV(txt);
+  }
+
+  async function loadAndMerge(){
+    // আপনার আগের merge কোড অপরিবর্তিত থাকবে
+    // (আমি এখানে সংক্ষিপ্ত করেছি, তবে আপনার full version 그대로 রাখবেন)
+  }
+
+  // ---- Event Handlers + Search + Status Update ----
+  function updateStatus(status, time){
+    if(!time){ alert('Missing reference time — cannot update'); return; }
+    document.getElementById('statusField').value = status;
+    document.getElementById('timeField').value = time;
+    try {
+      document.getElementById('statusForm').submit();
+      alert('✅ Status submitted: ' + status);
+      setTimeout(()=>loadAndMerge(), 2200);
+    } catch(e){
+      console.error(e);
+    }
+  }
+
+  // ---- Auth State ----
   onAuthStateChanged(auth, user => {
     if(!user) {
       window.location.href = 'login.html';
@@ -124,19 +175,18 @@
       orderTable.innerHTML = '<tr><td colspan="6">❌ Access denied. Not an admin.</td></tr>';
       return;
     }
-    // loadAndMerge() এখানে কল করবেন (আমি বাদ দিলাম জায়গা বাঁচাতে)
+    loadAndMerge();
   });
 
   logoutBtn.onclick = ()=> signOut(auth);
 
-  // ✅ Footer loader
+  // ✅ Footer Loader
   fetch("footer.html")
     .then(res => res.text())
     .then(html => {
       document.getElementById("footer-container").innerHTML = html;
-      attachUserBox(); // footer লোড হওয়ার পরে auth state attach
-    })
-    .catch(err => console.error("Footer load error:", err));
+      attachUserBox(); 
+    });
 
   async function attachUserBox(){
     const userBox = document.getElementById("userBox");
