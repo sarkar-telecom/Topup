@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sarkar Telecom - Home</title>
+  <style>
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#0f1115;color:#e7eaf0;text-align:center;}
+    header{background:#171a21;padding:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
+    header h1{color:#06b6d4;margin:0;}
+    nav a{color:#e7eaf0;text-decoration:none;margin:0 10px;font-weight:600;}
+    nav a:hover{color:#06b6d4;}
+    .hero{padding:60px 20px;}
+    .hero h2{font-size:28px;color:#06b6d4;}
+    .hero p{color:#9aa3b2;margin:10px 0 20px;}
+    .btn{background:#06b6d4;color:#001;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;}
+    .btn:hover{background:#0ea5e9;}
+    .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;padding:30px;max-width:900px;margin:auto;}
+    .feature{background:#171a21;padding:20px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.4);}
+    .feature h3{color:#06b6d4;margin-top:0;}
+    #footer{margin-top:40px;}
+    /* 🔔 Popup Notification Style */
+    .popup{
+      position:fixed;bottom:20px;right:20px;z-index:9999;
+      background:#06b6d4;color:#001;padding:12px 18px;
+      border-radius:8px;font-weight:bold;
+      box-shadow:0 4px 10px rgba(0,0,0,0.5);
+      animation:slideIn 0.3s ease;
+    }
+    @keyframes slideIn{
+      from{transform:translateY(30px);opacity:0;}
+      to{transform:translateY(0);opacity:1;}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>💎 Sarkar Telecom</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="order.html">Order</a>
+      <a href="order-history.html">History</a>
+      <a href="profile.html">Profile</a>
+      <a href="login.html" id="loginLink">Login</a>
+      <a href="#" id="logoutLink" style="display:none;">Logout</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h2>Welcome to Sarkar Telecom</h2>
+    <p>Fast & Secure Online Recharge Service</p>
+    <a href="order.html" class="btn">🚀 Order Now</a>
+  </section>
+
+  <section class="features">
+    <div class="feature">
+      <h3>⚡ Fast Recharge</h3>
+      <p>Instant mobile top-up & gaming recharge.</p>
+    </div>
+    <div class="feature">
+      <h3>📋 Order Tracking</h3>
+      <p>Check & manage all your past orders easily.</p>
+    </div>
+    <div class="feature">
+      <h3>🔐 Secure Login</h3>
+      <p>Safe authentication system with Firebase.</p>
+    </div>
+    <div class="feature">
+      <h3>📱 24/7 Support</h3>
+      <p>We are here to help you anytime.</p>
+    </div>
+  </section>
+
+  <!-- Footer load -->
+  <div id="footer"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, doc, getDoc, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const loginLink=document.getElementById("loginLink");
+    const logoutLink=document.getElementById("logoutLink");
+
+    // 🔄 Auth toggle
+    onAuthStateChanged(auth,(user)=>{
+      if(user){
+        loginLink.style.display="none";
+        logoutLink.style.display="inline";
+      } else {
+        loginLink.style.display="inline";
+        logoutLink.style.display="none";
+      }
+    });
+
+    logoutLink.onclick=()=>signOut(auth);
+
+    // 🔽 Load footer
+    fetch("footer.html")
+      .then(res=>res.text())
+      .then(html=>{
+        document.getElementById("footer").innerHTML=html;
+        attachUserInfo();
+      })
+      .catch(err=>console.error("Footer load failed:",err));
+
+    function attachUserInfo(){
+      const userBox=document.getElementById("userBox");
+      if(!userBox) return;
+      onAuthStateChanged(auth,async(user)=>{
+        if(user){
+          const snap=await getDoc(doc(db,"users",user.uid));
+          const data=snap.exists()?snap.data():{};
+          userBox.innerHTML=`
+            <h3>${data.name || user.displayName || "No Name"}</h3>
+            <p>💎 ${data.balance ?? 0}</p>
+            <p>${user.email}</p>
+          `;
+        } else {
+          userBox.innerHTML="<p>❌ Not logged in</p>";
+        }
+      });
+    }
+
+    // 🔔 Realtime Order Listener
+    const orderQ=query(collection(db,"orders"),orderBy("createdAt","desc"),limit(1));
+    onSnapshot(orderQ,(snapshot)=>{
+      snapshot.docChanges().forEach(change=>{
+        if(change.type==="added"){
+          const order=change.doc.data();
+          showPopup(`🛒 New Order: ${order.userName || "Unknown"} - ${order.amount}৳`);
+        }
+      });
+    });
+
+    // 🔔 Realtime Refund Listener
+    const refundQ=query(collection(db,"refunds"),orderBy("time","desc"),limit(1));
+    onSnapshot(refundQ,(snapshot)=>{
+      snapshot.docChanges().forEach(change=>{
+        if(change.type==="added"){
+          const refund=change.doc.data();
+          showPopup(`💰 Refund: ${refund.amount}৳ to ${refund.userEmail || "user"}`);
+        }
+      });
+    });
+
+    // ✅ Popup function
+    function showPopup(msg){
+      const popup=document.createElement("div");
+      popup.className="popup";
+      popup.textContent=msg;
+      document.body.appendChild(popup);
+      setTimeout(()=>popup.remove(),5000);
+    }
+  </script>
+</body>
+</html>
