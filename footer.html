@@ -134,36 +134,3 @@
     .user-details { text-align:center; }
   }
 </style>
-
-<script type="module">
-  import { auth, db } from "./firebase.js";
-  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-
-  const userBox = document.getElementById("userBox");
-
-  onAuthStateChanged(auth, async (user)=>{
-    if(user){
-      const userRef = doc(db,"users",user.uid);
-      const snap = await getDoc(userRef);
-      const data = snap.exists() ? snap.data() : {};
-      const bal = data.balance ?? 0;
-      const role = data.role ?? "User";
-      const phone = data.phone ?? "N/A";
-
-      userBox.innerHTML = `
-        <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" alt="avatar">
-        <div class="user-details">
-          <h3>${data.name || user.displayName || "No Name"} 
-              <span class="role-text">(${role})</span>
-          </h3>
-          <p>💎 <span class="balance-gradient">${bal}</span></p>
-          <p>📱 <span class="phone-text">${phone}</span></p>
-          <p>📧 <span class="email-text">${user.email}</span></p>
-        </div>
-      `;
-    } else {
-      userBox.innerHTML = "<p>❌ Not logged in</p>";
-    }
-  });
-</script>
