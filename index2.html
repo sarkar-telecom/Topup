@@ -24,16 +24,19 @@
     .ticker-wrap {
       background:#171a21;
       overflow:hidden;
-      white-space:nowrap;
       border-top:1px solid #333;
       border-bottom:1px solid #333;
       padding:10px;
     }
     .ticker {
-      display:inline-block;
       font-size:15px;
       color:#e7eaf0;
       font-weight:600;
+      opacity:0;
+      transition:opacity 1s ease-in-out;
+    }
+    .ticker.show {
+      opacity:1;
     }
   </style>
 </head>
@@ -180,11 +183,11 @@
         });
 
         if(messages.length>0){
-          ticker.textContent=messages[0];
+          showTickerMessage();
           setInterval(()=>{
             index=(index+1)%messages.length;
-            ticker.textContent=messages[index];
-          },12000); // 12 সেকেন্ড বিরতি
+            showTickerMessage();
+          },12000); // প্রতি 12 সেকেন্ড পর মেসেজ পাল্টাবে
         } else {
           ticker.textContent="কোনও অর্ডারের তথ্য পাওয়া যায়নি।";
         }
@@ -193,6 +196,14 @@
         console.error("Ticker load failed:", err);
         ticker.textContent="⚠️ টিকার তথ্য লোডে সমস্যা হচ্ছে";
       });
+
+    function showTickerMessage(){
+      ticker.classList.remove("show");
+      setTimeout(()=>{
+        ticker.textContent=messages[index];
+        ticker.classList.add("show");
+      },1000); // fade-out এর পর fade-in
+    }
   </script>
 </body>
 </html>
