@@ -39,7 +39,7 @@
   .footer-container {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: stretch;
     flex-wrap: wrap;
     gap: 20px;
   }
@@ -50,10 +50,11 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 14px;
     max-width: 200px;
+    flex: 1;
   }
 
   .footer-nav-grid button {
-    background: rgba(23, 26, 33, 0.75);
+    background: rgba(23, 26, 33, 0.85);
     border: 1px solid rgba(255,255,255,0.08);
     color: #e7eaf0;
     padding: 12px;
@@ -84,21 +85,21 @@
   .user-card {
     padding: 25px;
     border-radius: 20px;
-    background: rgba(23,26,33,0.75);
+    background: rgba(23,26,33,0.85);
     backdrop-filter: blur(14px);
     display: flex;
     align-items: center;
     gap: 24px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.6);
-    flex: 1;
+    flex: 2;
     justify-content: center;
-    min-width: 260px;
-    max-width: 420px;
+    min-width: 280px;
+    max-width: 500px;
   }
 
   .user-card img {
-    width: 120px;
-    height: 120px;
+    width: 130px;
+    height: 130px;
     border-radius: 50%;
     border: 4px solid #06b6d4;
     object-fit: cover;
@@ -106,12 +107,13 @@
 
   .user-details {
     font-size: 16px;
-    line-height: 1.7;
+    line-height: 1.8;
     text-align: left;
   }
-  .user-details strong { font-size: 20px; color: #06b6d4; }
+  .user-details strong { font-size: 22px; color: #06b6d4; }
+  .user-details .role { font-size: 16px; color: #facc15; font-weight: 600; }
   .user-details .email { color: #38bdf8; }
-  .user-details .phone { color: #facc15; }
+  .user-details .phone { color: #fbbf24; }
   .user-details .balance { color: #22c55e; font-weight: bold; }
 
   .footer-copy {
@@ -153,19 +155,20 @@
     if (!user) { userBox.innerHTML = "❌ Not logged in"; return; }
     try {
       const snap = await getDoc(doc(db, "users", user.uid));
-      let balance = 0, phone = "N/A", avatar="", name="";
+      let balance = 0, phone = "N/A", avatar="", name="", role="";
       if (snap.exists()) {
         const data = snap.data();
         balance = data.balance || 0;
         phone = data.phone || "N/A";
         avatar = data.avatar || user.photoURL || "https://i.ibb.co/3T1VYwF/user.png";
         name = data.name || user.displayName || "No Name";
+        role = data.role || "user";
       }
       const email = user.email || "Unknown";
       userBox.innerHTML = `
         <img src="${avatar}" alt="Avatar">
         <div class="user-details">
-          <strong>${name}</strong><br>
+          <strong>${name}</strong> <span class="role">(${role})</span><br>
           📧 <span class="email">${email}</span><br>
           📱 <span class="phone">${phone}</span><br>
           💎 <span class="balance">Balance: ${balance}</span>
