@@ -79,12 +79,15 @@
     align-items:center;
     gap:20px;
     min-width:260px;
-    max-width:380px;
+    max-width:min(380px,100%);
     box-shadow:0 4px 12px rgba(0,0,0,0.4);
+    flex:1 1 320px;
+    box-sizing:border-box;
+    overflow:hidden;
   }
   .user-card img {
-    width:110px;
-    height:110px;
+    width:80px;
+    height:80px;
     border-radius:50%;
     border:3px solid #06b6d4;
     box-shadow:0 0 15px #06b6d4;
@@ -95,23 +98,11 @@
     to { box-shadow:0 0 25px #22c55e; }
   }
 
-  .user-details {
-    text-align:left;
-    flex:1;
-  }
-  .user-details h3 {
-    margin:5px 0;
-    font-size:19px;
-    color:#06b6d4;
-  }
-  .user-details p {
-    margin:6px 0;
-    font-size:15px;
-    font-weight:bold;
-  }
+  .user-details { text-align:left; flex:1; }
+  .user-details h3 { margin:5px 0; font-size:17px; color:#06b6d4; }
+  .user-details p { margin:4px 0; font-size:14px; font-weight:bold; }
 
-  /* Colorful Info */
-  .role-text { color:#f97316; font-size:14px; }
+  .role-text { color:#f97316; font-size:13px; }
   .balance-gradient {
     background: linear-gradient(90deg, #06b6d4, #22c55e);
     -webkit-background-clip:text;
@@ -134,3 +125,57 @@
     .user-details { text-align:center; }
   }
 </style>
+
+<!-- Firebase Auth Detect -->
+<script type="module">
+  // Import Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+  // আপনার Firebase config বসান
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  const userBox = document.getElementById("userBox");
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const name = user.displayName || "Guest User";
+      const email = user.email || "";
+      const photo = user.photoURL || "https://via.placeholder.com/80";
+
+      userBox.innerHTML = `
+        <img src="${photo}" alt="User">
+        <div class="user-details">
+          <h3>${name}</h3>
+          <p class="email-text">${email}</p>
+          <p class="role-text">Logged in</p>
+        </div>
+      `;
+    } else {
+      userBox.innerHTML = `
+        <div class="user-details">
+          <h3>Not Logged In</h3>
+          <p><a href="login.html">🔑 Login</a></p>
+        </div>
+      `;
+    }
+  });
+
+  // Logout button click
+  document.querySelectorAll(".logout-btn").forEach(btn=>{
+    btn.addEventListener("click",(e)=>{
+      e.preventDefault();
+      signOut(auth);
+    });
+  });
+</script>
