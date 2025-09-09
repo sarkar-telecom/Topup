@@ -20,9 +20,6 @@
     .site-logo { height: 40px; border-radius: 8px; }
     .site-name { font-size: 20px; font-weight: 800; color: var(--accent); }
     .user-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-    .user-box { background: #1f2430; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
-    .balance { color: var(--ok); }
     .btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
     .btn.logout { background: var(--bad); color: #fff; }
     .btn.login { background: var(--accent); color: #001; }
@@ -35,18 +32,9 @@
     .btn-submit { width: 100%; padding: 10px; background: var(--accent); color: #001; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
     .error { color: var(--bad); margin-top: 10px; font-size: 14px; }
     .success { color: var(--ok); margin-top: 10px; font-size: 14px; }
-
-    /* Footer style (applies to loaded footer too) */
-    .site-footer, footer {
-      background: var(--card);
-      border-top: 1px solid #202635;
-      text-align: center;
-      padding: 15px;
-      font-size: 14px;
-      margin-top: auto;
-    }
-    .site-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
-    .site-footer a:hover { text-decoration: underline; }
+    footer, .site-footer { background: var(--card); border-top: 1px solid #202635; text-align: center; padding: 15px; font-size: 14px; margin-top: auto; }
+    footer a, .site-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    footer a:hover, .site-footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -57,7 +45,7 @@
       <img src="https://sarkar-telecom.github.io/Topup/logo.png" alt="Logo" class="site-logo">
       <span class="site-name">SARKAR TELECOM</span>
     </div>
-    <div class="user-info" id="userInfo">🔄 Checking...</div>
+    <div class="user-info" id="userInfo">🔄 Checking login...</div>
   </div>
   <div class="nav-row">
     <a href="dashboard.html">Dashboard</a>
@@ -81,7 +69,6 @@
   </div>
 </main>
 
-<!-- placeholder where external footer.html will be injected -->
 <div id="footerContainer"></div>
 
 <script type="module">
@@ -102,90 +89,81 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  const userInfo = document.getElementById("userInfo");
-  const updateBtn = document.getElementById("updateBtn");
-  const errorBox = document.getElementById("errorBox");
-  const successBox = document.getElementById("successBox");
+  document.addEventListener("DOMContentLoaded", () => {
+    const userInfo = document.getElementById("userInfo");
+    const updateBtn = document.getElementById("updateBtn");
+    const errorBox = document.getElementById("errorBox");
+    const successBox = document.getElementById("successBox");
+    let currentUser;
 
-  let currentUser;
+    // ✅ Auth check
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        userInfo.innerHTML = `👤 ${user.email} <button class="btn logout" id="logoutBtn">Logout</button>`;
 
-  // Auth check
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      currentUser = user;
-      userInfo.innerHTML = `👤 ${user.email} <button class="btn logout" id="logoutBtn">Logout</button>`;
+        document.getElementById("logoutBtn").addEventListener("click", async () => {
+          await signOut(auth);
+          window.location.href = "login.html";
+        });
 
-      document.getElementById("logoutBtn").onclick = async () => {
-        await signOut(auth);
+        try {
+          const snap = await getDoc(doc(db, "users", user.uid));
+          if (snap.exists()) {
+            const data = snap.data();
+            document.getElementById("name").value = data.name || "";
+            document.getElementById("email").value = data.email || user.email;
+            document.getElementById("phone").value = data.phone || "";
+            document.getElementById("avatar").value = data.avatar || "";
+          }
+        } catch (e) {
+          console.error("Firestore error", e);
+        }
+
+      } else {
         window.location.href = "login.html";
-      };
+      }
+    });
+
+    // ✅ Update Profile
+    updateBtn.addEventListener("click", async () => {
+      errorBox.textContent = "";
+      successBox.textContent = "";
+
+      if (!currentUser) return;
+
+      const name = document.getElementById("name").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const avatar = document.getElementById("avatar").value.trim();
+      const password = document.getElementById("password").value.trim();
 
       try {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        if (snap.exists()) {
-          const data = snap.data();
-          document.getElementById("name").value = data.name || "";
-          document.getElementById("email").value = data.email || user.email;
-          document.getElementById("phone").value = data.phone || "";
-          document.getElementById("avatar").value = data.avatar || "";
-        }
+        await updateDoc(doc(db, "users", currentUser.uid), { name, phone, avatar });
+
+        await updateProfile(currentUser, {
+          displayName: name,
+          photoURL: avatar || currentUser.photoURL
+        });
+
+        if (password) await updatePassword(currentUser, password);
+
+        successBox.textContent = "✅ Profile updated successfully!";
       } catch (e) {
-        console.error("Firestore error", e);
+        errorBox.textContent = "⚠ " + e.message;
       }
+    });
 
-    } else {
-      window.location.href = "login.html";
-    }
-  });
-
-  // Update Profile
-  updateBtn.addEventListener("click", async () => {
-    errorBox.textContent = "";
-    successBox.textContent = "";
-
-    if (!currentUser) return;
-
-    const name = document.getElementById("name").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const avatar = document.getElementById("avatar").value.trim();
-    const password = document.getElementById("password").value.trim();
-
-    try {
-      await updateDoc(doc(db, "users", currentUser.uid), {
-        name, phone, avatar
+    // ✅ Load footer
+    fetch("footer.html", { cache: "no-store" })
+      .then(res => res.ok ? res.text() : Promise.reject(res.status))
+      .then(html => document.getElementById("footerContainer").innerHTML = html)
+      .catch(err => {
+        console.warn("Footer load failed", err);
+        document.getElementById("footerContainer").innerHTML = `
+          <footer class="site-footer">
+            <p>© 2025 Sarkar Telecom. All rights reserved.</p>
+          </footer>`;
       });
-
-      await updateProfile(currentUser, {
-        displayName: name,
-        photoURL: avatar || currentUser.photoURL
-      });
-
-      if (password) await updatePassword(currentUser, password);
-
-      successBox.textContent = "✅ Profile updated successfully!";
-    } catch (e) {
-      errorBox.textContent = "⚠ " + e.message;
-    }
-  });
-
-  // -------------------------
-  // Load footer.html into page
-  // -------------------------
-  document.addEventListener('DOMContentLoaded', async () => {
-    const container = document.getElementById('footerContainer');
-    try {
-      const res = await fetch('footer.html', { cache: 'no-store' });
-      if (!res.ok) throw new Error('Footer not found: ' + res.status);
-      const footerHtml = await res.text();
-      container.innerHTML = footerHtml;
-      console.log('Footer loaded from footer.html');
-    } catch (err) {
-      console.warn('Footer load failed:', err);
-      // fallback footer
-      container.innerHTML = `<footer class="site-footer">
-        <p>© 2025 Sarkar Telecom. All rights reserved. | <a href="contact.html">Contact Us</a></p>
-      </footer>`;
-    }
   });
 </script>
 </body>
