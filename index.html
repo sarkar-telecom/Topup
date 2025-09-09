@@ -61,12 +61,60 @@
   <!-- Footer load -->
   <div id="footer"></div>
 
-  <script>
-    // footer.html auto load
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Load footer and then attach auth info
     fetch("footer.html")
-      .then(res=>res.text())
-      .then(html=>{ document.getElementById("footer").innerHTML=html; })
-      .catch(err=>console.error("Footer load failed:",err));
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("footer").innerHTML = html;
+        attachUserInfo();
+      })
+      .catch(err => console.error("Footer load failed:", err));
+
+    function attachUserInfo(){
+      const userBox=document.getElementById("userBox");
+      if(!userBox) return;
+
+      onAuthStateChanged(auth, async (user)=>{
+        if(user){
+          const snap=await getDoc(doc(db,"users",user.uid));
+          const data=snap.exists()?snap.data():{};
+          const bal=data.balance ?? 0;
+          const role=data.role ?? "User";
+          const phone=data.phone ?? "N/A";
+
+          userBox.innerHTML=`
+            <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" width="90" style="border-radius:50%;border:3px solid #06b6d4;">
+            <div>
+              <h3>${data.name || user.displayName || "No Name"} <span style="color:orange">(${role})</span></h3>
+              <p>💎 <span style="color:lime">${bal}</span></p>
+              <p>📱 ${phone}</p>
+              <p>📧 ${user.email}</p>
+            </div>
+          `;
+        } else {
+          userBox.innerHTML="<p>❌ Not logged in</p>";
+        }
+      });
+    }
   </script>
 </body>
 </html>
