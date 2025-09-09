@@ -2,39 +2,42 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Footer</title>
   <style>
     footer {
       background:#171a21;
-      padding:16px 10px;
+      padding:20px 12px;
       margin-top:30px;
       text-align:center;
+      border-top:2px solid #2b3347;
     }
     .footer-btn {
       display:inline-block;
-      margin:4px;
-      padding:8px 14px;
+      margin:5px;
+      padding:10px 16px;
       border-radius:8px;
-      background:#06b6d4;
-      color:#001;
+      background:#1f2430;
+      color:#e7eaf0;
       font-weight:bold;
       font-size:14px;
       text-decoration:none;
       transition:0.2s;
+      border:1px solid #2b3347;
     }
     .footer-btn:hover {
-      background:#0ea5e9;
+      background:#06b6d4;
+      color:#001;
       transform:scale(1.05);
     }
     .copyright {
-      margin-top:10px;
+      margin-top:12px;
       font-size:13px;
       color:#9aa3b2;
     }
     /* User info box */
     .user-box {
-      margin-top:12px;
+      margin-top:14px;
       padding:10px;
       border-radius:10px;
       background:#0f1115;
@@ -42,30 +45,13 @@
       text-align:left;
       font-size:14px;
       color:#e7eaf0;
-      min-width:220px;
+      min-width:240px;
     }
     .user-box img {
-      width:40px; height:40px;
+      width:42px; height:42px;
       border-radius:50%;
       vertical-align:middle;
       margin-right:10px;
-    }
-    .whatsapp-btn {
-      position:fixed;
-      bottom:80px;
-      right:20px;
-      background:#25D366;
-      color:white;
-      padding:12px 18px;
-      border-radius:50px;
-      font-weight:bold;
-      text-decoration:none;
-      box-shadow:0 4px 10px rgba(0,0,0,0.4);
-      transition:0.2s;
-    }
-    .whatsapp-btn:hover {
-      background:#1ebe57;
-      transform:scale(1.08);
     }
   </style>
 </head>
@@ -75,27 +61,21 @@
     <div>
       <a href="index.html" class="footer-btn">🏠 Home</a>
       <a href="dashboard.html" class="footer-btn">📊 Dashboard</a>
-      <a href="login.html" class="footer-btn">🔑 Login</a>
+      <a href="profile.html" class="footer-btn">👤 Profile</a>
+      <a href="https://wa.me/8801715118684?text=Hello%20I%20need%20support" target="_blank" class="footer-btn">💬 Support</a>
       <a href="register.html" class="footer-btn">📝 Register</a>
-      <a href="order.html" class="footer-btn">➕ Order</a>
-      <a href="order-history.html" class="footer-btn">📜 History</a>
-      <a href="admin.html" class="footer-btn">⚙ Admin</a>
       <a href="forgot.html" class="footer-btn">❓ Forgot</a>
       <a href="reset.html" class="footer-btn">♻ Reset</a>
-      <a href="profile.html" class="footer-btn">👤 Profile</a>
+      <a href="order.html" class="footer-btn">➕ Order</a>
+      <a href="order-history.html" class="footer-btn">📜 History</a>
+      <a href="login.html" class="footer-btn">🔑 Login</a>
       <a href="logout.html" class="footer-btn">🚪 Logout</a>
-      <a href="support.html" class="footer-btn">💬 Support</a>
     </div>
 
     <!-- User Info -->
     <div class="user-box" id="userBox">
       🔄 Checking login...
     </div>
-
-    <!-- WhatsApp Floating Button -->
-    <a href="https://wa.me/8801715118684?text=Hello%20I%20need%20support" target="_blank" class="whatsapp-btn">
-      💬 WhatsApp
-    </a>
 
     <!-- Copyright -->
     <div class="copyright">
