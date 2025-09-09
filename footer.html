@@ -1,117 +1,67 @@
-<footer>
-  <!-- Navigation -->
-  <div class="nav-grid">
-    <a href="index.html" class="footer-btn">🏠 Home</a>
-    <a href="dashboard.html" class="footer-btn">📊 Dashboard</a>
-    <a href="profile.html" class="footer-btn">👤 Profile</a>
-    <a href="https://wa.me/8801715118684?text=Hello%20I%20need%20support" target="_blank" class="footer-btn">💬 Support</a>
-    <a href="register.html" class="footer-btn">📝 Register</a>
-    <a href="forgot.html" class="footer-btn">❓ Forgot</a>
-    <a href="reset.html" class="footer-btn">♻ Reset</a>
-    <a href="order.html" class="footer-btn">➕ Order</a>
-    <a href="order-history.html" class="footer-btn">📜 History</a>
-    <a href="login.html" class="footer-btn">🔑 Login</a>
-    <a href="logout.html" class="footer-btn logout-btn">🚪 Logout</a>
-  </div>
-
-  <!-- User Info -->
-  <div class="user-box" id="userBox">
-    🔄 Checking login...
-  </div>
-
-  <!-- Copyright -->
-  <div class="copyright">
-    © SARKAR TELECOM 2025-2026
-  </div>
-</footer>
+<!-- User Info -->
+<div class="user-card" id="userBox">
+  🔄 Checking login...
+</div>
 
 <style>
-  footer {
-    background:#171a21;
-    padding:20px 12px;
-    margin-top:30px;
-    text-align:center;
-    border-top:2px solid #2b3347;
+  /* 🔹 User card */
+  .user-card {
+    margin: 18px auto 10px;
+    padding: 18px;
+    max-width: 420px;
+    border-radius: 14px;
+    background: #0f1115;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.6);
+    text-align: left;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
-  /* 🔹 Navigation Grid */
-  .nav-grid {
-    display:grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap:10px;
-    margin-bottom:18px;
+  .user-card img {
+    width: 100px;  /* ✅ Avatar বড় */
+    height: 100px;
+    border-radius: 50%;
+    border: 3px solid #06b6d4;
+    object-fit: cover;
+    flex-shrink: 0;
   }
 
-  /* 🔹 Button style */
-  .footer-btn {
-    display:block;
-    padding:12px;
-    border-radius:10px;
-    background:#1f2430;
-    color:#e7eaf0;
-    font-weight:bold;
-    font-size:14px;
-    text-decoration:none;
-    transition:0.2s;
-    border:1px solid #2b3347;
-    text-align:center;
-  }
-  .footer-btn:hover {
-    background:#06b6d4;
-    color:#001;
-    transform:scale(1.05);
-  }
-  .logout-btn {
-    background:#ef4444;
-    color:#fff;
-    border:1px solid #ef4444;
-  }
-  .logout-btn:hover {
-    background:#dc2626;
-  }
-
-  /* 🔹 User info box */
-  .user-box {
-    margin-top:16px;
-    padding:14px;
-    border-radius:14px;
-    background:#0f1115;
-    display:flex;
-    align-items:center;
-    gap:14px;
-    box-shadow:0 0 12px rgba(0,0,0,0.5);
-    text-align:left;
-    justify-content:center;
-    flex-wrap:wrap;
-  }
-  .user-box img {
-    width:80px; height:80px; /* ✅ Avatar bigger */
-    border-radius:50%;
-    border:3px solid #06b6d4;
-    object-fit:cover;
-  }
   .user-details {
-    font-size:15px;
-    line-height:1.6;
+    font-size: 16px;
+    line-height: 1.8;
   }
-  .user-details strong { color:#06b6d4; font-size:16px; }
-  .user-details .email { color:#38bdf8; }
-  .user-details .phone { color:#facc15; }
-  .user-details .balance { color:#22c55e; font-weight:bold; }
-  
-  .copyright {
-    margin-top:14px;
-    font-size:13px;
-    color:#9aa3b2;
+  .user-details strong {
+    font-size: 18px;
+    color: #06b6d4;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .user-details .email {
+    color: #38bdf8;
+    display: block;
+  }
+  .user-details .phone {
+    color: #facc15;
+    display: block;
+  }
+  .user-details .balance {
+    color: #22c55e;
+    font-weight: bold;
+    display: block;
   }
 
   /* 🔹 Mobile optimization */
   @media(max-width:600px){
-    .user-box {
-      flex-direction:column;
-      text-align:center;
+    .user-card {
+      flex-direction: column;
+      text-align: center;
+      padding: 20px;
     }
-    .user-details { font-size:14px; }
+    .user-details { font-size: 15px; }
+    .user-card img { width: 90px; height: 90px; }
   }
 </style>
 
@@ -158,9 +108,9 @@
       userBox.innerHTML = `
         <img src="${avatar}" alt="Avatar">
         <div class="user-details">
-          <strong>${name}</strong><br>
-          📧 <span class="email">${email}</span><br>
-          📱 <span class="phone">${phone}</span><br>
+          <strong>${name}</strong>
+          📧 <span class="email">${email}</span>
+          📱 <span class="phone">${phone}</span>
           💎 <span class="balance">Balance: ${balance}</span>
         </div>
       `;
