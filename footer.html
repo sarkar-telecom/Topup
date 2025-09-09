@@ -8,6 +8,7 @@
       <button onclick="location.href='profile.html'">👤 Profile</button>
       <button onclick="location.href='https://wa.me/8801715118684'">💬 Support</button>
       <button onclick="location.href='register.html'">📝 Register</button>
+      <button onclick="location.href='admin.html'">🛠 Admin</button>
     </div>
 
     <!-- 🔹 User Info Center -->
@@ -71,35 +72,36 @@
     background: #dc2626;
   }
 
-  /* 🔹 User card with glass effect */
+  /* 🔹 User card bigger */
   .user-card {
-    padding: 22px;
+    padding: 30px;
     border-radius: 20px;
-    background: rgba(23,26,33,0.6);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(23,26,33,0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 25px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.6);
     flex: 1;
     justify-content: center;
-    min-width: 280px;
+    min-width: 320px;
+    min-height: 180px; /* height increased */
   }
   .user-card img {
-    width: 110px;
-    height: 110px;
+    width: 140px;   /* bigger avatar */
+    height: 140px;
     border-radius: 50%;
-    border: 4px solid #06b6d4;
+    border: 5px solid #06b6d4;
     object-fit: cover;
   }
   .user-details {
-    font-size: 16px;
-    line-height: 1.7;
+    font-size: 18px;
+    line-height: 1.8;
     text-align: left;
   }
   .user-details strong {
-    font-size: 20px;
+    font-size: 22px;
     color: #06b6d4;
   }
   .user-details .email { color: #38bdf8; }
@@ -127,8 +129,8 @@
       text-align: center;
     }
     .user-card img {
-      width: 120px;
-      height: 120px;
+      width: 150px;
+      height: 150px;
     }
   }
 </style>
