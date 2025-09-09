@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sarkar Telecom - Home</title>
+  <title>Sarkar Telecom - Dashboard</title>
   <style>
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#0f1115;color:#e7eaf0;text-align:center;}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#0f1115;color:#e7eaf0;}
     header{background:#171a21;padding:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
     header h1{color:#06b6d4;margin:0;}
     nav a, nav button{color:#e7eaf0;text-decoration:none;margin:0 10px;font-weight:600;background:none;border:none;cursor:pointer;font-size:15px;}
     nav a:hover, nav button:hover{color:#06b6d4;}
-    .hero{padding:60px 20px;}
+    .hero{padding:40px 20px;text-align:center;}
     .hero h2{font-size:28px;color:#06b6d4;}
     .hero p{color:#9aa3b2;margin:10px 0 20px;}
     .btn{background:#06b6d4;color:#001;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;}
@@ -18,49 +18,37 @@
     .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;padding:30px;max-width:900px;margin:auto;}
     .feature{background:#171a21;padding:20px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.4);}
     .feature h3{color:#06b6d4;margin-top:0;}
-    #footer{margin-top:40px;}
 
-    /* 🔄 Ticker style */
-    .ticker-wrap {
-      background:#171a21;
-      overflow:hidden;
-      border-top:1px solid #333;
-      border-bottom:1px solid #333;
-      padding:10px;
-    }
-    .ticker {
-      font-size:15px;
-      color:#e7eaf0;
-      font-weight:600;
-      opacity:0;
-      transition:opacity 1s ease-in-out;
-    }
-    .ticker.show {
-      opacity:1;
-    }
+    /* 🔄 টিকার */
+    .ticker-wrap{background:#111;padding:10px 0;text-align:center;font-size:15px;font-weight:bold;color:#fff;}
+    .ticker{opacity:0;transition:opacity 1s ease;}
+    .ticker.show{opacity:1;}
+
+    /* Footer */
+    #footer{margin-top:30px;padding:20px;background:#171a21;text-align:center;}
+    #userBox{margin-top:10px;}
   </style>
 </head>
 <body>
   <header>
     <h1>💎 Sarkar Telecom</h1>
     <nav>
-      <a href="index.html">Home</a>
+      <a href="index.html">Dashboard</a>
       <a href="order.html">Order</a>
       <a href="order-history.html">History</a>
       <a href="profile.html">Profile</a>
-      <!-- 🔄 এখানে login/logout toggle হবে -->
       <button id="loginBtn" style="display:none;">Login</button>
       <button id="logoutBtn" style="display:none;">Logout</button>
     </nav>
   </header>
 
-  <!-- 🔄 Ticker Section -->
+  <!-- 🔄 টিকার -->
   <div class="ticker-wrap">
     <span class="ticker" id="ticker">⏳ সর্বশেষ তথ্য লোড হচ্ছে...</span>
   </div>
 
   <section class="hero">
-    <h2>Welcome to Sarkar Telecom</h2>
+    <h2>Welcome to Sarkar Telecom Dashboard</h2>
     <p>Fast & Secure Online Recharge Service</p>
     <a href="order.html" class="btn">🚀 Order Now</a>
   </section>
@@ -123,7 +111,7 @@
     loginBtn.onclick = ()=>window.location.href="login.html";
     logoutBtn.onclick = ()=>signOut(auth);
 
-    // Load footer and then attach auth info
+    // Footer load
     fetch("footer.html")
       .then(res => res.text())
       .then(html => {
@@ -159,7 +147,7 @@
       });
     }
 
-    // 🔄 CSV থেকে টিকার লোড
+    // 🔄 Ticker Logic
     const ticker=document.getElementById("ticker");
     let messages=[];
     let index=0;
@@ -187,7 +175,7 @@
           setInterval(()=>{
             index=(index+1)%messages.length;
             showTickerMessage();
-          },12000); // প্রতি 12 সেকেন্ড পর মেসেজ পাল্টাবে
+          },10000); // প্রতি ১০ সেকেন্ডে নতুন মেসেজ
         } else {
           ticker.textContent="কোনও অর্ডারের তথ্য পাওয়া যায়নি।";
         }
@@ -202,7 +190,7 @@
       setTimeout(()=>{
         ticker.textContent=messages[index];
         ticker.classList.add("show");
-      },1000); // fade-out এর পর fade-in
+      },1000); // fade effect
     }
   </script>
 </body>
