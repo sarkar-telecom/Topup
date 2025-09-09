@@ -5,20 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sarkar Telecom - Home</title>
   <style>
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#0f1115;color:#e7eaf0;}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#0f1115;color:#e7eaf0;text-align:center;}
     header{background:#171a21;padding:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
-    header h1{color:#06b6d4;margin:0;}
+    header h1{color:#06b6d4;margin:0;display:flex;align-items:center;gap:6px;}
     nav a{color:#e7eaf0;text-decoration:none;margin:0 10px;font-weight:600;}
     nav a:hover{color:#06b6d4;}
-    /* 🔽 Live Ticker */
-    .ticker-wrap{width:100%;overflow:hidden;background:#0f172a;color:#facc15;border-top:2px solid #06b6d4;border-bottom:2px solid #06b6d4;}
-    .ticker{display:inline-block;white-space:nowrap;animation:scroll 25s linear infinite;padding:8px 0;}
-    @keyframes scroll{0%{transform:translateX(100%);}100%{transform:translateX(-100%);}}
-    .hero{padding:60px 20px;text-align:center;}
+    .auth-box{display:flex;align-items:center;gap:10px;}
+    .btn{padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-weight:700;}
+    .btn-login{background:#06b6d4;color:#001;}
+    .btn-logout{background:#ef4444;color:#fff;}
+    .ticker{background:#111827;color:#facc15;padding:6px;font-weight:bold;overflow:hidden;white-space:nowrap;}
+    .ticker span{display:inline-block;padding-left:100%;animation:scroll-left 15s linear infinite;}
+    @keyframes scroll-left{0%{transform:translateX(0);}100%{transform:translateX(-100%);}}
+    .hero{padding:60px 20px;}
     .hero h2{font-size:28px;color:#06b6d4;}
     .hero p{color:#9aa3b2;margin:10px 0 20px;}
-    .btn{background:#06b6d4;color:#001;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;}
-    .btn:hover{background:#0ea5e9;}
+    .btn-main{background:#06b6d4;color:#001;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;}
+    .btn-main:hover{background:#0ea5e9;}
     .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;padding:30px;max-width:900px;margin:auto;}
     .feature{background:#171a21;padding:20px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.4);}
     .feature h3{color:#06b6d4;margin-top:0;}
@@ -26,6 +29,7 @@
   </style>
 </head>
 <body>
+  <!-- Header -->
   <header>
     <h1>💎 Sarkar Telecom</h1>
     <nav>
@@ -33,36 +37,52 @@
       <a href="order.html">Order</a>
       <a href="order-history.html">History</a>
       <a href="profile.html">Profile</a>
-      <a id="authBtn" href="login.html">Login</a>
     </nav>
+    <div class="auth-box">
+      <span id="userName">Checking...</span>
+      <button id="loginBtn" class="btn btn-login" style="display:none;">Login</button>
+      <button id="logoutBtn" class="btn btn-logout" style="display:none;">Logout</button>
+    </div>
   </header>
 
-  <!-- 🔽 Live Updates Ticker -->
-  <div class="ticker-wrap">
-    <div id="ticker" class="ticker">সর্বশেষ আপডেট লোড হচ্ছে...</div>
-  </div>
+  <!-- 🔔 Live Updates -->
+  <div class="ticker"><span id="liveTicker">⏳ লাইভ আপডেট লোড হচ্ছে...</span></div>
 
+  <!-- Hero -->
   <section class="hero">
     <h2>Welcome to Sarkar Telecom</h2>
     <p>Fast & Secure Online Recharge Service</p>
-    <a href="order.html" class="btn">🚀 Order Now</a>
+    <a href="order.html" class="btn-main">🚀 Order Now</a>
   </section>
 
+  <!-- Features -->
   <section class="features">
-    <div class="feature"><h3>⚡ দ্রুত রিচার্জ</h3><p>ইনস্ট্যান্ট মোবাইল টপ-আপ ও গেমিং রিচার্জ।</p></div>
-    <div class="feature"><h3>📋 অর্ডার ট্র্যাকিং</h3><p>অতীতের সব অর্ডার সহজেই চেক ও ম্যানেজ করুন।</p></div>
-    <div class="feature"><h3>🔐 সিকিউর লগইন</h3><p>ফায়ারবেজ দিয়ে নিরাপদ অথেনটিকেশন।</p></div>
-    <div class="feature"><h3>📱 ২৪/৭ সাপোর্ট</h3><p>আমরা সবসময় আপনার সাথে আছি।</p></div>
+    <div class="feature">
+      <h3>⚡ ফাস্ট রিচার্জ</h3>
+      <p>ইনস্ট্যান্ট মোবাইল টপ-আপ & গেমিং রিচার্জ।</p>
+    </div>
+    <div class="feature">
+      <h3>📋 অর্ডার ট্র্যাকিং</h3>
+      <p>অতীতের সব অর্ডার সহজেই চেক ও ম্যানেজ করুন।</p>
+    </div>
+    <div class="feature">
+      <h3>🔐 সিকিউর লগইন</h3>
+      <p>ফায়ারবেস দিয়ে নিরাপদ authentication।</p>
+    </div>
+    <div class="feature">
+      <h3>📱 ২৪/৭ সাপোর্ট</h3>
+      <p>আমরা সর্বসময় আপনার সাথে আছি।</p>
+    </div>
   </section>
 
-  <!-- Footer load -->
+  <!-- Footer -->
   <div id="footer"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-    // Firebase config
+    // ✅ Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
       authDomain: "diamond-recharge-f7f59.firebaseapp.com",
@@ -75,68 +95,74 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // ✅ Login/Logout Toggle
-    const authBtn=document.getElementById("authBtn");
-    onAuthStateChanged(auth,(user)=>{
-      if(user){
-        authBtn.textContent="Logout";
-        authBtn.href="#";
-        authBtn.onclick=()=>signOut(auth);
+    const userNameBox = document.getElementById("userName");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
 
-        // Footer এ ইউজার ইনফো দেখানো
-        const footerUser=document.getElementById("footer-user");
-        if(footerUser){
-          footerUser.textContent=`🔐 লগইন করা হয়েছে: ${user.displayName || user.email}`;
-        }
-      }else{
-        authBtn.textContent="Login";
-        authBtn.href="login.html";
-        const footerUser=document.getElementById("footer-user");
-        if(footerUser){
-          footerUser.textContent="❌ আপনি লগইন করেননি";
-        }
+    // ✅ Auth State Change
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        userNameBox.textContent = user.displayName || user.email;
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        updateFooter(user);
+      } else {
+        userNameBox.textContent = "Not logged in";
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        updateFooter(null);
       }
     });
 
-    // ✅ Load footer
-    fetch("footer.html")
-      .then(res=>res.text())
-      .then(html=>{
-        document.getElementById("footer").innerHTML=html;
+    loginBtn.onclick = () => window.location.href = "login.html";
+    logoutBtn.onclick = () => signOut(auth);
 
-        // Footer user info placeholder add
-        if(!document.getElementById("footer-user")){
-          const div=document.createElement("div");
-          div.id="footer-user";
-          div.style.textAlign="center";
-          div.style.padding="10px";
-          document.getElementById("footer").appendChild(div);
-        }
+    // ✅ Load footer.html & set user info
+    fetch("footer.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("footer").innerHTML = html;
       });
 
-    // ✅ Google Sheet থেকে লাইভ আপডেট ফেচ
-    const sheetURL="https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=1098128992&single=true&output=csv";
-
-    async function loadTicker(){
-      try{
-        const res=await fetch(sheetURL);
-        const text=await res.text();
-        const rows=text.trim().split("\n").slice(1); // skip header
-        const updates=rows.map(r=>{
-          const [time,number,amount,email,status]=r.split(",");
-          if(status==="Waiting") return `🟡 সর্বশেষ - ${email} একটি ${amount} 💎 এর অর্ডার দিয়েছেন ⏳`;
-          if(status==="CANCEL") return `🔴 সর্বশেষ - অর্ডার ক্যান্সেল হওয়ায় ${email} ${amount} 💎 ফেরত পেয়েছেন`;
-          if(status==="COMPLETE") return `✅ সর্বশেষ - ${email} সফলভাবে ${amount} 💎 অর্ডার সম্পন্ন করেছেন`;
-          return null;
-        }).filter(Boolean);
-        document.getElementById("ticker").textContent=updates.join(" 🔸 ");
-      }catch(err){
-        console.error("Ticker load failed:",err);
+    function updateFooter(user){
+      const footerUser = document.getElementById("footer-user");
+      if(!footerUser) return;
+      if(user){
+        footerUser.innerHTML = `🔐 লগইন করা হয়েছে: <span style="color:#06b6d4">${user.displayName || user.email}</span>`;
+      } else {
+        footerUser.innerHTML = "❌ আপনি লগইন করেননি";
       }
     }
 
+    // ✅ Live Ticker (Google Sheet CSV থেকে)
+    async function loadTicker(){
+      try {
+        const res = await fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=1098128992&single=true&output=csv");
+        const csv = await res.text();
+        const rows = csv.split("\n").slice(1).map(r=>r.split(","));
+        
+        let messages = [];
+        rows.forEach(r=>{
+          const [time, number, amount, email, status] = r;
+          if(!status) return;
+          if(status.includes("CANCEL")){
+            messages.push(`সর্বশেষ - অর্ডার ক্যান্সেল হওয়ায় ${email} ${amount} 💎 ফেরত পেয়েছেন 🔴`);
+          } else if(status.includes("COMPLETE")){
+            messages.push(`সর্বশেষ - ${email} সফলভাবে ${amount} 💎 অর্ডার করেছেন ✅`);
+          }
+        });
+
+        if(messages.length===0){
+          document.getElementById("liveTicker").textContent = "⏳ আপডেট পাওয়া যায়নি...";
+        } else {
+          document.getElementById("liveTicker").textContent = messages.join(" 🔔 ");
+        }
+      } catch(e){
+        document.getElementById("liveTicker").textContent = "⚠️ আপডেট লোড করতে সমস্যা হয়েছে";
+      }
+    }
     loadTicker();
-    setInterval(loadTicker,15000); // প্রতি 15 সেকেন্ডে আপডেট
+    setInterval(loadTicker, 15000); // প্রতি 15 সেকেন্ডে আপডেট
   </script>
 </body>
 </html>
