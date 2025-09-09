@@ -32,7 +32,7 @@
       font-size:15px;
       color:#e7eaf0;
       font-weight:bold;
-      animation: scroll-left 12s linear forwards;
+      animation: scroll-left 20s linear forwards;
     }
     @keyframes scroll-left {
       from { transform:translateX(100%); }
@@ -118,12 +118,41 @@
     loginBtn.onclick=()=>window.location.href="login.html";
     logoutBtn.onclick=()=>signOut(auth);
 
+    // Footer Load
     fetch("footer.html")
       .then(res=>res.text())
       .then(html=>{
         document.getElementById("footer").innerHTML=html;
+        attachUserInfo();
       });
 
+    // Footer user info
+    function attachUserInfo(){
+      const userBox=document.getElementById("userBox");
+      if(!userBox) return;
+      onAuthStateChanged(auth, async (user)=>{
+        if(user){
+          const snap=await getDoc(doc(db,"users",user.uid));
+          const data=snap.exists()?snap.data():{};
+          const bal=data.balance ?? 0;
+          const role=data.role ?? "User";
+          const phone=data.phone ?? "N/A";
+          userBox.innerHTML=`
+            <img src="${data.avatar || user.photoURL || 'https://i.ibb.co/3pPYd14/user.png'}" width="80" style="border-radius:50%;border:2px solid #06b6d4;">
+            <div>
+              <h3>${data.name || user.displayName || "No Name"} <span style="color:orange">(${role})</span></h3>
+              <p>💎 <span style="color:lime">${bal}</span></p>
+              <p>📱 ${phone}</p>
+              <p>📧 ${user.email}</p>
+            </div>
+          `;
+        } else {
+          userBox.innerHTML="<p>❌ Not logged in</p>";
+        }
+      });
+    }
+
+    // 🔄 Ticker Logic
     const ticker=document.getElementById("ticker");
 
     fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vR4owbSc_h38ouaktOU30TYqH6wy93qYjmW0G5GWXhsBMzsrVSaWzPtVPA7YpyOUmlEpStByT8TxG0-/pub?gid=1098128992&single=true&output=csv")
@@ -151,8 +180,8 @@
           void ticker.offsetWidth; // reflow
           ticker.classList.add("ticker");
           i=(i+1)%messages.length;
-          setTimeout(showMessage,22000); 
-          // 12s scroll + 10s gap = 22s
+          setTimeout(showMessage,30000); 
+          // 20s scroll + 10s gap = 30s
         }
         if(messages.length>0) showMessage();
         else ticker.textContent="কোনও অর্ডারের তথ্য পাওয়া যায়নি।";
