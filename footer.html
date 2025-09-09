@@ -68,39 +68,31 @@
     color:#001;
   }
 
-  /* User Card */
   .user-card {
-    flex: 0 1 320px;   /* fixed width card */
-    background:#0f1115;
-    border:1px solid #2b3347;
-    border-radius:12px;
-    padding:12px;     
-    display:flex;
-    align-items:center;
-    gap:15px;          
-    min-width:260px;
-    max-width:320px;  
-    margin:auto;       
-    box-shadow:0 4px 12px rgba(0,0,0,0.4);
-    box-sizing:border-box;
-  }
-  .user-card img {
-    width:90px;
-    height:90px;
-    border-radius:50%;
-    border:3px solid #06b6d4;
-    box-shadow:0 0 15px #06b6d4;
-    animation: glowPulse 2s infinite alternate;
-  }
-  @keyframes glowPulse {
-    from { box-shadow:0 0 10px #06b6d4; }
-    to { box-shadow:0 0 25px #22c55e; }
-  }
-
-  .user-details { text-align:left; flex:1; }
-  .user-details h3 { margin:5px 0; font-size:17px; color:#06b6d4; }
-  .user-details p { margin:4px 0; font-size:14px; font-weight:bold; }
-
+  flex: 0 1 320px;   /* fixed width card */
+  background:#0f1115;
+  border:1px solid #2b3347;
+  border-radius:12px;
+  padding:8px;         /* height কমানোর জন্য কমানো হলো */
+  display:flex;
+  align-items:center;
+  gap:10px;            /* আগে 15px ছিল */
+  min-width:260px;
+  max-width:320px;     
+  margin:auto;       
+  box-shadow:0 4px 12px rgba(0,0,0,0.4);
+  box-sizing:border-box;
+}
+.user-card img {
+  width:70px;   /* আগে ছিল 90px */
+  height:70px;
+  border-radius:50%;
+  border:3px solid #06b6d4;
+  box-shadow:0 0 15px #06b6d4;
+  animation: glowPulse 2s infinite alternate;
+}
+.user-details h3 { margin:4px 0; font-size:16px; color:#06b6d4; }
+.user-details p { margin:3px 0; font-size:13px; font-weight:bold; }
   .role-text { color:#f97316; font-size:13px; }
   .balance-gradient {
     background: linear-gradient(90deg, #06b6d4, #22c55e);
