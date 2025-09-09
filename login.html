@@ -1,20 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Sarkar Telecom</title>
+  <title>🔐 Login - Sarkar Telecom</title>
   <style>
-    body{font-family:Arial,sans-serif;background:#0f1115;color:#e7eaf0;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
-    .card{background:#171a21;padding:22px;border-radius:12px;width:320px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.5);}
-    h2{color:#06b6d4;margin-bottom:18px;}
-    input{width:90%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #333;background:#0f1115;color:#e7eaf0;}
-    button{background:#06b6d4;color:#001;border:none;padding:10px 14px;margin-top:10px;width:100%;border-radius:6px;font-weight:bold;cursor:pointer;}
-    button:hover{background:#0ea5e9;}
-    .msg{margin-top:10px;font-size:14px;min-height:20px}
+    body{font-family:Arial,Helvetica,sans-serif;background:#0f1115;color:#e7eaf0;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
+    .card{background:#171a21;padding:24px;border-radius:16px;width:340px;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,0.6);}
+    h2{color:#06b6d4;margin-bottom:20px;}
+    input{width:92%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #333;background:#0f1115;color:#e7eaf0;}
+    .nav-btn{background:#06b6d4;color:#001;text-decoration:none;padding:10px 14px;margin-top:10px;width:100%;border-radius:6px;font-weight:bold;cursor:pointer;display:inline-block;border:none;}
+    .nav-btn:hover{background:#0ea5e9;}
     .extra-btn{background:#1f2937;color:#e7eaf0;border:none;padding:8px;margin-top:8px;width:100%;border-radius:6px;cursor:pointer;font-size:14px;}
     .extra-btn:hover{background:#374151;}
     .muted{font-size:12px;color:#9aa3b2;margin-top:6px}
+    .msg{margin-top:10px;font-size:14px;min-height:20px;}
+    .options{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-top:6px;}
   </style>
 </head>
 <body>
@@ -23,12 +24,14 @@
     <input type="email" id="email" placeholder="Email" autocomplete="username">
     <input type="password" id="password" placeholder="Password" autocomplete="current-password">
 
-    <button onclick="login()">Login</button>
+    <div class="options">
+      <label><input type="checkbox" id="rememberMe"> Remember me</label>
+      <label><input type="checkbox" id="showPass"> Show password</label>
+    </div>
+
+    <button class="nav-btn" onclick="login()">Login</button>
     <button class="extra-btn" onclick="window.location.href='register.html'">Register</button>
     <button class="extra-btn" onclick="forgotPass()">Forgot Password?</button>
-    <label style="font-size:13px;display:block;margin-top:8px;">
-      <input type="checkbox" id="showPass"> Show password
-    </label>
 
     <p class="muted">Password must be at least 6 characters.</p>
     <p class="msg" id="msg"></p>
@@ -52,26 +55,65 @@
 
     const msgEl=document.getElementById("msg");
     const passEl=document.getElementById("password");
+    const emailEl=document.getElementById("email");
+    const rememberMeEl=document.getElementById("rememberMe");
 
+    // Get query parameter
+    function getQueryParam(name){
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    // Load saved credentials if Remember Me checked before
+    window.addEventListener("load", ()=>{
+      const savedEmail = localStorage.getItem("savedEmail");
+      const savedPass = localStorage.getItem("savedPass");
+      if(savedEmail && savedPass){
+        emailEl.value = savedEmail;
+        passEl.value = savedPass;
+        rememberMeEl.checked = true;
+      }
+    });
+
+    // Show/Hide password
     document.getElementById("showPass").addEventListener("change",e=>{
       passEl.type=e.target.checked?"text":"password";
     });
 
+    // Login function
     window.login=()=>{
-      const email=document.getElementById("email").value.trim();
-      const pass=document.getElementById("password").value.trim();
+      const email=emailEl.value.trim();
+      const pass=passEl.value.trim();
       if(!email||!pass){ msgEl.textContent="⚠️ Enter email & password"; return; }
       msgEl.textContent="⏳ Logging in...";
       signInWithEmailAndPassword(auth,email,pass).then(()=>{
         msgEl.textContent="✅ Login success!";
-        window.location.href="dashboard.html";
+        
+        // Save credentials if Remember Me checked
+        if(rememberMeEl.checked){
+          localStorage.setItem("savedEmail", email);
+          localStorage.setItem("savedPass", pass);
+        } else {
+          localStorage.removeItem("savedEmail");
+          localStorage.removeItem("savedPass");
+        }
+
+        // Redirect back to the requested page if provided
+        const redirectUrl = getQueryParam("redirect");
+        if(redirectUrl){
+          window.location.href = redirectUrl;
+        } else {
+          window.location.href = "dashboard.html";
+        }
+
       }).catch(e=>{
         msgEl.textContent="❌ "+e.message;
       });
     };
 
+    // Forgot Password
     window.forgotPass=()=>{
-      const email=document.getElementById("email").value.trim();
+      const email=emailEl.value.trim();
       if(!email){ msgEl.textContent="⚠️ Enter your email first"; return; }
       sendPasswordResetEmail(auth,email,{url:"https://sarkar-telecom.github.io/Topup/reset.html"})
         .then(()=>msgEl.textContent="📩 Reset email sent! Check your inbox.")
