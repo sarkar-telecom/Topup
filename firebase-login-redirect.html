@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔐 Redirect Login</title>
+</head>
+<body>
+  <p>⏳ Logging in... Please wait.</p>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIIOv-2Laqugv5_HAIRNJllp8YUfYndF8",
+      authDomain: "diamond-recharge-f7f59.firebaseapp.com",
+      projectId: "diamond-recharge-f7f59",
+      storageBucket: "diamond-recharge-f7f59.appspot.com",
+      messagingSenderId: "657717928489",
+      appId: "1:657717928489:web:70431ebc9afb7002d4b238"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Get original redirect URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectBack = urlParams.get("redirect") || "/";
+
+    // Get temp credentials from sessionStorage
+    const email = sessionStorage.getItem("tempEmail");
+    const pass = sessionStorage.getItem("tempPass");
+
+    if(email && pass){
+      signInWithEmailAndPassword(auth, email, pass)
+        .then(()=>{
+          sessionStorage.removeItem("tempEmail");
+          sessionStorage.removeItem("tempPass");
+          window.location.href = redirectBack;
+        })
+        .catch(e=>{
+          alert("❌ Login failed: " + e.message);
+          window.location.href = redirectBack;
+        });
+    } else {
+      alert("⚠️ No credentials found!");
+      window.location.href = redirectBack;
+    }
+  </script>
+</body>
+</html>
